@@ -1,6 +1,6 @@
 ---
 name: qa-setup
-description: Interactively scaffold .qa-config.json for the QA orchestrator (app URL, Jira project key, login env var names, safety options).
+description: Interactively scaffold .qa-config.json for the QA orchestrator (app URL, Jira project key, login env var names, safety options), plus a git-ignored .qa-secrets credential store and hardened .gitignore.
 tools:
   - Read
   - Write
@@ -68,15 +68,28 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
    - Keep the `safety` (other than `allowProduction`), `severityMap`, and `execution` blocks exactly as they appear in the embedded default config above — do not change `prodUrlPatterns`, `destructiveActions`, `cleanupCreatedData`, `maskPatterns`, `severityMap`, `execution`, or `outputDir` from the embedded defaults.
    - Use the `Write` tool to create **`.qa-config.json`** in the project root with this filled-in structure.
 
-5. **Remind the user of follow-up steps.** After writing the file, tell the user to:
-   - Set the referenced env vars before running the orchestrator, using PowerShell syntax, e.g.:
+5. **Scaffold the git-ignored credential store (`.qa-secrets`).** If `login.required` is `true`, create a **`.qa-secrets`** file in the project root (a `.env`-style `KEY=VALUE` file) so the executor has a local place to read credentials from when OS env vars aren't set. **Never ask the user to type their actual password into this conversation, and never write a real secret value yourself** — write only a commented template with empty placeholders for the chosen env-var names, which the user fills in privately in the git-ignored file. If `.qa-secrets` already exists, do NOT overwrite it (leave the user's values intact). Template to write:
+   ```
+   # QA Orchestrator credential store — .env-style KEY=VALUE
+   # This file is git-ignored and MUST NEVER be committed.
+   # Fill in the values below; the executor reads these when the matching OS env var is unset.
+   QA_USER=
+   QA_PASS=
+   ```
+   (substitute the actual `usernameEnv`/`passwordEnv` names chosen in step 3 for `QA_USER`/`QA_PASS`).
+
+6. **Harden `.gitignore`.** Read the project's `.gitignore` (create it if absent) and ensure it contains each of these entries (add any that are missing; never remove existing lines): `.qa-secrets`, `.env`, `.env.*`, `.qa-config.json`, `.playwright-mcp/`, `qa-runs/`. This guarantees credentials, config, browser snapshots, and run outputs are never committed.
+
+7. **Remind the user of follow-up steps.** After writing the files, tell the user they can supply credentials either way:
+   - **Option A — fill in `.qa-secrets`** (the git-ignored file just created): put the real values after `QA_USER=` / `QA_PASS=`. Convenient for repeated runs; never committed.
+   - **Option B — OS environment variables** (nothing on disk), using PowerShell syntax, e.g.:
      ```powershell
      $env:QA_USER = "your-username"
      $env:QA_PASS = "your-password"
      ```
-     (substitute the actual `usernameEnv`/`passwordEnv` names chosen in step 3 if they differ from `QA_USER`/`QA_PASS`).
+     (substitute the actual `usernameEnv`/`passwordEnv` names chosen in step 3). The executor checks the OS env var first, then `.qa-secrets`.
    - Authorize the Atlassian connector in claude.ai connector settings if it is not already connected, since the QA orchestrator's Jira-facing subagents depend on it.
 
 ## Output
 
-The only file this command writes is **`.qa-config.json`** in the project root. Do not create or modify any other files.
+This command writes **`.qa-config.json`** (always), a **`.qa-secrets`** template (only if login is required and it does not already exist), and ensures **`.gitignore`** contains the credential/config/output entries listed in step 6 — all in the project root. It writes no real secret values and modifies no other files.

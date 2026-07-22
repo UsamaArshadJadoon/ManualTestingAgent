@@ -6,3 +6,7 @@ qa-runs/
 .playwright-mcp/
 # Local project config that references credential env-var names
 .qa-config.json
+# QA credential store (.env-style secrets — NEVER commit)
+.qa-secrets
+.env
+.env.*
