@@ -153,6 +153,16 @@ Example shape:
 }
 ```
 
+## Cleanup — credential hygiene (always, at end of run)
+
+After `results.json` is written, and BEFORE returning, you MUST scrub browser-side artifacts that can retain credentials or PII between runs. The Playwright MCP writes page snapshots (accessibility/DOM dumps) to a **`.playwright-mcp/`** folder in the project, and those can capture the login email and even the typed password in plaintext.
+
+- Use **Bash** to delete the `.playwright-mcp/` directory from the project root if it exists (e.g. `rm -rf .playwright-mcp`). Do this even if the run ended in an error or was cut short by `maxRunMinutes`.
+- Do NOT delete anything inside the run folder (`screenshots/`, the JSON files) — those are deliberate, masked evidence. Only remove the Playwright snapshot scratch.
+- Never echo credential values while doing this. This cleanup is mandatory on every run, including partial/aborted ones.
+
+The genuine evidence screenshots you saved under the run folder's `screenshots/` are unaffected — only the browser tool's raw snapshot scratch is removed.
+
 ## Return
 
-After writing `results.json`, return a one-line summary to the orchestrator with the counts of each status, for example: `results.json written: 8 passed, 1 failed, 1 flaky, 2 blocked`.
+After writing `results.json` and running the cleanup above, return a one-line summary to the orchestrator with the counts of each status, for example: `results.json written: 8 passed, 1 failed, 1 flaky, 2 blocked (browser snapshot scratch cleaned)`.
