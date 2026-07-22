@@ -344,6 +344,16 @@ AIO_TOKEN=<span class="you">•••••••••••••••••�
   <h2>Download &amp; install the agents — step by step</h2>
   <p class="intro">You install the agents <b>once per machine</b>; after that they work in <b>every</b> project via <code>/qa-run</code> and <code>/qa-setup</code>. Requires <b>Windows + VS Code + Claude Code</b> and <b>PowerShell 5.1</b>.</p>
 
+  <div class="call warn"><span class="lbl">⚠️ Where to run each command — read this once</span><p>There are <b>two different places</b> you type things. Mixing them up gives a <em>“term is not recognized”</em> error:</p></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Command</th><th>Where to type it</th></tr></thead>
+    <tbody>
+      <tr><td><code>powershell -File qa-agent\install.ps1</code><br><span style="color:var(--faint)">(also <code>Invoke-WebRequest</code>, <code>git clone</code>, <code>Get-ChildItem</code>)</span></td><td><b>VS Code terminal / PowerShell</b> — real shell commands</td></tr>
+      <tr><td><code>/qa-setup</code><br><code>/qa-run &lt;STORY-KEY&gt;</code></td><td><b>The Claude Code chat prompt</b> (press <kbd>Ctrl</kbd>+<kbd>Esc</kbd> to focus it) — these are <b>Claude Code commands, not shell commands</b></td></tr>
+    </tbody>
+  </table></div>
+  <p style="color:var(--faint);font-size:.9rem;margin:.2em 0 0"><code>/qa-run</code> and <code>/qa-setup</code> will <b>not</b> work in PowerShell — type them in the <b>Claude Code chat box</b> inside VS Code. Type <code>/</code> there to see them; if they don't appear right after installing, reload VS Code (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> → “Developer: Reload Window”).</p>
+
   <div class="call safe"><span class="lbl">⚡ Fastest way — one paste installs everything</span><p>Open <b>Windows PowerShell</b> and paste the whole block below. It <b>downloads</b> the release ZIP, <b>extracts</b> it, and <b>installs all 8 agents + 2 commands</b> into <code>~/.claude</code> — no manual clicking. (Use the <b>Copy</b> button, top-right of the box.)</p></div>
   <div class="win"><button class="copy" type="button">Copy</button><div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="win-title">Windows PowerShell — one-shot download &amp; install</span></div>
     <div class="win-body"><span class="dim"># QA AZM Digital Agent — download the ZIP + install every agent</span>

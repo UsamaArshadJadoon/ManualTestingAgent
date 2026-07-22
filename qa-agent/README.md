@@ -111,6 +111,8 @@ those environment variables (see Prerequisites) before running `/qa-run`.
 
 ## Usage
 
+> **Where to type these:** `/qa-run` and `/qa-setup` are **Claude Code commands** — type them in the **Claude Code chat prompt** (Ctrl+Esc to focus it), **not** in the terminal/PowerShell. Only `install.ps1` runs in PowerShell. If PowerShell says *"qa-run is not recognized"*, you typed it in the wrong place. Type `/` in the chat to see the commands; reload VS Code if they don't appear right after installing.
+
 ```
 /qa-run PROJ-123
 ```
