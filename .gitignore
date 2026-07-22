@@ -1,0 +1,4 @@
+# Subagent-driven-development scratch (briefs, reports, review packages, ledger)
+.superpowers/
+# Local QA run outputs
+qa-runs/
