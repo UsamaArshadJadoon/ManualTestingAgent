@@ -7,6 +7,8 @@ tools:
   - mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql
   - mcp__claude_ai_Atlassian__createJiraIssue
   - mcp__claude_ai_Atlassian__createIssueLink
+  - mcp__claude_ai_Atlassian__getTransitionsForJiraIssue
+  - mcp__claude_ai_Atlassian__transitionJiraIssue
 model: claude-opus-4-8
 ---
 
@@ -138,6 +140,25 @@ Example shape:
 
 **Return:** after writing `bugs-created.json`, return a one-line summary, e.g. `bugs-created.json written: created 2 bugs, linked to PROJ-55`.
 
+## Transition mode — apply approved Jira transitions (used by `--rerun`)
+
+Separately from Phase A / Phase B, the orchestrator may invoke you in **Transition mode**. This mode is used only on a `--rerun`, for previously-logged bugs whose originating test now passes, and the human has ALREADY approved each transition — you are the executor of an approved decision, never the decider.
+
+**Input:** the orchestrator invokes you in Transition mode with an explicit list of already-approved `{ bugKey, targetStatus }` items (the Jira issue key of a previously-created bug and the status it should move to, e.g. `{ "bugKey": "PROJ-101", "targetStatus": "Done" }`). Only these items are in scope.
+
+### Terminal failure — never fabricate
+
+**If the approved transition list is missing or empty, STOP and return a one-line error** (e.g. `Cannot transition: no approved transition list supplied`). Do NOT transition any issue that is not explicitly in the supplied list, and do NOT invent bug keys, target statuses, or transition ids.
+
+### Applying
+
+For each `{ bugKey, targetStatus }` in the supplied list:
+1. Call `mcp__claude_ai_Atlassian__getTransitionsForJiraIssue` for `bugKey` to look up the available transitions and find the transition whose destination matches `targetStatus`.
+2. If a matching transition exists, apply it with `mcp__claude_ai_Atlassian__transitionJiraIssue`. If no transition matches `targetStatus` from the issue's current status, skip that issue and note it — never force or fabricate a transition.
+3. Transition ONLY the bugs explicitly passed in — never any other issue, and never re-open, close, or alter anything not in the approved list.
+
+Return a one-line summary of what was transitioned, e.g. `transitioned 2 bugs: PROJ-101→Done, PROJ-102→Done (1 skipped: no matching transition)`. Transition mode writes no run-folder file.
+
 ## Summary line
 
-Whichever phase you ran, your final return to the orchestrator is always a single line stating what happened in that phase — `drafted N` for Phase A, `created M` for Phase B — never both in the same invocation.
+Whichever phase you ran, your final return to the orchestrator is always a single line stating what happened in that phase — `drafted N` for Phase A, `created M` for Phase B, `transitioned K` for Transition mode — never more than one mode in the same invocation.
