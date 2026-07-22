@@ -81,7 +81,11 @@ After stage 9 (and its validation), produce the report. **Redaction first:** bef
    - **Screenshot links**: the per-case screenshot paths from `results.json`.
    - A **validation summary**: per stage, whether it passed clean, how many fix-retries it took, and whether it was escalated to the user (from the `validation/<stage>.json` files and the outcomes you recorded in section 4).
 2. Write **`report.html`** into the run folder — the same content as a self-contained HTML page — and **publish it as an Artifact** (call the Artifact tool on the `report.html` file). Include the same sections: summary, GO/NO-GO, traceability matrix, tallies, coverage %, proposed-vs-created bugs, screenshot links, and the validation summary.
-3. Tell the user the run folder path, the verdict, and the published Artifact URL.
+3. **ALWAYS write a detailed `bug-report.html` with embedded screenshots** whenever `bugs-proposed.json` has ≥1 draft (this is mandatory on every run that found anything — not optional). It is a self-contained HTML page with one **card per bug** (every draft in `bugs-proposed.json`), and each card shows the **full standard bug details**: `ref`/ID, title, a severity chip, priority, status, linked AC, originating test id(s), environment, numbered **steps to reproduce**, **expected result**, **actual result**, any **console/network errors**, **possible duplicates**, a **recommendation**, and the discovered date — plus a **summary table** of all bugs at the top and the run/verdict header.
+   - **Embed each bug's screenshots inline as base64 data URIs** so they render anywhere (the Artifact CSP blocks external/local file refs). For every `screenshots` path on every draft, use the **Bash** tool to base64-encode the PNG from the run folder and inline it as `data:image/png;base64,<...>` in the page (e.g. author the HTML with `{{IMG:<name>}}` placeholders, then run a small `node`/`base64` step that replaces each placeholder with the encoded file's data URI). Each screenshot appears in a `<figure>` with a caption naming its test case. Never reference a screenshot by file path in the published page.
+   - Apply the same `safety.maskPatterns` redaction to all text before writing.
+   - **Publish `bug-report.html` as an Artifact** (Artifact tool) and give the user its URL. If there were zero drafts (a clean run), skip this file and say so.
+4. Tell the user the run folder path, the verdict, the report Artifact URL, and (when produced) the bug-report Artifact URL.
 
 ## 7. Fresh-run wrap-up
 
