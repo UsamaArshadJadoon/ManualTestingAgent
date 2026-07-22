@@ -103,6 +103,16 @@ docs/superpowers/        design spec + implementation plan
 
 You install the agents **once per machine**; after that they work in **every** project via `/qa-run` and `/qa-setup`. Requires **Windows + VS Code + Claude Code** and **PowerShell 5.1**.
 
+> ### ⚠️ Where to run each command — this trips everyone up once
+> There are **two different places** you type things, and mixing them up gives a *"term is not recognized"* error:
+>
+> | Command | Where to type it |
+> |---|---|
+> | `powershell -File qa-agent\install.ps1` (and `Invoke-WebRequest`, `git clone`, `Get-ChildItem`) | **VS Code terminal / PowerShell** — these are real shell commands |
+> | **`/qa-setup`** and **`/qa-run <STORY-KEY>`** | **The Claude Code chat prompt** (press **Ctrl+Esc** to focus it) — these are **Claude Code commands, *not* shell commands** |
+>
+> `/qa-run` and `/qa-setup` will **not** work in PowerShell. Type them in the **Claude Code chat box** inside VS Code. Type `/` there to see them listed; if they don't appear right after installing, reload VS Code (**Ctrl+Shift+P → "Developer: Reload Window"**).
+
 ### ⚡ Fastest way — download the ZIP &amp; install all agents (copy-paste)
 
 Open **Windows PowerShell** and paste this whole block. It **downloads** the release ZIP, **extracts** it, and **installs all 8 agents + 2 commands** into `~/.claude`:
