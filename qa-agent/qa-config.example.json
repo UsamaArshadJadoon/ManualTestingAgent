@@ -15,7 +15,7 @@
     "prodUrlPatterns": ["prod", "www.", "app.", "live"],
     "destructiveActions": "confirm",
     "cleanupCreatedData": true,
-    "maskPatterns": ["password", "token", "authorization", "email", "\\b\\d{12,19}\\b"]
+    "maskPatterns": ["[\\w.+-]+@[\\w-]+\\.[\\w.-]+", "(?i)(bearer|token|authorization)\\s*[:=]\\s*\\S+", "\\b\\d{12,19}\\b", "(?i)(password|passwd|pwd|secret|api[_-]?key)\\s*[:=]\\s*\\S+"]
   },
   "severityMap": { "blocker": "Highest", "major": "High", "minor": "Low" },
   "execution": { "flakyRetry": 1, "stepTimeoutMs": 15000, "maxRunMinutes": 30 },

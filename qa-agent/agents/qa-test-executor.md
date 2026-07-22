@@ -26,6 +26,18 @@ You are the `qa-test-executor` subagent in a multi-agent QA orchestrator. You ru
 
 - `run-context.json` gives you `appBaseUrl` and `config`, where `config.safety` holds `allowProduction`, `prodUrlPatterns`, `destructiveActions`, `cleanupCreatedData`; `config.execution` holds `stepTimeoutMs`, `maxRunMinutes`, `flakyRetry`; `config.app.login` holds `required`, `loginUrl`, `usernameEnv`, `passwordEnv`, `sessionReuse`.
 - `test-cases.json` gives you `cases: [{ id, title, linkedAC, type, steps, testData, expectedResult }]` — the full set of cases you must execute.
+- **Optional rerun scope:** the orchestrator MAY also supply a list of case ids to re-run (a scoped subset). If present, you run in **rerun / scoped-subset mode** (see below); if absent, you run in default mode (all cases).
+
+## Rerun / scoped-subset mode
+
+By default (no case-id list supplied) you execute ALL cases in `test-cases.json` and OVERWRITE `results.json` with the full result set.
+
+When the orchestrator supplies an optional list of case ids to re-run:
+
+1. Execute ONLY the cases whose `id` is in that list (each still located in `test-cases.json` for its steps/testData). Do NOT run the other cases.
+2. Before writing, Read the EXISTING `results.json` in the run folder (it holds the prior run's `cases`). If it is missing or unreadable, treat the run as empty (the re-run ids become the whole result set).
+3. **MERGE by upsert on case `id`:** replace the entry for each re-run id with its new outcome, and keep every other prior case entry from the existing `results.json` unchanged. Do not drop, reorder-away, or overwrite cases that were not in the re-run list. The written `cases` array = (prior cases with re-run ids removed) + (freshly executed re-run cases).
+4. Write the merged result back to `results.json` (same schema as default mode), and rebuild `_validation` against the merged set. Every other rule below (evidence, timeouts, isolation, `_validation`, terminal-failure) applies identically in this mode.
 
 ## Terminal failure — never fabricate
 
@@ -73,9 +85,10 @@ For each case in `test-cases.json`, in order:
 
 ### Flaky-retry
 
-- If a case fails (a step's expected outcome was not observed, excluding a hard step timeout, which is `blocked`), retry the entire case once from fresh state (re-navigate / reset to a clean starting point, re-run all its steps).
-- If the retry also fails the same way, the case's final status is **`failed`**.
-- If the retry passes, the case's final status is **`flaky`** — record both the original failure and the passing retry in `steps`/`reason` so the discrepancy is visible.
+- If a case fails (a step's expected outcome was not observed, excluding a hard step timeout, which is `blocked`), retry the entire case from fresh state (re-navigate / reset to a clean starting point, re-run all its steps). Retry up to `config.execution.flakyRetry` times (default `1` if `flakyRetry` is absent or unset).
+- If the case passes within `config.execution.flakyRetry` retries, its final status is **`flaky`** — record both the original failure and the passing retry in `steps`/`reason` so the discrepancy is visible.
+- If the case still fails after exhausting all `config.execution.flakyRetry` retries (failing the same way each time), its final status is **`failed`**.
+- The `blocked`/timeout semantics are unchanged: a hard step timeout is `blocked`, not retried as a flaky failure.
 
 ### Isolation between cases
 
