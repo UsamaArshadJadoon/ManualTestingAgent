@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="qa-agent/docs/assets/azm-digital-logo.png" alt="AZM Saudi Digital" height="140">
+</p>
+
 # QA AZM Digital Agent
 
 > An autonomous, multi-agent QA system for **Claude Code** (VS Code) that turns a single Jira story key into a fully executed, evidence-backed, approval-gated QA report.
@@ -192,5 +196,5 @@ The Atlassian MCP has no attachment-upload tool, so bugs reference screenshots b
 
 ## Credits
 
-**QA AZM Digital Agent** — Developed by **Usama Arshad Jadoon**, QC Lead, **AZM Digital**.
+**QA AZM Digital Agent** — Developed by **Usama Arshad Jadoon**, QC Lead, **AZM Saudi Digital**.
 Built on Claude Code with a multi-agent, file-based orchestration architecture.
