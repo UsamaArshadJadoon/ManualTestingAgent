@@ -19,6 +19,7 @@ qa-runs/<PROJ-KEY>_<runId>/
 ├── review.json
 ├── validation/
 │   └── <stage>.json
+├── aio-sync.json         # optional: written by qa-test-sync when config.aio.enabled
 ├── report.md
 └── report.html
 ```
@@ -69,3 +70,11 @@ qa-runs/<PROJ-KEY>_<runId>/
 ```
 { stage, pass: bool, gaps: [{ item, detail }], checklist: [{ item, pass }], iteration }
 ```
+
+### `aio-sync.json` (optional — written by `qa-test-sync` only when `config.aio.enabled`)
+```
+{ project, folderID, folderName, storyJiraId, createdCount, total,
+  cases: [ { testId, aioKey, aioID, title } | { testId, error, status } ],
+  _validation: {...} }
+```
+Note: the AIO folder (named with the story key) must be created once in the AIO Cases UI beforehand — the AIO API cannot create folders. Runs once per story.
