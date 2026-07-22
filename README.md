@@ -4,6 +4,8 @@
 
 **Developed by:** Usama Arshad Jadoon &nbsp;·&nbsp; **Role:** QC Lead &nbsp;·&nbsp; **Company:** AZM Digital
 
+> 📖 **New here? Start with the interactive user guide** — [open it in your browser](https://claude.ai/code/artifact/d10855cc-35e8-4581-a41d-89232fe6f843) (step-by-step walkthrough, live pipeline explorer, real screenshots). It's also in the repo at [`qa-agent/docs/complete-guide.html`](qa-agent/docs/complete-guide.html) and attached to the [latest release](https://github.com/UsamaArshadJadoon/ManualTestingAgent/releases/latest) — download and open it if the hosted link isn't shared with you.
+
 ---
 
 ## What it does
