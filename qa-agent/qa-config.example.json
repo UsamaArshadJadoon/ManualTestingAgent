@@ -1,0 +1,23 @@
+{
+  "jira": { "projectKey": "PROJ", "defaultBugType": "Bug" },
+  "app": {
+    "baseUrl": "https://staging.example.com",
+    "login": {
+      "required": true,
+      "loginUrl": "https://staging.example.com/login",
+      "usernameEnv": "QA_USER",
+      "passwordEnv": "QA_PASS",
+      "sessionReuse": true
+    }
+  },
+  "safety": {
+    "allowProduction": false,
+    "prodUrlPatterns": ["prod", "www.", "app.", "live"],
+    "destructiveActions": "confirm",
+    "cleanupCreatedData": true,
+    "maskPatterns": ["password", "token", "authorization", "email", "\\b\\d{12,19}\\b"]
+  },
+  "severityMap": { "blocker": "Highest", "major": "High", "minor": "Low" },
+  "execution": { "flakyRetry": 1, "stepTimeoutMs": 15000, "maxRunMinutes": 30 },
+  "outputDir": "qa-runs"
+}
