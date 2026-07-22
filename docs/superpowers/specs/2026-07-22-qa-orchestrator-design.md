@@ -42,11 +42,12 @@ Installed **globally** so it works in any VS Code project:
     ├── qa-gap-analyzer.md  # verify every AC is covered by >=1 test
     ├── qa-test-executor.md # drive live app via Playwright MCP, capture evidence
     ├── qa-bug-logger.md    # propose bugs, then (on approval) create + link in Jira
-    └── qa-reviewer.md      # validate coverage, emit GO/NO-GO verdict
+    ├── qa-reviewer.md      # validate coverage, emit GO/NO-GO verdict
+    └── qa-validator.md     # independent per-stage verification (nothing missed)
 ```
 
 The **orchestrator is a slash command** (a prompt), not a subagent. The main agent
-reads it and dispatches the six subagents via the Task tool, so the user watches
+reads it and dispatches the seven subagents via the Task tool, so the user watches
 progress live in the VS Code terminal.
 
 ### 2.1 Data bus — the run folder
@@ -66,6 +67,8 @@ and a full audit trail.
 ├── bugs-proposed.json   # qa-bug-logger (drafts; NO Jira writes)
 ├── bugs-created.json    # qa-bug-logger (only approved bugs, after Jira writes)
 ├── review.json          # qa-reviewer
+├── validation/          # qa-validator: one file per stage (story, test-writer, ...)
+│   └── <stage>.json     #   { stage, pass, gaps: [..], checklist: [{item, pass}], iteration }
 ├── report.md            # orchestrator: final markdown report
 └── report.html          # orchestrator: shareable HTML dashboard (Artifact)
 ```
@@ -193,7 +196,26 @@ its input files, and its exact output file + schema.
 - **Rule:** verdict is `NO-GO` if any AC is uncovered, any blocker-severity test
   failed, or coverage < 100% of testable AC.
 
+### 4.7 qa-validator (independent per-stage verification)
+- **Job:** After each stage, independently confirm that stage missed nothing. It does
+  NOT redo the work — it *checks* the output against the stage's inputs and checklist.
+- **Tools:** Read/Write only (Atlassian MCP read allowed when it must confirm against
+  Jira, e.g. that no AC was dropped from the source issue).
+- **Input:** the stage name + that stage's input and output files.
+- **Output:** `validation/<stage>.json` —
+  `{ stage, pass: bool, gaps: [{ item, detail }], checklist: [{ item, pass }], iteration }`.
+- **Independence:** it re-derives expectations from the *source* (e.g. re-reads the
+  Jira issue's AC rather than trusting `story.json`) so it can catch omissions the
+  producing agent made. This is why it is a separate agent, not self-review.
+
 ## 5. Orchestrator flow (`/qa-run PROJ-123 [--rerun] [--resume]`)
+
+> **Validation rule (applies to every producing stage below).** Immediately after a
+> stage writes its output, the orchestrator dispatches **qa-validator** for that stage.
+> If `pass=false`, the orchestrator sends the reported `gaps` back to that stage's
+> agent to fix, then re-validates — **max 2 fix-retries**. If it still fails, the
+> orchestrator surfaces the remaining gaps to the user and asks whether to proceed,
+> stop, or fix manually. Every stage also self-validates (Layer 1) before returning.
 
 1. **Load config.** Read `.qa-config.json`; if missing, instruct `/qa-setup` and stop.
 2. **Preflight.** Confirm the Atlassian connector is authorized; if not, tell the user
@@ -201,22 +223,25 @@ its input files, and its exact output file + schema.
    guard:** if `baseUrl` matches a production pattern and `allowProduction=false`,
    require explicit confirmation before proceeding.
 3. **Create run folder** `qa-runs/<KEY>_<timestamp>/`, write `run-context.json`.
-4. **qa-story** → `story.json`. If AC was inferred, surface a note.
-5. **qa-test-writer** → `test-cases.json`.
-6. **qa-gap-analyzer** → `gap-report.json`; loop to test-writer if incomplete (max 2).
+4. **qa-story** → `story.json` → **validate**. If AC was inferred, surface a note.
+5. **qa-test-writer** → `test-cases.json` → **validate**.
+6. **qa-gap-analyzer** → `gap-report.json` → **validate**; loop to test-writer if
+   incomplete (max 2).
 7. **Test-plan approval gate.** Present the final test list (id, title, linked AC,
    type). Wait for the user's `go` before the slow browser phase. User may drop/edit
    cases first.
-8. **qa-test-executor** → `results.json` + screenshots.
-9. **qa-bug-logger Phase A** → `bugs-proposed.json` (drafts + duplicate flags).
+8. **qa-test-executor** → `results.json` + screenshots → **validate**.
+9. **qa-bug-logger Phase A** → `bugs-proposed.json` (drafts + duplicate flags) →
+   **validate**.
 10. **Bug approval gate.** Present a numbered list (title, severity, failed test,
     possible-duplicate). User replies `all` / `none` / `1,3,4` / or edits a field.
-11. **qa-bug-logger Phase B** → `bugs-created.json` (only approved).
-12. **qa-reviewer** → `review.json`.
+11. **qa-bug-logger Phase B** → `bugs-created.json` (only approved) → **validate**.
+12. **qa-reviewer** → `review.json` → **validate**.
 13. **Report.** Write `report.md` and publish `report.html` as an Artifact:
     summary, GO/NO-GO verdict, **traceability matrix** (AC ↔ test(s) ↔ result ↔ bug),
     pass/fail/flaky/blocked counts, coverage %, proposed vs. created bugs, screenshot
-    links.
+    links, and the **validation summary** (per-stage pass-clean / retries / escalated
+    gaps).
 
 ### 5.1 Resume mode (`--resume`)
 
@@ -233,6 +258,36 @@ its input files, and its exact output file + schema.
   Jira bug (e.g., to "Done"/"Resolved") — applied only after user approval (same gate
   discipline).
 
+### 5.3 Two-layer validation ("didn't miss anything at each level")
+
+Every stage is verified twice:
+
+- **Layer 1 — self-validation.** Before returning, each producing agent runs its own
+  stage checklist and embeds a `_validation` block in its output file
+  (`{ checklist: [{item, pass}], selfConfident, notes }`). Cheap, catches obvious slips.
+- **Layer 2 — independent validation.** `qa-validator` re-derives expectations from the
+  *source* and checks the output, writing `validation/<stage>.json`. Because it is a
+  separate agent working from the source (not the producing agent's summary), it
+  catches omissions self-review would miss.
+
+On a Layer-2 fail the orchestrator loops the gaps back to the stage agent (**max 2
+retries**), then escalates to the user if unresolved.
+
+**Per-stage validation checklists:**
+
+| Stage | Checks |
+|---|---|
+| qa-story | Every AC captured & atomic/testable · nothing dropped from description · components/status present |
+| qa-test-writer | Every AC → ≥1 case · happy + negative + edge covered · steps executable & unambiguous · test data present |
+| qa-gap-analyzer | Coverage verdict actually matches `test-cases.json` (validate the validator) |
+| qa-test-executor | Every planned case has a result · evidence per case · no case silently skipped · status justified by steps |
+| qa-bug-logger (propose) | Every `failed` test → a draft · severity mapped · dup-check ran · masking applied |
+| qa-bug-logger (create) | Every *approved* bug created + linked · keys/URLs returned |
+| qa-reviewer | Verdict logically consistent with underlying numbers |
+
+The final `report.md` / `report.html` include a **validation summary**: per stage,
+pass-clean vs. number of fix-retries vs. gaps escalated to the user.
+
 ## 6. Error handling summary
 
 | Condition | Behavior |
@@ -248,6 +303,7 @@ its input files, and its exact output file + schema.
 | Destructive step | Confirm before running; track + clean up created data |
 | Step/run timeout exceeded | Mark case `blocked`, continue; run cap ends the run gracefully |
 | Interrupted run | `--resume` restarts from first missing stage |
+| Stage validation fails | Loop gaps back to the stage agent (max 2 retries), then escalate to user |
 
 ## 7. Human-in-the-loop gates (summary)
 
@@ -255,6 +311,10 @@ Two hard gates, nothing consequential happens without approval:
 1. **Test-plan gate** — before executing the browser suite.
 2. **Bug gate** — before writing anything to Jira (and before transitioning bugs in
    `--rerun`).
+
+Plus a **soft gate**: if any stage's validation can't be resolved within its retry
+budget, the orchestrator pauses and asks the user whether to proceed, stop, or fix
+manually.
 
 ## 8. Safety & data handling (cross-cutting)
 
