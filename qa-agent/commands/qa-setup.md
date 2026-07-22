@@ -75,6 +75,8 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
    # Fill in the values below; the executor reads these when the matching OS env var is unset.
    QA_USER=
    QA_PASS=
+   # AIO Tests API token (only needed if config.aio.enabled is true; used by qa-test-sync)
+   AIO_TOKEN=
    ```
    (substitute the actual `usernameEnv`/`passwordEnv` names chosen in step 3 for `QA_USER`/`QA_PASS`).
 
