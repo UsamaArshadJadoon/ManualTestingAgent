@@ -22,22 +22,29 @@ You type one command:
 
 Each agent reads the previous stage's file from a shared run folder, does its job, writes its own file for the next agent, and is independently re-checked by the validator before the pipeline advances. Two human gates guard the consequential actions.
 
+> 🔀 **[Open the interactive animated diagram →](https://claude.ai/code/artifact/4a0f6fce-63da-456a-af85-c74d1c415042)** — press **Play** to watch a story flow through every agent, or click any stage to see what it reads and writes.
+
 ```mermaid
 flowchart TD
-    U([👤 You — /qa-run ABYR-2167]):::you --> ORCH{{Orchestrator}}:::orch
-    ORCH -->|writes run-context.json| S1[qa-story]:::agent
-    S1 -->|story.json| V1{{qa-validator}}:::val
-    V1 -.->|gaps → fix · max 2| S1
-    V1 -->|ok| S2[qa-test-writer]:::agent
-    S2 -->|test-cases.json| S3[qa-gap-analyzer]:::agent
-    S3 -->|gap-report.json · 12/12| G1[/🚦 Gate 1 — approve test plan/]:::gate
-    G1 -->|you say go| S4[qa-test-executor]:::agent
-    S4 -->|results.json + screenshots| V2{{qa-validator}}:::val
-    V2 --> S5A[qa-bug-logger — Phase A]:::agent
-    S5A -->|bugs-proposed.json · drafts only| G2[/🚦 Gate 2 — approve bugs/]:::gate
-    G2 -->|approved refs| S5B[qa-bug-logger — Phase B]:::agent
-    S5B -->|bugs-created.json| S6[qa-reviewer]:::agent
-    S6 -->|review.json · GO / NO-GO| R[[📄 report.html + bug-report.html]]:::report
+    U(["You: /qa-run ABYR-2167"]):::you
+    U --> ORCH{{"Orchestrator (runs the whole pipeline)"}}:::orch
+    ORCH == run-context.json ==> S1["1 - qa-story"]:::agent
+    S1 == story.json ==> S2["2 - qa-test-writer"]:::agent
+    S2 == test-cases.json ==> S3["3 - qa-gap-analyzer"]:::agent
+    S3 == gap-report.json ==> G1{"Gate 1: you approve the test plan"}:::gate
+    G1 == go ==> S4["4 - qa-test-executor (real browser)"]:::agent
+    S4 == "results.json + screenshots" ==> S5A["5 - qa-bug-logger - Phase A (draft only)"]:::agent
+    S5A == bugs-proposed.json ==> G2{"Gate 2: you approve which bugs to file"}:::gate
+    G2 == approved refs ==> S5B["6 - qa-bug-logger - Phase B (create in Jira)"]:::agent
+    S5B == bugs-created.json ==> S6["7 - qa-reviewer"]:::agent
+    S6 == "review.json (GO / NO-GO)" ==> R[["report.html + bug-report.html"]]:::report
+
+    VAL{{"qa-validator - independent check after every stage; on a gap it loops the stage back, max 2 retries"}}:::val
+    S1 -.-> VAL
+    S3 -.-> VAL
+    S4 -.-> VAL
+    S6 -.-> VAL
+    VAL -. gaps .-> ORCH
 
     classDef you fill:#6d5ae0,stroke:#4b3ec9,color:#fff;
     classDef orch fill:#334155,stroke:#1e293b,color:#fff;
@@ -47,7 +54,9 @@ flowchart TD
     classDef report fill:#1f9d57,stroke:#167243,color:#fff;
 ```
 
-> **Legend:** teal = agent · amber = independent validator (loops back on gaps, max 2 retries) · blue = human approval gate · green = published reports. Nothing runs against your app before Gate 1; nothing reaches Jira before Gate 2.
+**How to read it:** the flow runs **top → bottom**, 1 through 7. Each **bold arrow is the file** one agent writes for the next. Diamonds are the **two human gates** (nothing runs against the app before Gate 1; nothing reaches Jira before Gate 2). The amber **qa-validator** independently re-checks every stage and dashed-loops a stage back to the orchestrator if it finds a gap.
+
+**Legend:** 🟣 you · ⬛ orchestrator · 🟢 agent · 🟠 validator · 🔵 human gate · 🟩 published reports.
 
 ## The pipeline — seven agents + a validator
 
