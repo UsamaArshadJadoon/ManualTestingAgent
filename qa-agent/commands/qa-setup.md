@@ -1,6 +1,6 @@
 ---
 name: qa-setup
-description: Interactively scaffold .qa-config.json for the QA orchestrator (app URL, Jira project key, login env var names, safety options), plus a git-ignored .qa-secrets credential store and hardened .gitignore.
+description: QA AZM Digital Agent — interactively scaffold .qa-config.json (app URL, Jira project key, login env var names, safety options), plus a git-ignored .qa-secrets credential store and hardened .gitignore. (Developed by Usama Arshad Jadoon, QC Lead, AZM Digital.)
 tools:
   - Read
   - Write
@@ -93,3 +93,7 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
 ## Output
 
 This command writes **`.qa-config.json`** (always), a **`.qa-secrets`** template (only if login is required and it does not already exist), and ensures **`.gitignore`** contains the credential/config/output entries listed in step 6 — all in the project root. It writes no real secret values and modifies no other files.
+
+---
+
+_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._

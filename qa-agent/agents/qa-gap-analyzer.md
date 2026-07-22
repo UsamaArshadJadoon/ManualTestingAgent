@@ -67,3 +67,7 @@ Example shape:
 ## Return
 
 After writing `gap-report.json`, return a one-line summary to the orchestrator stating covered/total AC and whether coverage is complete, for example: `gap-report.json written: 4/5 AC covered, complete: false`.
+
+---
+
+_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._

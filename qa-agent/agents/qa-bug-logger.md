@@ -187,3 +187,7 @@ Return a one-line summary of what was transitioned, e.g. `transitioned 2 bugs: P
 ## Summary line
 
 Whichever phase you ran, your final return to the orchestrator is always a single line stating what happened in that phase — `drafted N` for Phase A, `created M` for Phase B, `transitioned K` for Transition mode — never more than one mode in the same invocation.
+
+---
+
+_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._

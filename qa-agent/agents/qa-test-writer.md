@@ -107,3 +107,7 @@ Example shape:
 ## Return
 
 After writing `test-cases.json`, return a one-line summary to the orchestrator stating the total case count and the breakdown per type, for example: `test-cases.json written: 12 cases (5 happy, 5 negative, 2 edge)`.
+
+---
+
+_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._

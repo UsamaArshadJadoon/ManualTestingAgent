@@ -166,3 +166,7 @@ The genuine evidence screenshots you saved under the run folder's `screenshots/`
 ## Return
 
 After writing `results.json` and running the cleanup above, return a one-line summary to the orchestrator with the counts of each status, for example: `results.json written: 8 passed, 1 failed, 1 flaky, 2 blocked (browser snapshot scratch cleaned)`.
+
+---
+
+_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._

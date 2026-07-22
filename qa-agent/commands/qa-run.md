@@ -1,6 +1,6 @@
 ---
 name: qa-run
-description: Orchestrate the full multi-agent QA run for a Jira story — fetch & normalize the story, write and gap-check test cases, execute them against the live app, log approved bugs, and produce a GO/NO-GO report — dispatching the seven qa-* subagents through the Task tool with validation gates and human approval gates.
+description: QA AZM Digital Agent — orchestrate the full multi-agent QA run for a Jira story — fetch & normalize the story, write and gap-check test cases, execute them against the live app, log approved bugs, and produce a GO/NO-GO report — dispatching the seven qa-* subagents through the Task tool with validation gates and human approval gates. (Developed by Usama Arshad Jadoon, QC Lead, AZM Digital.)
 tools:
   - Read
   - Write
@@ -69,7 +69,7 @@ Dispatch each stage via the **Task** tool, passing the run-folder path. Run them
 
 ## 6. Report
 
-After stage 9 (and its validation), produce the report. **Redaction first:** before writing EITHER report file, scan all content you are about to emit and redact every substring matching any pattern in `safety.maskPatterns` (replace matches with `***`) — this applies to titles, descriptions, repro steps, reasons, screenshot paths/names, and any pasted values. Never emit an unmasked secret into `report.md` or `report.html`.
+After stage 9 (and its validation), produce the report. **Branding:** every report file (`report.md`, `report.html`, and `bug-report.html`) MUST carry the product name **"QA AZM Digital Agent"** in its title/header and, in a footer, the attribution line **"Developed by Usama Arshad Jadoon · QC Lead · AZM Digital"**. **Redaction first:** before writing ANY report file, scan all content you are about to emit and redact every substring matching any pattern in `safety.maskPatterns` (replace matches with `***`) — this applies to titles, descriptions, repro steps, reasons, screenshot paths/names, and any pasted values. Never emit an unmasked secret into `report.md`, `report.html`, or `bug-report.html`.
 
 1. Write **`report.md`** into the run folder — human-readable summary containing:
    - A one-paragraph **summary** of the run (story key, app URL, run timestamp, mode).
@@ -117,3 +117,7 @@ When invoked with **`--rerun`**:
 - The two human approval gates (**Test-plan approval gate** before execution, **Bug approval gate** before Jira writes) are hard gates: never execute the browser without plan approval, and never create a Jira bug or apply a Jira transition without explicit approval.
 - The validation loop is a soft gate capped at **max 2** fix-retries per stage before escalating to the user.
 - Redact `safety.maskPatterns` matches before writing any report file.
+
+---
+
+_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._
