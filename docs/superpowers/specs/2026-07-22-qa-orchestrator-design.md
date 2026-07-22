@@ -1,0 +1,232 @@
+# Multi-Agent QA Orchestrator — Design Spec
+
+**Date:** 2026-07-22
+**Author:** usama.arshed@azm.dev
+**Status:** Approved for planning
+
+## 1. Overview
+
+A Claude Code–native, multi-agent QA system that takes a Jira story key, derives
+acceptance-criteria-driven end-to-end tests, executes them against a live app in a
+real browser, and — after human approval — logs bugs back to Jira and produces a
+sign-off report.
+
+It runs entirely inside **Claude Code in VS Code**. It uses **no Anthropic API** and
+**no Slack**. Jira access is through the **Atlassian MCP connector**; browser
+execution is through the **Playwright MCP**.
+
+### Goals
+- One command: `/qa-run PROJ-123` runs the whole pipeline.
+- Specialized, isolated subagents, each with one clear job.
+- Human-in-the-loop gates before the two consequential actions: **running the browser
+  suite** and **writing bugs to Jira**.
+- A durable, auditable run folder with all evidence.
+
+### Non-goals (out of scope for v1)
+- Full 12-dimension / 50–75 test matrix (we do AC-driven functional E2E).
+- Persisting reusable `.spec.ts` files (execution is live-browser only).
+- CI/Jenkins triggering, credential vaults, auto token rotation.
+
+## 2. Architecture
+
+Installed **globally** so it works in any VS Code project:
+
+```
+~/.claude/
+├── commands/
+│   ├── qa-run.md          # Orchestrator (entry point): /qa-run PROJ-123 [--rerun]
+│   └── qa-setup.md        # Interactive first-run config scaffolder: /qa-setup
+└── agents/
+    ├── qa-story.md         # fetch + parse Jira story & acceptance criteria
+    ├── qa-test-writer.md   # generate AC-driven E2E test cases
+    ├── qa-gap-analyzer.md  # verify every AC is covered by >=1 test
+    ├── qa-test-executor.md # drive live app via Playwright MCP, capture evidence
+    ├── qa-bug-logger.md    # propose bugs, then (on approval) create + link in Jira
+    └── qa-reviewer.md      # validate coverage, emit GO/NO-GO verdict
+```
+
+The **orchestrator is a slash command** (a prompt), not a subagent. The main agent
+reads it and dispatches the six subagents via the Task tool, so the user watches
+progress live in the VS Code terminal.
+
+### 2.1 Data bus — the run folder
+
+Subagents run isolated and cannot share memory, so they communicate through **files**
+in a per-run folder under the current project. This gives robustness, debuggability,
+and a full audit trail.
+
+```
+<project>/qa-runs/PROJ-123_<timestamp>/
+├── run-context.json     # orchestrator: key, app URL, resolved config, mode
+├── story.json           # qa-story
+├── test-cases.json      # qa-test-writer (gap-analyzer may append)
+├── gap-report.json      # qa-gap-analyzer
+├── results.json         # qa-test-executor
+├── screenshots/*.png    # qa-test-executor
+├── bugs-proposed.json   # qa-bug-logger (drafts; NO Jira writes)
+├── bugs-created.json    # qa-bug-logger (only approved bugs, after Jira writes)
+├── review.json          # qa-reviewer
+├── report.md            # orchestrator: final markdown report
+└── report.html          # orchestrator: shareable HTML dashboard (Artifact)
+```
+
+Each subagent reads its inputs from and writes its outputs to this folder. The
+orchestrator passes the run-folder path to every subagent it dispatches.
+
+## 3. Configuration — `.qa-config.json`
+
+Lives in the **project root**. Created by `/qa-setup`. Credentials are referenced by
+**env var name only** — never stored in the file.
+
+```json
+{
+  "jira": { "projectKey": "PROJ", "defaultBugType": "Bug" },
+  "app": {
+    "baseUrl": "https://staging.example.com",
+    "login": {
+      "required": true,
+      "loginUrl": "https://staging.example.com/login",
+      "usernameEnv": "QA_USER",
+      "passwordEnv": "QA_PASS",
+      "sessionReuse": true
+    }
+  },
+  "severityMap": {
+    "blocker": "Highest",
+    "major": "High",
+    "minor": "Low"
+  },
+  "execution": { "flakyRetry": 1 },
+  "outputDir": "qa-runs"
+}
+```
+
+If `.qa-config.json` is missing when `/qa-run` starts, the orchestrator tells the user
+to run `/qa-setup` first and stops.
+
+## 4. Subagents
+
+Each subagent definition is a `~/.claude/agents/*.md` file with frontmatter
+(`name`, `description`, `tools`, `model`) and a prompt body describing its single job,
+its input files, and its exact output file + schema.
+
+### 4.1 qa-story
+- **Job:** Fetch the story from Jira and normalize it.
+- **Tools:** Atlassian MCP (`getJiraIssue`, `searchJiraIssuesUsingJql`).
+- **Input:** `run-context.json` (story key).
+- **Output:** `story.json` — `{ key, summary, description, acceptanceCriteria: [{ id, text }], components, status }`.
+- **Notes:** If no AC is present, extract candidate criteria from the description and
+  mark `acSource: "inferred"` with low confidence for the orchestrator to surface.
+
+### 4.2 qa-test-writer
+- **Job:** Generate AC-driven functional E2E test cases (happy path, negative, edge).
+- **Tools:** Read/Write (no external calls).
+- **Input:** `story.json` (+ `gap-report.json` on later iterations).
+- **Output:** `test-cases.json` — array of
+  `{ id, title, linkedAC: [acId], type: "happy|negative|edge", steps: [..], testData: {..}, expectedResult }`.
+
+### 4.3 qa-gap-analyzer
+- **Job:** Verify every AC maps to >=1 test case; identify missing coverage.
+- **Tools:** Read/Write.
+- **Input:** `story.json`, `test-cases.json`.
+- **Output:** `gap-report.json` — `{ covered: [acId], uncovered: [acId], suggestions: [..], complete: bool }`.
+- **Loop:** If `complete=false`, orchestrator sends suggestions back to qa-test-writer.
+  **Capped at 2 iterations**, then remaining gaps are flagged in the report rather
+  than looping forever.
+
+### 4.4 qa-test-executor
+- **Job:** Execute each test case against the live app in a real browser.
+- **Tools:** Playwright MCP (navigate, click, type, snapshot, screenshot, console,
+  network), Read/Write.
+- **Input:** `test-cases.json`, `run-context.json`.
+- **Behavior:**
+  - **Login session reuse:** authenticate once at the start (using `usernameEnv` /
+    `passwordEnv`), reuse the session for all cases.
+  - Run each case's steps; capture a screenshot per case (and on any failure).
+  - **Flaky-retry:** on failure, retry once with fresh state. Only a *consistent*
+    failure is recorded as `failed`; a pass-on-retry is recorded as `flaky`.
+  - One failing/blocked test never stops the rest.
+  - If the app URL is unreachable or login fails, mark affected tests `blocked` (not
+    `failed`) and record the reason.
+- **Output:** `results.json` — per case
+  `{ id, status: "passed|failed|flaky|blocked", steps: [{ step, ok, note }], screenshots: [path], consoleErrors: [..], reason }`.
+
+### 4.5 qa-bug-logger (two-phase, human-approved)
+- **Job:** Turn consistent failures into Jira bugs — but only after user approval.
+- **Tools:** Atlassian MCP (`searchJiraIssuesUsingJql`, `createJiraIssue`,
+  `createIssueLink`), Read/Write.
+- **Phase A — propose (no Jira writes):**
+  - For each `failed` test, draft a bug: `{ title, description, reproSteps, severity,
+    linkedAC, testId, screenshots }` using `severityMap`.
+  - **Duplicate detection:** run a JQL search for existing open bugs with a similar
+    summary on the project; annotate each draft with `possibleDuplicate: [key]`.
+  - Write `bugs-proposed.json`. **Return control to the orchestrator.**
+- **Phase B — create (only after approval):**
+  - The orchestrator passes the approved subset. For each, `createJiraIssue` +
+    `createIssueLink` (link to the story). Write `bugs-created.json`
+    (`{ testId, key, url }`).
+
+### 4.6 qa-reviewer
+- **Job:** Objective sign-off.
+- **Tools:** Read/Write.
+- **Input:** all prior JSON files.
+- **Output:** `review.json` — `{ acCoveragePct, totalTests, passed, failed, flaky,
+  blocked, bugsLogged, blockers, verdict: "GO|NO-GO", rationale }`.
+- **Rule:** verdict is `NO-GO` if any AC is uncovered, any blocker-severity test
+  failed, or coverage < 100% of testable AC.
+
+## 5. Orchestrator flow (`/qa-run PROJ-123 [--rerun]`)
+
+1. **Load config.** Read `.qa-config.json`; if missing, instruct `/qa-setup` and stop.
+2. **Preflight.** Confirm the Atlassian connector is authorized; if not, tell the user
+   to authorize it in claude.ai connector settings and stop cleanly.
+3. **Create run folder** `qa-runs/<KEY>_<timestamp>/`, write `run-context.json`.
+4. **qa-story** → `story.json`. If AC was inferred, surface a note.
+5. **qa-test-writer** → `test-cases.json`.
+6. **qa-gap-analyzer** → `gap-report.json`; loop to test-writer if incomplete (max 2).
+7. **Test-plan approval gate.** Present the final test list (id, title, linked AC,
+   type). Wait for the user's `go` before the slow browser phase. User may drop/edit
+   cases first.
+8. **qa-test-executor** → `results.json` + screenshots.
+9. **qa-bug-logger Phase A** → `bugs-proposed.json` (drafts + duplicate flags).
+10. **Bug approval gate.** Present a numbered list (title, severity, failed test,
+    possible-duplicate). User replies `all` / `none` / `1,3,4` / or edits a field.
+11. **qa-bug-logger Phase B** → `bugs-created.json` (only approved).
+12. **qa-reviewer** → `review.json`.
+13. **Report.** Write `report.md` and publish `report.html` as an Artifact:
+    summary, GO/NO-GO verdict, **traceability matrix** (AC ↔ test(s) ↔ result ↔ bug),
+    pass/fail/flaky/blocked counts, coverage %, proposed vs. created bugs, screenshot
+    links.
+
+### 5.1 Re-run / verify mode (`--rerun`)
+- Locate the most recent run folder for the key.
+- Re-execute only tests with status `failed` or `flaky`.
+- Write a new run folder; report shows before/after.
+- For each previously-logged bug whose test now passes, **propose** transitioning the
+  Jira bug (e.g., to "Done"/"Resolved") — applied only after user approval (same gate
+  discipline).
+
+## 6. Error handling summary
+
+| Condition | Behavior |
+|---|---|
+| `.qa-config.json` missing | Instruct `/qa-setup`, stop |
+| Atlassian connector not authorized | Tell user to authorize in claude.ai settings, stop |
+| Story has no AC | Infer from description, flag low-confidence, ask user to confirm |
+| Gap loop not converging | Cap at 2 iterations, flag remaining gaps in report |
+| App URL unreachable / login fails | Mark tests `blocked` (not `failed`), record reason |
+| Single test fails | Retry once (flaky check); continue remaining tests |
+| Duplicate bug likely | Flag `possibleDuplicate` in proposal; user decides |
+
+## 7. Human-in-the-loop gates (summary)
+
+Two hard gates, nothing consequential happens without approval:
+1. **Test-plan gate** — before executing the browser suite.
+2. **Bug gate** — before writing anything to Jira (and before transitioning bugs in
+   `--rerun`).
+
+## 8. Component isolation
+
+Every subagent: single purpose, file-based I/O contract, independently testable. You
+can run any stage alone by placing its input files in a run folder and dispatching
+just that agent.
