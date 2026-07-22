@@ -8,8 +8,9 @@ The **QA AZM Digital Agent** takes a Jira story key, writes and
 gap-checks test cases, executes them against a running application with
 Playwright, logs approved bugs back to Jira, and produces a GO/NO-GO
 verdict with a full traceability report — all coordinated by a `/qa-run`
-orchestrator command that dispatches seven specialist subagents through the
-`Task` tool.
+orchestrator command that dispatches seven core specialist subagents (plus an
+optional `qa-test-sync` that mirrors the approved cases into AIO Tests)
+through the `Task` tool.
 
 ## What it is
 
@@ -19,8 +20,8 @@ orchestrator command that dispatches seven specialist subagents through the
   described below.
 - **1 setup command** (`/qa-setup`) that interactively scaffolds
   `.qa-config.json` for your project.
-- **7 subagents**, each single-purpose and dispatched one at a time via the
-  `Task` tool:
+- **7 core subagents (+ 1 optional)**, each single-purpose and dispatched one
+  at a time via the `Task` tool:
   - `qa-story` — fetches and normalizes the Jira story (summary, description,
     atomic acceptance criteria, components, status).
   - `qa-test-writer` — writes happy / negative / edge test cases per
@@ -36,6 +37,13 @@ orchestrator command that dispatches seven specialist subagents through the
     the GO/NO-GO verdict.
   - `qa-validator` — the soft validation gate run after every producing
     stage, checking each stage's output before the pipeline advances.
+  - `qa-test-sync` *(optional)* — when `aio.enabled` is `true`, after the
+    test-plan gate it creates the approved cases in **AIO Tests for Jira
+    (Cloud)** inside the story's folder and links each to the Jira story for
+    traceability. It runs once per story and does not gate execution. Because
+    the AIO API cannot create folders, **you must first create a folder named
+    with the story key** (e.g. `ABYR-2167`) in the AIO *Cases* module; if it
+    is missing, `qa-test-sync` stops and tells you the exact name to create.
 
 Every subagent runs isolated with no shared memory: the orchestrator passes
 only the run-folder path (plus a `stage`/`iteration` for `qa-validator`, and
@@ -64,6 +72,13 @@ files inside the run folder.
    time) and are held in memory only for the duration of the login step —
    they are never written to `results.json`, screenshots, logs, or any other
    run artifact, and never persisted anywhere.
+4. **(Optional — only for AIO Tests sync)** set `aio.enabled: true` in
+   `.qa-config.json`, add the AIO API token to `.qa-secrets` under the name
+   in `aio.tokenEnv` (default `AIO_TOKEN`), and **create one folder named with
+   the story key** (e.g. `ABYR-2167`) in the AIO **Cases** module. The AIO
+   public API cannot create folders, so this one-time UI step is required per
+   story; `qa-test-sync` then finds the folder by name and fills it with the
+   approved cases.
 
 ## Install
 
@@ -154,6 +169,7 @@ qa-runs/PROJ-123_20260722-143001/
   bugs-created.json
   review.json
   validation/
+  aio-sync.json          # only when AIO sync is enabled (testId → AIO key/ID)
   report.md
   report.html
   bug-report.html

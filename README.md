@@ -14,7 +14,7 @@ You type one command:
 /qa-run ABYR-2167
 ```
 
-…and the agent reads the Jira story, designs the tests, drives your live app in a **real browser**, and hands you a signed-off report — pausing only at two human approval gates. Behind that one command, an **orchestrator** dispatches seven specialist subagents and re-checks every stage with an independent validator.
+…and the agent reads the Jira story, designs the tests, drives your live app in a **real browser**, and hands you a signed-off report — pausing only at two human approval gates. Behind that one command, an **orchestrator** dispatches the specialist subagents (seven core + an optional **`qa-test-sync`** that mirrors the approved cases into **AIO Tests**) and re-checks every stage with an independent validator.
 
 **On our live run (Jira `ABYR-2167` — “Client Profile View & Risk Results”):** 12 acceptance criteria → 26 test cases → **22 passed · 2 failed · 2 blocked**, 7 findings surfaced, GO ⚠ verdict — with real screenshots captured for every case.
 
@@ -33,6 +33,8 @@ flowchart TD
     S2 == test-cases.json ==> S3["3 - qa-gap-analyzer"]:::agent
     S3 == gap-report.json ==> G1{"Gate 1: you approve the test plan"}:::gate
     G1 == go ==> S4["4 - qa-test-executor (real browser)"]:::agent
+    G1 -. "if AIO enabled" .-> SYNC["+ qa-test-sync (optional): push approved cases to AIO Tests"]:::agent
+    SYNC == aio-sync.json ==> AIOF[["AIO Tests folder named &lt;STORY-KEY&gt; (you create it once in the UI)"]]:::report
     S4 == "results.json + screenshots" ==> S5A["5 - qa-bug-logger - Phase A (draft only)"]:::agent
     S5A == bugs-proposed.json ==> G2{"Gate 2: you approve which bugs to file"}:::gate
     G2 == approved refs ==> S5B["6 - qa-bug-logger - Phase B (create in Jira)"]:::agent
@@ -54,11 +56,13 @@ flowchart TD
     classDef report fill:#1f9d57,stroke:#167243,color:#fff;
 ```
 
-**How to read it:** the flow runs **top → bottom**, 1 through 7. Each **bold arrow is the file** one agent writes for the next. Diamonds are the **two human gates** (nothing runs against the app before Gate 1; nothing reaches Jira before Gate 2). The amber **qa-validator** independently re-checks every stage and dashed-loops a stage back to the orchestrator if it finds a gap.
+**How to read it:** the flow runs **top → bottom**, 1 through 7. Each **bold arrow is the file** one agent writes for the next. Diamonds are the **two human gates** (nothing runs against the app before Gate 1; nothing reaches Jira before Gate 2). The amber **qa-validator** independently re-checks every stage and dashed-loops a stage back to the orchestrator if it finds a gap. The dashed **qa-test-sync** branch runs only when `config.aio.enabled` is `true`; it does **not** gate execution and runs once per story.
+
+> 📁 **Prerequisite for AIO sync:** AIO's API can't create folders, so **before the run you create one folder in the AIO *Cases* module named with the story key** (e.g. `ABYR-2167`). `qa-test-sync` finds that folder by name and fills it with the approved cases, each linked to the Jira story. If the folder is missing, the agent stops and tells you the exact name to create, then you re-run it.
 
 **Legend:** 🟣 you · ⬛ orchestrator · 🟢 agent · 🟠 validator · 🔵 human gate · 🟩 published reports.
 
-## The pipeline — seven agents + a validator
+## The pipeline — seven core agents + a validator (+ optional AIO sync)
 
 | # | Agent | Reads → Writes | Job |
 |---|-------|----------------|-----|
@@ -66,6 +70,7 @@ flowchart TD
 | 2 | `qa-test-writer` | `story.json` → `test-cases.json` | Write happy / negative / edge cases per AC |
 | 3 | `qa-gap-analyzer` | + → `gap-report.json` | Prove every AC is covered by a real test |
 | — | **Gate #1** | — | You approve the test plan before anything runs |
+| + | `qa-test-sync` *(optional)* | `test-cases.json` → `aio-sync.json` | If AIO is enabled: create the approved cases in the story's **AIO Tests** folder (by story key) and link each to the Jira story. Runs once per story; does not gate execution |
 | 4 | `qa-test-executor` | live app → `results.json` + screenshots | Drive the app via Playwright; capture evidence & console errors |
 | 5 | `qa-bug-logger` | `results.json` → `bugs-proposed.json` / `bugs-created.json` | Draft detailed bugs (Phase A); create only approved ones in Jira (Phase B) |
 | — | **Gate #2** | — | You approve which bugs get filed to Jira |
@@ -79,7 +84,7 @@ Every subagent runs isolated with no shared memory — all data flows through JS
 ```
 qa-agent/
 ├── commands/            /qa-run and /qa-setup
-├── agents/              the 7 qa-* subagents
+├── agents/              the 7 core qa-* subagents + optional qa-test-sync (AIO)
 ├── references/          run-folder JSON contract
 ├── tools/               structural checker
 ├── install.ps1          deploys agents/commands to ~/.claude
@@ -95,10 +100,11 @@ docs/superpowers/        design spec + implementation plan
    ```powershell
    powershell -File qa-agent\install.ps1
    ```
-   Copies the 7 agents + 2 commands into `~/.claude` (works in every project).
+   Copies the agents + 2 commands into `~/.claude` (works in every project).
 3. **Configure** your project — run `/qa-setup` (writes `.qa-config.json`, scaffolds a git-ignored `.qa-secrets`, hardens `.gitignore`).
 4. **Provide credentials** — fill the git-ignored `.qa-secrets`, or set `$env:QA_USER` / `$env:QA_PASS`.
-5. **Run** — `/qa-run <STORY-KEY>` (add `--rerun` to re-test prior failures, `--resume` to continue an interrupted run).
+5. *(Optional — AIO Tests)* set `aio.enabled: true` in `.qa-config.json`, add `AIO_TOKEN` to `.qa-secrets`, and **create a folder named with the story key** (e.g. `ABYR-2167`) in the AIO **Cases** module — `qa-test-sync` fills that folder with the approved cases.
+6. **Run** — `/qa-run <STORY-KEY>` (add `--rerun` to re-test prior failures, `--resume` to continue an interrupted run).
 
 See [`qa-agent/README.md`](qa-agent/README.md) for the complete documentation.
 

@@ -44,12 +44,14 @@ Installed **globally** so it works in any VS Code project:
     ├── qa-test-executor.md # drive live app via Playwright MCP, capture evidence
     ├── qa-bug-logger.md    # propose bugs, then (on approval) create + link in Jira
     ├── qa-reviewer.md      # validate coverage, emit GO/NO-GO verdict
-    └── qa-validator.md     # independent per-stage verification (nothing missed)
+    ├── qa-validator.md     # independent per-stage verification (nothing missed)
+    └── qa-test-sync.md     # OPTIONAL: mirror approved cases into AIO Tests (Cloud)
 ```
 
 The **orchestrator is a slash command** (a prompt), not a subagent. The main agent
-reads it and dispatches the seven subagents via the Task tool, so the user watches
-progress live in the VS Code terminal.
+reads it and dispatches the seven core subagents (plus the optional `qa-test-sync`
+when `aio.enabled` is true) via the Task tool, so the user watches progress live in
+the VS Code terminal.
 
 ### 2.1 Data bus — the run folder
 
@@ -70,6 +72,7 @@ and a full audit trail.
 ├── review.json          # qa-reviewer
 ├── validation/          # qa-validator: one file per stage (story, test-writer, ...)
 │   └── <stage>.json     #   { stage, pass, gaps: [..], checklist: [{item, pass}], iteration }
+├── aio-sync.json        # qa-test-sync (optional): testId -> AIO key/ID, folder, storyJiraId
 ├── report.md            # orchestrator: final markdown report
 └── report.html          # orchestrator: shareable HTML dashboard (Artifact)
 ```
@@ -209,6 +212,24 @@ its input files, and its exact output file + schema.
   Jira issue's AC rather than trusting `story.json`) so it can catch omissions the
   producing agent made. This is why it is a separate agent, not self-review.
 
+### 4.8 qa-test-sync (optional — AIO Tests mirror)
+- **Job:** When `aio.enabled` is true, after the test-plan gate, create the approved
+  test cases in **AIO Tests for Jira (Cloud)** inside the story's folder and link each
+  to the Jira story for traceability. Runs once per story; does not gate execution.
+- **Tools:** Read/Write, Bash (for the AIO REST calls via `fetch`/`curl` and to read
+  the token from `.qa-secrets`), and Atlassian MCP read (to resolve the story's numeric
+  Jira ID for the requirement link).
+- **Input:** `run-context.json` (`config.aio`, project key, story key), `story.json`
+  (AC text for rich case descriptions), `test-cases.json` (the cases to sync).
+- **Output:** `aio-sync.json` — `{ project, folderID, folderName, storyJiraId,
+  createdCount, total, cases: [{ testId, aioKey, aioID, title }], _validation }`.
+- **Folder prerequisite (hard constraint):** the AIO public API returns HTTP 500 on
+  folder/set creation and 404 on case deletion, so folders are **pre-created once in
+  the AIO Cases UI, named with the story key** (e.g. `ABYR-2167`). `qa-test-sync`
+  resolves the folder by name; if it is missing it stops and returns the exact name to
+  create, then the user re-runs it. It creates each case with `scriptType {ID:5}`
+  (Classic), `TEXT` steps, and `folder {ID}`; run once per story to avoid duplicates.
+
 ## 5. Orchestrator flow (`/qa-run PROJ-123 [--rerun] [--resume]`)
 
 > **Validation rule (applies to every producing stage below).** Immediately after a
@@ -231,6 +252,11 @@ its input files, and its exact output file + schema.
 7. **Test-plan approval gate.** Present the final test list (id, title, linked AC,
    type). Wait for the user's `go` before the slow browser phase. User may drop/edit
    cases first.
+7b. **qa-test-sync (optional).** If `aio.enabled` is true, dispatch `qa-test-sync`
+    once to create the approved cases in the story's **AIO Tests** folder (found by
+    the story-key folder name, pre-created in the AIO Cases UI) and link each to the
+    Jira story → `aio-sync.json`. Non-gating: on any failure (e.g. missing folder) it
+    reports the exact folder name to create and the pipeline continues.
 8. **qa-test-executor** → `results.json` + screenshots → **validate**.
 9. **qa-bug-logger Phase A** → `bugs-proposed.json` (drafts + duplicate flags) →
    **validate**.
