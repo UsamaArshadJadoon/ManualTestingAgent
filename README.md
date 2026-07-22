@@ -99,6 +99,37 @@ docs/superpowers/        design spec + implementation plan
 
 You install the agents **once per machine**; after that they work in **every** project via `/qa-run` and `/qa-setup`. Requires **Windows + VS Code + Claude Code** and **PowerShell 5.1**.
 
+### ⚡ Fastest way — download the ZIP &amp; install all agents (copy-paste)
+
+Open **Windows PowerShell** and paste this whole block. It **downloads** the release ZIP, **extracts** it, and **installs all 8 agents + 2 commands** into `~/.claude`:
+
+```powershell
+# QA AZM Digital Agent — one-shot download & install
+$zip  = "$HOME\Downloads\qa-azm-agent.zip"
+$dest = "$HOME\Downloads\qa-azm-agent"
+Invoke-WebRequest "https://github.com/UsamaArshadJadoon/ManualTestingAgent/archive/refs/tags/v1.1.0.zip" -OutFile $zip
+Expand-Archive $zip $dest -Force
+$root = (Get-ChildItem $dest -Directory)[0].FullName
+powershell -ExecutionPolicy Bypass -File "$root\qa-agent\install.ps1"
+```
+
+Prefer Git? Two lines does the same:
+
+```powershell
+git clone https://github.com/UsamaArshadJadoon/ManualTestingAgent.git
+powershell -ExecutionPolicy Bypass -File ManualTestingAgent\qa-agent\install.ps1
+```
+
+Then **verify** (should list 8 `qa-*` agents):
+
+```powershell
+Get-ChildItem $HOME\.claude\agents\qa-*.md | Select-Object Name
+```
+
+That's the whole install. Next, [authorize the connectors](#2--authorize-the-connectors) and [set up a project](#5--set-up-a-project-and-run). The detailed manual version of every step follows.
+
+---
+
 ### 1 · Get the agent code
 
 Pick either option — both give you the `qa-agent/` folder that holds all 8 agents + 2 commands:
