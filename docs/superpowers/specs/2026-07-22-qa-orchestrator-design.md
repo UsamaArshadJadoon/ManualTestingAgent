@@ -1,7 +1,8 @@
-# Multi-Agent QA Orchestrator — Design Spec
+# QA AZM Digital Agent — Design Spec
 
+**Product:** QA AZM Digital Agent (multi-agent QA orchestrator)
 **Date:** 2026-07-22
-**Author:** usama.arshed@azm.dev
+**Developed by:** Usama Arshad Jadoon · QC Lead · AZM Digital (usama.arshed@azm.dev)
 **Status:** Approved for planning
 
 ## 1. Overview

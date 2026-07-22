@@ -108,3 +108,7 @@ Example shape:
 ## Return
 
 After writing `validation/<stage>.json`, return a one-line summary to the orchestrator stating `pass` and the gap count, for example: `validation/test-writer.json written: pass=false, 1 gap (iteration 1)`.
+
+---
+
+_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._

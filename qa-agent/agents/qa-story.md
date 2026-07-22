@@ -68,3 +68,7 @@ Example shape:
 ## Return
 
 After writing `story.json`, return a one-line summary to the orchestrator stating the count of acceptance criteria and the `acSource` used, for example: `story.json written: 5 AC (acSource: explicit)`.
+
+---
+
+_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._

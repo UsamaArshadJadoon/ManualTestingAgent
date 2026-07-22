@@ -97,3 +97,7 @@ Example shape:
 ## Return
 
 After writing `review.json`, return a one-line summary to the orchestrator stating the verdict and coverage, for example: `review.json written: verdict NO-GO, 80% AC coverage (8/10 tests passed)`.
+
+---
+
+_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._

@@ -1,6 +1,10 @@
-# QA Orchestrator for Claude Code
+# QA AZM Digital Agent
 
-A multi-agent QA system for Claude Code that takes a Jira story key, writes and
+> **QA AZM Digital Agent** — an autonomous, multi-agent QA system for Claude Code.
+>
+> **Developed by:** Usama Arshad Jadoon &nbsp;·&nbsp; **Role:** QC Lead &nbsp;·&nbsp; **Company:** AZM Digital
+
+The **QA AZM Digital Agent** takes a Jira story key, writes and
 gap-checks test cases, executes them against a running application with
 Playwright, logs approved bugs back to Jira, and produces a GO/NO-GO
 verdict with a full traceability report — all coordinated by a `/qa-run`
@@ -152,9 +156,10 @@ qa-runs/PROJ-123_20260722-143001/
   validation/
   report.md
   report.html
+  bug-report.html
 ```
 
-`report.html` is also published as an Artifact, and `report.md` /
+`report.html` and the detailed `bug-report.html` are also published as Artifacts, and `report.md` /
 `report.html` contain the GO/NO-GO verdict, the AC-to-test-to-result-to-bug
 traceability matrix, tallies, coverage %, bug counts, screenshot links, and a
 per-stage validation summary. Both reports are redacted against
@@ -168,4 +173,11 @@ in the description/repro steps — the image files themselves are not
 uploaded or attached to the Jira issue. To view a failure's screenshot,
 open the corresponding `screenshots/` file inside the run folder locally
 (or from the published `report.html` Artifact, which links to the same
-paths); it will not appear as a Jira attachment.
+paths); it will not appear as a Jira attachment. The detailed
+`bug-report.html` embeds those screenshots inline for convenient sharing.
+
+---
+
+## Credits
+
+**QA AZM Digital Agent** — Developed by **Usama Arshad Jadoon**, QC Lead, **AZM Digital**.
