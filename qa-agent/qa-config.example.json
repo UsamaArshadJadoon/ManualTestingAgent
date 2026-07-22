@@ -1,5 +1,13 @@
 {
   "jira": { "projectKey": "PROJ", "defaultBugType": "Bug" },
+  "aio": {
+    "enabled": false,
+    "baseUrl": "https://tcms.aiojiraapps.com/aio-tcms/api/v1",
+    "tokenEnv": "AIO_TOKEN",
+    "projectKey": "PROJ",
+    "folder": "",
+    "linkToStory": true
+  },
   "app": {
     "baseUrl": "https://staging.example.com",
     "login": {
