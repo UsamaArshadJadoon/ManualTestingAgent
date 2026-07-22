@@ -4,6 +4,7 @@ description: Execute each test case against the live app in a real browser via t
 tools:
   - Read
   - Write
+  - Bash
   - mcp__playwright__browser_navigate
   - mcp__playwright__browser_snapshot
   - mcp__playwright__browser_click
@@ -44,10 +45,11 @@ Before executing any case, compare `appBaseUrl` (from `run-context.json`) agains
 
 If `config.app.login.required` is `true`:
 
-1. Before running any case, authenticate exactly once: navigate to `config.app.login.loginUrl` (or the app's login entry point) with `mcp__playwright__browser_navigate`, then use `browser_snapshot`/`browser_fill_form`/`browser_type`/`browser_click` to submit credentials.
-2. The credential *values* come from the environment variables **named** by `usernameEnv` and `passwordEnv` (e.g. if `usernameEnv` is `"QA_USER"`, use the value currently held by the `QA_USER` environment variable). Only confirm that each named variable is set (non-empty) before using it — never print, log, echo, or otherwise write the secret value itself into your reasoning, `results.json`, screenshots, or any other output. If a required env var is not set, treat this as a login failure (see below), not a fabricated success.
-3. Once authenticated, reuse that same browser session for every case (`config.app.login.sessionReuse`) — do not log in again per case.
-4. If login fails (bad credentials, unreachable login page, missing env var), mark every case that depends on being logged in as **`blocked`** with a `reason` describing the login failure, and do not attempt to guess or bypass authentication.
+1. Before running any case, obtain the credential values exactly once, using **Bash for this purpose only**: run a command that reads the current value of the environment variable **named** by `config.app.login.usernameEnv` (e.g. if `usernameEnv` is `"QA_USER"`, read the `QA_USER` environment variable), and likewise for `passwordEnv`. Hold each value only in working memory for the immediate purpose of logging in — never write either value to a file, never include it in a tool call's visible arguments beyond the login form fields themselves, and never let it appear in your reasoning output, `results.json`, `notes`/`reason` fields, screenshots, or any other artifact. Do not use Bash for anything else in this run.
+2. If a required env var is unset or empty, do NOT fabricate a value or attempt a login: mark every case that depends on being logged in as **`blocked`** with `reason: "credential env var <NAME> not set"` (substituting the actual variable name), and continue to the rest of the run per the isolation rule below.
+3. Otherwise, navigate to `config.app.login.loginUrl` (or the app's login entry point) with `mcp__playwright__browser_navigate`, then submit the credential values you read into the login form using `mcp__playwright__browser_type` / `browser_fill_form` (guided by `browser_snapshot` to locate the fields) and `browser_click` to submit. This is the only place the credential values are used.
+4. Once authenticated, reuse that same browser session for every case (`config.app.login.sessionReuse`) — do not log in again per case, and do not re-invoke Bash for credentials again during this run.
+5. If login fails for any other reason (bad credentials rejected by the app, unreachable login page), mark every case that depends on being logged in as **`blocked`** with a `reason` describing the login failure (without including the credential values), and do not attempt to guess or bypass authentication.
 
 ## Timeouts
 
