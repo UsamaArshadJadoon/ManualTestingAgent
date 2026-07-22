@@ -204,6 +204,7 @@
   <a href="#workflow">Workflow</a>
   <a href="#aio">AIO Tests</a>
   <a href="#creds">Credentials</a>
+  <a href="#prereq">Prerequisites</a>
   <a href="#guide">Step-by-step</a>
   <a href="#outputs">Outputs</a>
   <a href="#safety">Safety</a>
@@ -219,7 +220,7 @@
     <div class="herometa">
       <span class="htag"><b>Command:</b> /qa-run ABYR-2167</span>
       <span class="htag"><b>Worked example:</b> CM-5 Client Profile View</span>
-      <span class="htag"><b>Result:</b> 26 tests · 22✓ 2✗ 2⃠</span>
+      <span class="htag"><b>Result:</b> 26 tests · 22 passed · 2 failed · 2 blocked</span>
       <span class="htag"><b>AIO:</b> 26 cases synced to folder ABYR-2167</span>
       <span class="htag"><b>Developed by:</b> Usama Arshad Jadoon · QC Lead · AZM Digital</span>
     </div>
@@ -235,6 +236,7 @@
     <li><a href="#workflow">The full pipeline diagram</a></li>
     <li><a href="#aio">AIO Tests sync + folder rule 📁</a></li>
     <li><a href="#creds">How credentials are handled 🔐</a></li>
+    <li><a href="#prereq">Prerequisites &amp; install</a></li>
     <li><a href="#guide">Step-by-step guide</a></li>
     <li><a href="#outputs">Outputs &amp; artifacts</a></li>
     <li><a href="#safety">Safety &amp; important points</a></li>
@@ -324,6 +326,30 @@ QA_USER=<span class="you">tenantadmin001@test.local</span>
 QA_PASS=<span class="you">••••••••••••</span>
 AIO_TOKEN=<span class="you">••••••••••••••••••••••••</span>   <span class="dim"># only needed if aio.enabled</span></div>
   </div>
+</section>
+
+
+<!-- PREREQUISITES -->
+<section id="prereq" class="reveal">
+  <span class="lead-label">Before you start</span>
+  <h2>Prerequisites &amp; one-time install</h2>
+  <p class="intro">A few things need to be in place before your first <code>/qa-run</code>. You do these once per machine (install) and once per project (setup).</p>
+  <ul>
+    <li><b>VS Code + Claude Code</b> — open the project you want to test in VS Code with Claude Code active.</li>
+    <li><b>Authorize two connectors</b> in <a href="https://claude.ai">claude.ai → Settings → Connectors</a>: <b>Atlassian (Jira)</b> — to read the story and file bugs (also used by <b>qa-test-sync</b> to link each AIO case back to the story); and <b>Playwright</b> — to drive the browser during execution.</li>
+    <li><b>A staging URL</b> for the app under test — a production-looking URL is refused by default (see Safety).</li>
+    <li><b>A test account</b> for that app (for our run: <code>tenantadmin001</code> on <code>abyan-qc.azm.sa</code>), with its credentials set as in the Credentials section.</li>
+    <li><b>(Optional) AIO Tests</b> — an AIO API token plus the story-key folder, only if you want the AIO sync (see the AIO Tests section above).</li>
+  </ul>
+  <div class="call safe"><span class="lbl">One-time install</span><p>If <kbd>/qa-run</kbd> and <kbd>/qa-setup</kbd> aren't available yet, run the installer once (Windows PowerShell 5.1):</p></div>
+  <div class="win"><button class="copy" type="button">Copy</button><div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="win-title">Windows PowerShell — one-time install</span></div>
+    <div class="win-body"><span class="cmd">powershell -File qa-agent\install.ps1</span>
+<span class="ok">✔</span> Installed QA AZM Digital Agent to ~/.claude
+  <span class="dim">agents: qa-story, qa-test-writer, qa-gap-analyzer, qa-test-executor,</span>
+  <span class="dim">        qa-bug-logger, qa-reviewer, qa-validator, qa-test-sync (optional)</span>
+  <span class="dim">commands: qa-run, qa-setup</span></div>
+  </div>
+  <p style="color:var(--faint);font-size:.9rem">Copies the agents (7 core + the optional <code>qa-test-sync</code>) and the 2 commands into <code>~/.claude</code>, so they work in every project. Re-run it any time you update the agent files.</p>
 </section>
 
 
