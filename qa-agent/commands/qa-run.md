@@ -1,6 +1,6 @@
 ---
 name: qa-run
-description: QA AZM Digital Agent — orchestrate the full multi-agent QA run for a Jira story — fetch & normalize the story, write and gap-check test cases, execute them against the live app, log approved bugs, and produce a GO/NO-GO report — dispatching the seven qa-* subagents through the Task tool with validation gates and human approval gates. (Developed by Usama Arshad Jadoon, QC Lead, AZM Digital.)
+description: QA AZM Digital Agent — orchestrate the full multi-agent QA run for a Jira story — fetch & normalize the story, write and gap-check test cases, execute them against the live app, log approved bugs, and produce a GO/NO-GO report — dispatching the seven core qa-* subagents (plus an optional qa-test-sync that mirrors approved cases into AIO Tests) through the Task tool with validation gates and human approval gates. (Developed by Usama Arshad Jadoon, QC Lead, AZM Digital.)
 tools:
   - Read
   - Write

@@ -49,7 +49,8 @@ c:\QCAgent\qa-agent\
     ├── qa-test-executor.md
     ├── qa-bug-logger.md
     ├── qa-reviewer.md
-    └── qa-validator.md
+    ├── qa-validator.md
+    └── qa-test-sync.md    # optional: mirror approved cases into AIO Tests (Cloud)
 ```
 
 Each `.md` artifact is self-contained (subagents only receive their own file). The `references/run-folder-contract.md` is a maintainer document; the exact schemas are ALSO restated inside each agent that produces them.
@@ -684,7 +685,7 @@ pwsh qa-agent/tools/check-artifacts.ps1 -File "$HOME/.claude/agents/qa-story.md"
 pwsh qa-agent/tools/check-artifacts.ps1 -File "$HOME/.claude/commands/qa-run.md" -Frontmatter -Requires 'qa-validator'
 ls "$HOME/.claude/agents/qa-"*.md "$HOME/.claude/commands/qa-"*.md
 ```
-Expected: install prints all 7 agents + 2 commands; both checks print `CHECK PASSED`; `ls` lists 7 `qa-*` agents and 2 `qa-*` commands.
+Expected: install prints all agents + 2 commands; both checks print `CHECK PASSED`; `ls` lists the `qa-*` agents (7 core, plus `qa-test-sync` once Task 13 is done) and 2 `qa-*` commands.
 
 - [ ] **Step 4: Remove the stale monolithic agent**
 
@@ -751,6 +752,39 @@ With the Atlassian + Playwright MCP authorized, env vars set, and `/qa-setup` co
 ```bash
 git add -A
 git commit -m "fix(qa): address issues found in smoke verification"
+```
+
+---
+
+## Task 13: qa-test-sync subagent (optional — AIO Tests integration)
+
+**Files:**
+- Create: `qa-agent/agents/qa-test-sync.md`
+- Modify: `qa-agent/commands/qa-run.md` (dispatch after the test-plan gate when `config.aio.enabled`), `qa-agent/commands/qa-setup.md` (scaffold `AIO_TOKEN` in `.qa-secrets`), `qa-agent/qa-config.example.json` (`aio` block)
+
+**Interfaces:**
+- Consumes: `run-context.json` (`config.aio`, project key, story key), `story.json` (AC text), `test-cases.json` (the approved cases).
+- Produces: `aio-sync.json` per the run-folder contract; consumed by nobody downstream (side-integration) but recorded for the audit trail.
+
+**Behavior (from the reverse-engineered AIO Cloud REST API):**
+- Guard: run only when `config.aio.enabled` is `true`; otherwise return `AIO sync disabled`.
+- Token: read `config.aio.tokenEnv` (default `AIO_TOKEN`) from OS env → `.qa-secrets`; never printed; sent as `Authorization: AioAuth <token>`.
+- Folder: `GET /project/{proj}/testcase/folder`, match the folder whose name starts with the story key. **The AIO API cannot create folders (HTTP 500), so the folder must be pre-created once in the AIO Cases UI, named with the story key.** If missing, STOP and return the exact folder name to create.
+- Create each case: `POST /project/{proj}/testcase` with `scriptType {ID:5}` (Classic), `TEXT` steps (`step` field, expected result on the last step), `folder {ID}`, and `jiraRequirementIDs:[storyJiraId]` (story numeric id from `getJiraIssue`). Run once per story (AIO API cannot delete cases).
+
+- [ ] **Step 1: Write `qa-agent/agents/qa-test-sync.md`** with frontmatter `name: qa-test-sync`, `tools: [Read, Write, Bash, mcp__claude_ai_Atlassian__getJiraIssue]`, and the recipe above (folder-by-ID, schema, limits, `aio-sync.json` output with a `_validation` block).
+
+- [ ] **Step 2: Wire the orchestrator** — in `qa-run.md`, after the test-plan approval gate, dispatch `qa-test-sync` once when `config.aio.enabled`; it does NOT gate execution.
+
+- [ ] **Step 3: Config + secrets** — add the `aio` block to `qa-config.example.json` and `AIO_TOKEN` to the `.qa-secrets` template in `qa-setup.md`.
+
+- [ ] **Step 4: Verify + commit**
+
+```bash
+pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/agents/qa-test-sync.md -Frontmatter -Requires 'AioAuth','scriptType','jiraRequirementIDs','.qa-secrets','aio-sync.json','testcase/folder','enabled'
+pwsh qa-agent/install.ps1
+git add qa-agent/agents/qa-test-sync.md qa-agent/commands/qa-run.md qa-agent/commands/qa-setup.md qa-agent/qa-config.example.json
+git commit -m "feat(qa): add qa-test-sync agent for AIO Tests integration"
 ```
 
 ---
