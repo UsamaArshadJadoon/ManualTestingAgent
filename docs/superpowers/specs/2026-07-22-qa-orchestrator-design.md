@@ -34,7 +34,7 @@ Installed **globally** so it works in any VS Code project:
 ```
 ~/.claude/
 ├── commands/
-│   ├── qa-run.md          # Orchestrator (entry point): /qa-run PROJ-123 [--rerun]
+│   ├── qa-run.md          # Orchestrator (entry point): /qa-run PROJ-123 [--rerun] [--resume]
 │   └── qa-setup.md        # Interactive first-run config scaffolder: /qa-setup
 └── agents/
     ├── qa-story.md         # fetch + parse Jira story & acceptance criteria
@@ -91,12 +91,19 @@ Lives in the **project root**. Created by `/qa-setup`. Credentials are reference
       "sessionReuse": true
     }
   },
+  "safety": {
+    "allowProduction": false,
+    "prodUrlPatterns": ["prod", "www.", "app.", "live"],
+    "destructiveActions": "confirm",
+    "cleanupCreatedData": true,
+    "maskPatterns": ["password", "token", "authorization", "email", "\\b\\d{12,19}\\b"]
+  },
   "severityMap": {
     "blocker": "Highest",
     "major": "High",
     "minor": "Low"
   },
-  "execution": { "flakyRetry": 1 },
+  "execution": { "flakyRetry": 1, "stepTimeoutMs": 15000, "maxRunMinutes": 30 },
   "outputDir": "qa-runs"
 }
 ```
@@ -140,16 +147,27 @@ its input files, and its exact output file + schema.
   network), Read/Write.
 - **Input:** `test-cases.json`, `run-context.json`.
 - **Behavior:**
+  - **Environment guard:** before navigating, check `baseUrl` against
+    `safety.prodUrlPatterns`. If it looks like production and `allowProduction=false`,
+    stop and require explicit user confirmation.
+  - **Non-destructive posture:** prefer read/create over update/delete on shared data.
+    Any step flagged destructive requires confirmation when
+    `safety.destructiveActions="confirm"`. Data the tests create is tracked and, if
+    `cleanupCreatedData=true`, cleaned up (or flagged) at the end.
   - **Login session reuse:** authenticate once at the start (using `usernameEnv` /
     `passwordEnv`), reuse the session for all cases.
+  - **Timeouts:** each step is bounded by `stepTimeoutMs`; the whole run by
+    `maxRunMinutes`. A step timeout marks that case `blocked` and moves on.
   - Run each case's steps; capture a screenshot per case (and on any failure).
   - **Flaky-retry:** on failure, retry once with fresh state. Only a *consistent*
     failure is recorded as `failed`; a pass-on-retry is recorded as `flaky`.
+  - **Console/JS error findings:** collect uncaught JS + console errors during each
+    case and record them as findings even when the functional assertion passes.
   - One failing/blocked test never stops the rest.
   - If the app URL is unreachable or login fails, mark affected tests `blocked` (not
     `failed`) and record the reason.
 - **Output:** `results.json` — per case
-  `{ id, status: "passed|failed|flaky|blocked", steps: [{ step, ok, note }], screenshots: [path], consoleErrors: [..], reason }`.
+  `{ id, status: "passed|failed|flaky|blocked", steps: [{ step, ok, note }], screenshots: [path], consoleErrors: [..], jsErrorFindings: [..], createdData: [..], reason }`.
 
 ### 4.5 qa-bug-logger (two-phase, human-approved)
 - **Job:** Turn consistent failures into Jira bugs — but only after user approval.
@@ -175,11 +193,13 @@ its input files, and its exact output file + schema.
 - **Rule:** verdict is `NO-GO` if any AC is uncovered, any blocker-severity test
   failed, or coverage < 100% of testable AC.
 
-## 5. Orchestrator flow (`/qa-run PROJ-123 [--rerun]`)
+## 5. Orchestrator flow (`/qa-run PROJ-123 [--rerun] [--resume]`)
 
 1. **Load config.** Read `.qa-config.json`; if missing, instruct `/qa-setup` and stop.
 2. **Preflight.** Confirm the Atlassian connector is authorized; if not, tell the user
-   to authorize it in claude.ai connector settings and stop cleanly.
+   to authorize it in claude.ai connector settings and stop cleanly. **Environment
+   guard:** if `baseUrl` matches a production pattern and `allowProduction=false`,
+   require explicit confirmation before proceeding.
 3. **Create run folder** `qa-runs/<KEY>_<timestamp>/`, write `run-context.json`.
 4. **qa-story** → `story.json`. If AC was inferred, surface a note.
 5. **qa-test-writer** → `test-cases.json`.
@@ -198,7 +218,14 @@ its input files, and its exact output file + schema.
     pass/fail/flaky/blocked counts, coverage %, proposed vs. created bugs, screenshot
     links.
 
-### 5.1 Re-run / verify mode (`--rerun`)
+### 5.1 Resume mode (`--resume`)
+
+- Locate the most recent run folder for the key.
+- Inspect which output files already exist and restart from the first missing stage
+  (e.g. if `results.json` exists but `bugs-proposed.json` does not, resume at the bug
+  gate). Avoids redoing the Jira fetch, test-writing, or an expensive browser run.
+
+### 5.2 Re-run / verify mode (`--rerun`)
 - Locate the most recent run folder for the key.
 - Re-execute only tests with status `failed` or `flaky`.
 - Write a new run folder; report shows before/after.
@@ -217,6 +244,10 @@ its input files, and its exact output file + schema.
 | App URL unreachable / login fails | Mark tests `blocked` (not `failed`), record reason |
 | Single test fails | Retry once (flaky check); continue remaining tests |
 | Duplicate bug likely | Flag `possibleDuplicate` in proposal; user decides |
+| `baseUrl` looks like production | Stop and require explicit confirmation (env guard) |
+| Destructive step | Confirm before running; track + clean up created data |
+| Step/run timeout exceeded | Mark case `blocked`, continue; run cap ends the run gracefully |
+| Interrupted run | `--resume` restarts from first missing stage |
 
 ## 7. Human-in-the-loop gates (summary)
 
@@ -225,7 +256,28 @@ Two hard gates, nothing consequential happens without approval:
 2. **Bug gate** — before writing anything to Jira (and before transitioning bugs in
    `--rerun`).
 
-## 8. Component isolation
+## 8. Safety & data handling (cross-cutting)
+
+Applies across all stages:
+
+- **Environment guard.** Never run against production unless `allowProduction=true` or
+  the user explicitly confirms. The URL is checked at preflight and again in the
+  executor.
+- **Non-destructive by default.** Prefer read/create; confirm before destructive
+  steps; track and clean up test-created data.
+- **Secrets & PII masking.** Before anything is written to `report.md`, `report.html`,
+  screenshots metadata, or a Jira bug, redact values matching `safety.maskPatterns`
+  (passwords, tokens, auth headers, emails, long digit sequences). Jira bugs are
+  team-visible — this prevents leaking credentials or customer data into a ticket.
+- **Timeouts.** Per-step (`stepTimeoutMs`) and whole-run (`maxRunMinutes`) caps keep a
+  stuck app from freezing the pipeline.
+
+### Known limitation
+Screenshot **attachments** to Jira are not supported by the Atlassian MCP
+`createJiraIssue` tool. v1 stores screenshots in the run folder, references them in the
+report, and includes their paths in the bug description rather than attaching binaries.
+
+## 9. Component isolation
 
 Every subagent: single purpose, file-based I/O contract, independently testable. You
 can run any stage alone by placing its input files in a run folder and dispatching
