@@ -335,6 +335,27 @@ AIO_TOKEN=<span class="you">•••••••••••••••••�
   <h2>Download &amp; install the agents — step by step</h2>
   <p class="intro">You install the agents <b>once per machine</b>; after that they work in <b>every</b> project via <code>/qa-run</code> and <code>/qa-setup</code>. Requires <b>Windows + VS Code + Claude Code</b> and <b>PowerShell 5.1</b>.</p>
 
+  <div class="call safe"><span class="lbl">⚡ Fastest way — one paste installs everything</span><p>Open <b>Windows PowerShell</b> and paste the whole block below. It <b>downloads</b> the release ZIP, <b>extracts</b> it, and <b>installs all 8 agents + 2 commands</b> into <code>~/.claude</code> — no manual clicking. (Use the <b>Copy</b> button, top-right of the box.)</p></div>
+  <div class="win"><button class="copy" type="button">Copy</button><div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="win-title">Windows PowerShell — one-shot download &amp; install</span></div>
+    <div class="win-body"><span class="dim"># QA AZM Digital Agent — download the ZIP + install every agent</span>
+<span class="cmd">$zip  = "$HOME\Downloads\qa-azm-agent.zip"</span>
+<span class="cmd">$dest = "$HOME\Downloads\qa-azm-agent"</span>
+<span class="cmd">Invoke-WebRequest "https://github.com/UsamaArshadJadoon/ManualTestingAgent/archive/refs/tags/v1.1.0.zip" -OutFile $zip</span>
+<span class="cmd">Expand-Archive $zip $dest -Force</span>
+<span class="cmd">$root = (Get-ChildItem $dest -Directory)[0].FullName</span>
+<span class="cmd">powershell -ExecutionPolicy Bypass -File "$root\qa-agent\install.ps1"</span></div>
+  </div>
+  <p style="color:var(--faint);font-size:.9rem;margin:.2em 0 0">Prefer Git? Two lines do the same:</p>
+  <div class="win"><button class="copy" type="button">Copy</button><div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="win-title">Windows PowerShell — via Git</span></div>
+    <div class="win-body"><span class="cmd">git clone https://github.com/UsamaArshadJadoon/ManualTestingAgent.git</span>
+<span class="cmd">powershell -ExecutionPolicy Bypass -File ManualTestingAgent\qa-agent\install.ps1</span></div>
+  </div>
+  <p style="color:var(--faint);font-size:.9rem;margin:.2em 0 0">Then confirm all 8 agents landed:</p>
+  <div class="win"><button class="copy" type="button">Copy</button><div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="win-title">Windows PowerShell — verify</span></div>
+    <div class="win-body"><span class="cmd">Get-ChildItem $HOME\.claude\agents\qa-*.md | Select-Object Name</span></div>
+  </div>
+  <div class="call aio"><span class="lbl">That's the whole install</span><p>After this, just <b>authorize the connectors</b> (Step 2 below) and <b>set up your project</b> (the walkthrough). The numbered steps below are the same thing explained in detail if you'd rather do it by hand.</p></div>
+
   <h3>What you need first</h3>
   <ul>
     <li><b>VS Code + Claude Code</b> active.</li>
