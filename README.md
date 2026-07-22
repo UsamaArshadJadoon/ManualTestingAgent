@@ -95,18 +95,53 @@ qa-agent/
 docs/superpowers/        design spec + implementation plan
 ```
 
-## Quick start
+## Download &amp; install — step by step (for QC members)
 
-1. **Authorize connectors** in claude.ai → Settings → Connectors: **Atlassian (Jira)** and **Playwright**.
-2. **Install** (Windows PowerShell 5.1):
-   ```powershell
-   powershell -File qa-agent\install.ps1
-   ```
-   Copies the agents + 2 commands into `~/.claude` (works in every project).
-3. **Configure** your project — run `/qa-setup` (writes `.qa-config.json`, scaffolds a git-ignored `.qa-secrets`, hardens `.gitignore`).
-4. **Provide credentials** — fill the git-ignored `.qa-secrets`, or set `$env:QA_USER` / `$env:QA_PASS`.
-5. *(Optional — AIO Tests)* set `aio.enabled: true` in `.qa-config.json`, add `AIO_TOKEN` to `.qa-secrets`, and **create a folder named with the story key** (e.g. `ABYR-2167`) in the AIO **Cases** module — `qa-test-sync` fills that folder with the approved cases.
-6. **Run** — `/qa-run <STORY-KEY>` (add `--rerun` to re-test prior failures, `--resume` to continue an interrupted run).
+You install the agents **once per machine**; after that they work in **every** project via `/qa-run` and `/qa-setup`. Requires **Windows + VS Code + Claude Code** and **PowerShell 5.1**.
+
+### 1 · Get the agent code
+
+Pick either option — both give you the `qa-agent/` folder that holds all 8 agents + 2 commands:
+
+- **Download the release (no Git needed):** open the **[latest release](https://github.com/UsamaArshadJadoon/ManualTestingAgent/releases/latest)** → **Assets** → **Source code (zip)** → download it, then **right-click → Extract All** to a folder (e.g. `C:\ManualTestingAgent`).
+- **or clone with Git:**
+  ```powershell
+  git clone https://github.com/UsamaArshadJadoon/ManualTestingAgent.git
+  ```
+
+> The **Source code (zip)** asset *is* the agent code — it contains the whole repo, including `qa-agent\agents\` (the 8 `qa-*` agents), `qa-agent\commands\` (`qa-run`, `qa-setup`), and `qa-agent\install.ps1`.
+
+### 2 · Authorize the connectors
+
+In **claude.ai → Settings → Connectors**, authorize **Atlassian (Jira)** and **Playwright**. (Atlassian is also used by `qa-test-sync` to link AIO cases to the story.)
+
+### 3 · Install the agents
+
+Open **Windows PowerShell** *inside the extracted/cloned folder* (the one that contains `qa-agent\`) and run:
+
+```powershell
+powershell -File qa-agent\install.ps1
+```
+
+This copies the **8 agents + 2 commands** into `~/.claude` so they are available in every project. It prints each agent and command it installs.
+
+### 4 · Verify the install
+
+```powershell
+Get-ChildItem $HOME\.claude\agents\qa-*.md
+Get-ChildItem $HOME\.claude\commands\qa-*.md
+```
+
+You should see the 8 `qa-*` agents (`qa-story`, `qa-test-writer`, `qa-gap-analyzer`, `qa-test-executor`, `qa-bug-logger`, `qa-reviewer`, `qa-validator`, `qa-test-sync`) and the 2 commands (`qa-run`, `qa-setup`).
+
+### 5 · Set up a project and run
+
+1. In the project you want to test, run `/qa-setup` (writes `.qa-config.json`, scaffolds a git-ignored `.qa-secrets`, hardens `.gitignore`).
+2. **Provide credentials** — fill the git-ignored `.qa-secrets`, or set `$env:QA_USER` / `$env:QA_PASS`.
+3. *(Optional — AIO Tests)* set `aio.enabled: true` in `.qa-config.json`, add `AIO_TOKEN` to `.qa-secrets`, and **create a folder named with the story key** (e.g. `ABYR-2167`) in the AIO **Cases** module — `qa-test-sync` fills that folder with the approved cases.
+4. **Run** — `/qa-run <STORY-KEY>` (add `--rerun` to re-test prior failures, `--resume` to continue an interrupted run).
+
+> **Updating later:** to get a newer version, download/clone again and re-run `powershell -File qa-agent\install.ps1` — it overwrites the deployed copies with the latest.
 
 See [`qa-agent/README.md`](qa-agent/README.md) for the complete documentation.
 

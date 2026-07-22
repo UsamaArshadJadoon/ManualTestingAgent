@@ -204,7 +204,7 @@
   <a href="#workflow">Workflow</a>
   <a href="#aio">AIO Tests</a>
   <a href="#creds">Credentials</a>
-  <a href="#prereq">Prerequisites</a>
+  <a href="#prereq">Download &amp; install</a>
   <a href="#guide">Step-by-step</a>
   <a href="#outputs">Outputs</a>
   <a href="#safety">Safety</a>
@@ -236,7 +236,7 @@
     <li><a href="#workflow">The full pipeline diagram</a></li>
     <li><a href="#aio">AIO Tests sync + folder rule 📁</a></li>
     <li><a href="#creds">How credentials are handled 🔐</a></li>
-    <li><a href="#prereq">Prerequisites &amp; install</a></li>
+    <li><a href="#prereq">Download &amp; install the agents</a></li>
     <li><a href="#guide">Step-by-step guide</a></li>
     <li><a href="#outputs">Outputs &amp; artifacts</a></li>
     <li><a href="#safety">Safety &amp; important points</a></li>
@@ -329,27 +329,53 @@ AIO_TOKEN=<span class="you">•••••••••••••••••�
 </section>
 
 
-<!-- PREREQUISITES -->
+<!-- PREREQUISITES / DOWNLOAD & INSTALL -->
 <section id="prereq" class="reveal">
-  <span class="lead-label">Before you start</span>
-  <h2>Prerequisites &amp; one-time install</h2>
-  <p class="intro">A few things need to be in place before your first <code>/qa-run</code>. You do these once per machine (install) and once per project (setup).</p>
+  <span class="lead-label">Get it onto your machine</span>
+  <h2>Download &amp; install the agents — step by step</h2>
+  <p class="intro">You install the agents <b>once per machine</b>; after that they work in <b>every</b> project via <code>/qa-run</code> and <code>/qa-setup</code>. Requires <b>Windows + VS Code + Claude Code</b> and <b>PowerShell 5.1</b>.</p>
+
+  <h3>What you need first</h3>
   <ul>
-    <li><b>VS Code + Claude Code</b> — open the project you want to test in VS Code with Claude Code active.</li>
-    <li><b>Authorize two connectors</b> in <a href="https://claude.ai">claude.ai → Settings → Connectors</a>: <b>Atlassian (Jira)</b> — to read the story and file bugs (also used by <b>qa-test-sync</b> to link each AIO case back to the story); and <b>Playwright</b> — to drive the browser during execution.</li>
+    <li><b>VS Code + Claude Code</b> active.</li>
     <li><b>A staging URL</b> for the app under test — a production-looking URL is refused by default (see Safety).</li>
-    <li><b>A test account</b> for that app (for our run: <code>tenantadmin001</code> on <code>abyan-qc.azm.sa</code>), with its credentials set as in the Credentials section.</li>
+    <li><b>A test account</b> for that app (for our run: <code>tenantadmin001</code> on <code>abyan-qc.azm.sa</code>).</li>
     <li><b>(Optional) AIO Tests</b> — an AIO API token plus the story-key folder, only if you want the AIO sync (see the AIO Tests section above).</li>
   </ul>
-  <div class="call safe"><span class="lbl">One-time install</span><p>If <kbd>/qa-run</kbd> and <kbd>/qa-setup</kbd> aren't available yet, run the installer once (Windows PowerShell 5.1):</p></div>
-  <div class="win"><button class="copy" type="button">Copy</button><div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="win-title">Windows PowerShell — one-time install</span></div>
+
+  <h3>Step 1 · Get the agent code</h3>
+  <p>Pick either option — both give you the <code>qa-agent/</code> folder that holds all <b>8 agents + 2 commands</b>:</p>
+  <div class="win"><button class="copy" type="button">Copy</button><div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="win-title">Option A — download the release (no Git)</span></div>
+    <div class="win-body"><span class="dim"># 1. Open the repo's Releases page → latest release</span>
+<span class="dim"># 2. Under "Assets", click:</span>  <span class="acc">Source code (zip)</span>
+<span class="dim"># 3. Right-click the downloaded .zip → Extract All  (e.g. to C:\ManualTestingAgent)</span></div>
+  </div>
+  <div class="win"><button class="copy" type="button">Copy</button><div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="win-title">Option B — clone with Git</span></div>
+    <div class="win-body"><span class="cmd">git clone https://github.com/UsamaArshadJadoon/ManualTestingAgent.git</span></div>
+  </div>
+  <div class="call aio"><span class="lbl">📦 The “Source code (zip)” <em>is</em> the agent code</span><p>That release asset contains the whole repo, including <code>qa-agent\agents\</code> (the 8 <code>qa-*</code> agents), <code>qa-agent\commands\</code> (<code>qa-run</code>, <code>qa-setup</code>), and the installer <code>qa-agent\install.ps1</code>. There's nothing else to download.</p></div>
+
+  <h3>Step 2 · Authorize the connectors</h3>
+  <p>In <a href="https://claude.ai">claude.ai → Settings → Connectors</a>, authorize <b>Atlassian (Jira)</b> and <b>Playwright</b>. (Atlassian is also what <b>qa-test-sync</b> uses to link each AIO case back to the story.)</p>
+
+  <h3>Step 3 · Install the agents</h3>
+  <p>Open <b>Windows PowerShell</b> <em>inside the extracted/cloned folder</em> (the one that contains <code>qa-agent\</code>) and run the installer:</p>
+  <div class="win"><button class="copy" type="button">Copy</button><div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="win-title">Windows PowerShell — install</span></div>
     <div class="win-body"><span class="cmd">powershell -File qa-agent\install.ps1</span>
 <span class="ok">✔</span> Installed QA AZM Digital Agent to ~/.claude
-  <span class="dim">agents: qa-story, qa-test-writer, qa-gap-analyzer, qa-test-executor,</span>
-  <span class="dim">        qa-bug-logger, qa-reviewer, qa-validator, qa-test-sync (optional)</span>
-  <span class="dim">commands: qa-run, qa-setup</span></div>
+  <span class="dim">agent:   qa-story · qa-test-writer · qa-gap-analyzer · qa-test-executor</span>
+  <span class="dim">agent:   qa-bug-logger · qa-reviewer · qa-validator · qa-test-sync</span>
+  <span class="dim">command: qa-run · qa-setup</span></div>
   </div>
-  <p style="color:var(--faint);font-size:.9rem">Copies the agents (7 core + the optional <code>qa-test-sync</code>) and the 2 commands into <code>~/.claude</code>, so they work in every project. Re-run it any time you update the agent files.</p>
+  <p style="color:var(--faint);font-size:.9rem">Copies the 8 agents + 2 commands into <code>~/.claude</code>, so they work in every project.</p>
+
+  <h3>Step 4 · Verify the install</h3>
+  <div class="win"><button class="copy" type="button">Copy</button><div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="win-title">Windows PowerShell — verify</span></div>
+    <div class="win-body"><span class="cmd">Get-ChildItem $HOME\.claude\agents\qa-*.md</span>
+<span class="cmd">Get-ChildItem $HOME\.claude\commands\qa-*.md</span>
+<span class="dim"># expect 8 qa-* agents + qa-run.md and qa-setup.md</span></div>
+  </div>
+  <div class="call safe"><span class="lbl">Updating later</span><p>To get a newer version, download/clone again and re-run <code>powershell -File qa-agent\install.ps1</code> — it overwrites the deployed copies with the latest. Then continue to <b>Step 1</b> of the walkthrough below (<code>/qa-setup</code>) in whatever project you want to test.</p></div>
 </section>
 
 
