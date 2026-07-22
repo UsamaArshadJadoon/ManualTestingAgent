@@ -1,0 +1,287 @@
+<title>QA AZM Digital Agent — Live Workflow Diagram</title>
+<style>
+  :root{
+    --bg0:#070b14;--bg1:#0b1120;--ink:#eaf1fb;--muted:#93a1b8;--faint:#5b6784;--line:#1c2740;
+    --teal:#22c7bb;--teal2:#12a6a0;--purple:#8b7bf0;--amber:#e2a13c;--blue:#4f8bf0;--green:#3ecf7a;--red:#ef6b7e;--aio:#e2803f;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Cascadia Code",monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:
+      radial-gradient(60% 50% at 80% -5%, rgba(139,123,240,.16), transparent 60%),
+      radial-gradient(55% 45% at 0% 0%, rgba(34,199,187,.14), transparent 55%),
+      var(--bg0);
+    color:var(--ink);font-family:var(--sans);line-height:1.55;min-height:100vh;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:0 auto;padding:30px 20px 70px}
+  .kicker{font-family:var(--mono);font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--teal);font-weight:700}
+  h1{font-size:clamp(1.7rem,4vw,2.6rem);margin:.25em 0 .1em;letter-spacing:-.02em;font-weight:800;text-wrap:balance;
+    background:linear-gradient(90deg,#fff,#b9c6de);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);margin:0 0 4px;font-size:1rem;max-width:70ch}
+  .sub b{color:var(--ink)}
+
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:22px 0 6px}
+  .btn{font-family:var(--mono);font-size:.82rem;font-weight:600;border:1px solid var(--line);background:rgba(255,255,255,.04);
+    color:var(--ink);padding:9px 16px;border-radius:11px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:.15s}
+  .btn:hover{border-color:var(--teal);background:rgba(34,199,187,.1)}
+  .btn.play{background:linear-gradient(90deg,var(--teal2),var(--teal));border-color:transparent;color:#04231f}
+  .btn.play:hover{filter:brightness(1.08)}
+  .speed{display:flex;gap:4px;align-items:center;font-family:var(--mono);font-size:.74rem;color:var(--faint);margin-left:auto}
+  .speed button{font-family:var(--mono);font-size:.72rem;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 9px;cursor:pointer}
+  .speed button.on{border-color:var(--teal);color:var(--teal)}
+
+  .stage{display:grid;grid-template-columns:340px 1fr;gap:26px;margin-top:20px}
+  @media (max-width:840px){.stage{grid-template-columns:1fr}}
+
+  /* rail */
+  .rail{position:relative;padding:6px 0}
+  .rail::before{content:"";position:absolute;left:26px;top:34px;bottom:34px;width:3px;border-radius:3px;
+    background:linear-gradient(var(--teal),var(--purple));opacity:.18}
+  .fill{position:absolute;left:26px;top:34px;width:3px;border-radius:3px;height:0;
+    background:linear-gradient(var(--teal),var(--purple));box-shadow:0 0 14px rgba(34,199,187,.6);transition:height .5s ease}
+  .packet{position:absolute;left:20px;top:26px;width:15px;height:15px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#fff,var(--teal));box-shadow:0 0 16px 4px rgba(34,199,187,.85);
+    transform:translateY(0);transition:transform .55s cubic-bezier(.5,.05,.3,1);opacity:0;z-index:3}
+  .packet.on{opacity:1}
+
+  .node{position:relative;z-index:2;display:flex;align-items:center;gap:13px;padding:9px 12px;margin:5px 0;border-radius:14px;
+    border:1px solid transparent;cursor:pointer;background:transparent;width:100%;text-align:left;font:inherit;color:inherit;transition:.2s}
+  .node:hover{background:rgba(255,255,255,.03);border-color:var(--line)}
+  .node .dot{flex:0 0 auto;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-family:var(--mono);font-weight:800;
+    font-size:.9rem;background:var(--bg1);border:2px solid var(--line);color:var(--muted);transition:.25s}
+  .node .lab b{display:block;font-family:var(--mono);font-size:.9rem;letter-spacing:-.01em}
+  .node .lab span{display:block;font-size:.75rem;color:var(--faint)}
+  .node .lab span code{color:var(--teal);font-family:var(--mono)}
+  .node.t-agent .dot{border-color:var(--teal)}
+  .node.t-gate .dot{border-color:var(--blue);color:var(--blue)}
+  .node.t-val .dot{border-color:var(--amber);color:var(--amber)}
+  .node.t-you .dot{border-color:var(--purple);color:var(--purple)}
+  .node.t-orch .dot{border-color:#64748b;color:#94a3b8}
+  .node.t-report .dot{border-color:var(--green);color:var(--green)}
+  .node.t-aio .dot{border-color:var(--aio);color:var(--aio)}
+  /* active / done states */
+  .node.active{background:rgba(34,199,187,.08);border-color:rgba(34,199,187,.4)}
+  .node.active .dot{transform:scale(1.12)}
+  .node.t-agent.active .dot{background:var(--teal);color:#04231f;box-shadow:0 0 0 5px rgba(34,199,187,.22)}
+  .node.t-gate.active .dot{background:var(--blue);color:#fff;box-shadow:0 0 0 5px rgba(79,139,240,.22)}
+  .node.t-val.active .dot{background:var(--amber);color:#2a1c05;box-shadow:0 0 0 5px rgba(226,161,60,.22)}
+  .node.t-you.active .dot{background:var(--purple);color:#fff}
+  .node.t-report.active .dot{background:var(--green);color:#04231f;box-shadow:0 0 0 5px rgba(62,207,122,.22)}
+  .node.t-aio.active .dot{background:var(--aio);color:#2a1405;box-shadow:0 0 0 5px rgba(226,128,63,.22)}
+  .node.done .dot{opacity:.9}
+  .node[aria-selected="true"]{background:rgba(255,255,255,.05);border-color:var(--teal)}
+  .badge{margin-left:auto;font-family:var(--mono);font-size:.64rem;padding:3px 8px;border-radius:999px;color:var(--faint);border:1px solid var(--line);white-space:nowrap}
+  .node.active .badge{color:var(--teal);border-color:rgba(34,199,187,.5)}
+
+  /* detail */
+  .detail{position:sticky;top:20px;align-self:start;background:linear-gradient(180deg,rgba(20,28,46,.9),rgba(11,17,32,.9));
+    border:1px solid var(--line);border-radius:20px;padding:24px 26px;backdrop-filter:blur(10px);box-shadow:0 30px 80px rgba(0,0,0,.5);min-height:360px}
+  @media (max-width:840px){.detail{position:static}}
+  .dpill{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:4px 11px;border-radius:999px;display:inline-block}
+  .dpill.agent{color:var(--teal);background:rgba(34,199,187,.12)}
+  .dpill.gate{color:var(--blue);background:rgba(79,139,240,.14)}
+  .dpill.val{color:var(--amber);background:rgba(226,161,60,.14)}
+  .dpill.you{color:var(--purple);background:rgba(139,123,240,.14)}
+  .dpill.orch{color:#94a3b8;background:rgba(100,116,139,.16)}
+  .dpill.report{color:var(--green);background:rgba(62,207,122,.14)}
+  .dpill.aio{color:var(--aio);background:rgba(226,128,63,.14)}
+  .detail h2{font-size:1.4rem;margin:13px 0 4px;letter-spacing:-.01em;font-weight:750}
+  .detail .role{color:var(--muted);margin:0 0 16px;font-size:.96rem}
+  .io{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch;margin:4px 0}
+  @media (max-width:520px){.io{grid-template-columns:1fr}}
+  .iobox{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:13px;padding:12px 14px}
+  .iobox .h{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+  .iobox .f{font-family:var(--mono);font-size:.8rem;color:var(--teal);display:block;margin:3px 0}
+  .iobox.out .f{color:var(--green)}
+  .ioarrow{display:grid;place-items:center;color:var(--faint);font-size:1.4rem}
+  @media (max-width:520px){.ioarrow{transform:rotate(90deg)}}
+  .proc{margin-top:15px}.proc .h{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+  .proc p{margin:0;font-size:.94rem;color:var(--ink)}
+  .eg{margin-top:15px;padding:12px 15px;border-radius:13px;background:rgba(34,199,187,.08);border:1px solid rgba(34,199,187,.25);font-size:.9rem}
+  .eg b{color:var(--teal);font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px}
+  .hint{margin-top:16px;color:var(--faint);font-size:.8rem;font-family:var(--mono)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:26px;color:var(--muted);font-size:.82rem}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+  footer{margin-top:30px;color:var(--faint);font-size:.82rem;border-top:1px solid var(--line);padding-top:16px}
+</style>
+
+<div class="wrap">
+  <div class="kicker">QA AZM Digital Agent · Interactive workflow</div>
+  <h1>How the agents work — live</h1>
+  <p class="sub">Press <b>▶ Play run</b> to watch one Jira story flow through all seven agents and two human gates, or <b>click any stage</b> to see exactly what it reads and writes. Numbers reflect the real <b>ABYR-2167</b> run.</p>
+
+  <div class="controls">
+    <button class="btn play" id="play" type="button">▶&nbsp; Play run</button>
+    <button class="btn" id="reset" type="button">↺&nbsp; Reset</button>
+    <div class="speed">speed
+      <button data-s="1400" type="button">0.5×</button>
+      <button data-s="900" class="on" type="button">1×</button>
+      <button data-s="500" type="button">2×</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="rail" id="rail">
+      <div class="fill" id="fill"></div>
+      <div class="packet" id="packet"></div>
+    </div>
+    <div class="detail" id="detail" role="region" aria-live="polite"></div>
+  </div>
+
+  <div class="legend">
+    <span><i style="background:#8b7bf0"></i> you</span>
+    <span><i style="background:#94a3b8"></i> orchestrator</span>
+    <span><i style="background:#22c7bb"></i> agent</span>
+    <span><i style="background:#e2a13c"></i> validator (loops back on gaps)</span>
+    <span><i style="background:#4f8bf0"></i> human gate</span>
+    <span><i style="background:#3ecf7a"></i> reports</span>
+  </div>
+
+  <footer><b style="color:var(--ink)">QA AZM Digital Agent</b> · Developed by Usama Arshad Jadoon · QC Lead · AZM Digital.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var STAGES = [
+    {t:"you",  ic:"▶", label:"You", sub:"run <code>/qa-run ABYR-2167</code>", title:"You start the run",
+     role:"One command with a Jira key kicks off the whole pipeline; you only step back in at the two gates.",
+     reads:["a Jira story key"], writes:["run-context.json"], badge:"input",
+     proc:"The orchestrator loads .qa-config.json, verifies the Jira connector, runs the production-URL guard, and creates a timestamped run folder.",
+     eg:"Created qa-runs/ABYR-2167_… and confirmed abyan-qc.azm.sa is staging."},
+    {t:"orch", ic:"⚙", label:"Orchestrator", sub:"dispatches every stage", title:"Orchestrator",
+     role:"Sequences the seven agents, runs the validator after each stage, enforces the gates, and writes the reports. It never does the work itself.",
+     reads:[".qa-config.json"], writes:["run-context.json"], badge:"conductor",
+     proc:"Passes only the run-folder path to each subagent; all data flows through JSON files in that folder.",
+     eg:"Ran 12 stages end to end for ABYR-2167."},
+    {t:"agent", ic:"1", label:"qa-story", sub:"Jira → <code>story.json</code>", title:"qa-story",
+     role:"Fetches the Jira issue and normalizes its acceptance criteria into atomic, testable items.",
+     reads:["run-context.json","Jira (Atlassian MCP)"], writes:["story.json"], badge:"validated",
+     proc:"Splits compound criteria into atomic AC; never fabricates — stops if the issue can't be read.",
+     eg:"Normalized the CM-5 story into 10 AC (then 12 after validation)."},
+    {t:"val", ic:"✓", label:"qa-validator", sub:"re-checks the story", title:"qa-validator — story check",
+     role:"Independently re-reads the SOURCE (Jira) and compares it to story.json, catching anything the agent dropped.",
+     reads:["story.json","Jira (re-read)"], writes:["validation/story.json"], badge:"loops back",
+     proc:"On a gap it writes pass:false; the orchestrator loops the stage back (max 2 retries).",
+     eg:"Caught 2 dropped requirements → qa-story re-issued with 12 AC."},
+    {t:"agent", ic:"2", label:"qa-test-writer", sub:"→ <code>test-cases.json</code>", title:"qa-test-writer",
+     role:"Turns each acceptance criterion into concrete, executable test cases.",
+     reads:["story.json"], writes:["test-cases.json"], badge:"validated",
+     proc:"Writes happy-path, negative, and edge cases with semantic UI steps, data, and expected results.",
+     eg:"Produced 26 cases — 10 happy, 10 negative, 6 edge."},
+    {t:"agent", ic:"3", label:"qa-gap-analyzer", sub:"→ <code>gap-report.json</code>", title:"qa-gap-analyzer",
+     role:"Proves every AC is exercised by at least one real case; asks for more if a gap remains.",
+     reads:["story.json","test-cases.json"], writes:["gap-report.json"], badge:"validated",
+     proc:"An AC counts as covered only if a case links it AND its steps actually exercise it.",
+     eg:"Confirmed 12/12 AC covered — complete."},
+    {t:"gate", ic:"⏸", label:"Gate 1", sub:"you approve the plan", title:"Test-plan approval gate",
+     role:"A hard human gate — nothing runs against your app until you approve.",
+     reads:["the 26-case plan"], writes:["your “go”"], badge:"human",
+     proc:"The orchestrator prints the full case list; you say go or drop/edit cases first.",
+     eg:"Plan approved; execution authorized."},
+    {t:"aio", ic:"＋", label:"qa-test-sync", sub:"→ <code>aio-sync.json</code> · optional", title:"qa-test-sync — mirror to AIO Tests (optional)",
+     role:"When AIO is enabled, mirrors the approved cases into the story's AIO Tests folder and links each to the Jira story. Does not gate execution.",
+     reads:["run-context.json (config.aio)","test-cases.json","story.json"], writes:["aio-sync.json"], badge:"optional · run once",
+     proc:"Finds the AIO folder named with the story key — you create it once in the AIO Cases UI, since the AIO API can't create folders — then creates each approved case with steps + AC text and links it to the story. Runs once per story.",
+     eg:"26 cases created in AIO folder ABYR-2167, each linked to ABYR-2167."},
+    {t:"agent", ic:"4", label:"qa-test-executor", sub:"live app → <code>results.json</code>", title:"qa-test-executor",
+     role:"Drives your real app in a real browser (Playwright) and records what actually happens.",
+     reads:["test-cases.json","credentials (env → .qa-secrets)","the live app"], writes:["results.json","screenshots/"], badge:"validated",
+     proc:"Logs in once, runs each case, captures a screenshot + console errors, retries flaky failures, then deletes the browser snapshot scratch.",
+     eg:"22 passed · 2 failed · 0 flaky · 2 blocked, 26 screenshots."},
+    {t:"agent", ic:"5", label:"qa-bug-logger · A", sub:"→ <code>bugs-proposed.json</code>", title:"qa-bug-logger — Phase A",
+     role:"Drafts fully-detailed bugs from failures and findings. Writes NOTHING to Jira.",
+     reads:["results.json","test-cases.json","story.json"], writes:["bugs-proposed.json"], badge:"drafts only",
+     proc:"Full standard fields per bug, captures console/spec findings too, masks secrets, searches Jira for duplicates.",
+     eg:"Drafted B1 plus findings F1–F6 — 7 total, 0 in Jira."},
+    {t:"gate", ic:"⏸", label:"Gate 2", sub:"you approve bugs", title:"Bug approval gate",
+     role:"A hard human gate — nothing is created in Jira until you choose.",
+     reads:["bugs-proposed.json"], writes:["your approved list"], badge:"human",
+     proc:"You reply all / none / a subset; only approved refs go to Phase B.",
+     eg:"On this run we chose none — zero Jira issues created."},
+    {t:"agent", ic:"6", label:"qa-bug-logger · B", sub:"→ <code>bugs-created.json</code>", title:"qa-bug-logger — Phase B",
+     role:"Creates ONLY the bugs you approved and links them to the story.",
+     reads:["bugs-proposed.json","approved refs"], writes:["bugs-created.json"], badge:"validated",
+     proc:"Creates each approved Jira issue, links it to the story, records keys/URLs.",
+     eg:"0 created (none approved); empty file written so review proceeds."},
+    {t:"agent", ic:"7", label:"qa-reviewer", sub:"→ <code>review.json</code>", title:"qa-reviewer",
+     role:"Computes coverage and a GO / NO-GO verdict from the real numbers.",
+     reads:["all prior files"], writes:["review.json"], badge:"validated",
+     proc:"Tallies pass/fail/flaky/blocked, computes coverage %, derives blockers from real severity, sets the verdict.",
+     eg:"Verdict GO ⚠ · 100% coverage · 0 bugs filed."},
+    {t:"report", ic:"★", label:"Reports", sub:"published Artifacts", title:"Reports published",
+     role:"The orchestrator renders and publishes the human-facing outputs.",
+     reads:["review.json + all evidence"], writes:["report.html","bug-report.html"], badge:"done",
+     proc:"Run report (verdict + traceability) and detailed bug report (screenshots embedded), both masked.",
+     eg:"report.html + bug-report.html published for ABYR-2167."}
+  ];
+  var pillName={you:"You",orch:"Orchestrator",agent:"Agent",gate:"Human gate",val:"Validator",report:"Reports",aio:"Optional · AIO"};
+  var rail=document.getElementById("rail"), detail=document.getElementById("detail");
+  var fill=document.getElementById("fill"), packet=document.getElementById("packet");
+  var nodes=[];
+
+  function esc(s){return s;}
+  function render(i){
+    var s=STAGES[i];
+    nodes.forEach(function(n,j){n.setAttribute("aria-selected", j===i?"true":"false");});
+    detail.innerHTML=
+      '<span class="dpill '+s.t+'">'+pillName[s.t]+'</span>'+
+      '<h2>'+s.title+'</h2><p class="role">'+s.role+'</p>'+
+      '<div class="io"><div class="iobox"><div class="h">Reads</div>'+s.reads.map(function(x){return '<span class="f">'+x+'</span>';}).join("")+'</div>'+
+      '<div class="ioarrow">→</div>'+
+      '<div class="iobox out"><div class="h">Writes</div>'+s.writes.map(function(x){return '<span class="f">'+x+'</span>';}).join("")+'</div></div>'+
+      '<div class="proc"><div class="h">What it does</div><p>'+s.proc+'</p></div>'+
+      '<div class="eg"><b>On ABYR-2167</b>'+s.eg+'</div>'+
+      '<div class="hint">Tip: press ▶ Play run to animate the whole pipeline.</div>';
+  }
+
+  STAGES.forEach(function(s,i){
+    var b=document.createElement("button");
+    b.className="node t-"+s.t; b.type="button"; b.setAttribute("aria-selected","false");
+    b.innerHTML='<span class="dot">'+s.ic+'</span><span class="lab"><b>'+s.label+'</b><span>'+s.sub+'</span></span><span class="badge">'+s.badge+'</span>';
+    b.addEventListener("click",function(){ stopPlay(); render(i); moveTo(i,true); });
+    rail.appendChild(b); nodes.push(b);
+  });
+  render(0);
+
+  function nodeCenter(i){ var n=nodes[i]; return n.offsetTop + n.offsetHeight/2; }
+  function moveTo(i, light){
+    var y=nodeCenter(i);
+    packet.classList.add("on");
+    packet.style.transform="translateY("+(y-33)+"px)";
+    var railTop=34;
+    fill.style.height=Math.max(0,(y-railTop))+"px";
+    if(light){ nodes.forEach(function(n,j){ n.classList.toggle("active", j===i); if(j<i)n.classList.add("done"); }); }
+  }
+
+  var timer=null, speed=900, playing=false;
+  function stopPlay(){ playing=false; if(timer){clearTimeout(timer);timer=null;} document.getElementById("play").textContent="▶  Play run"; }
+  function reset(){ stopPlay(); nodes.forEach(function(n){n.classList.remove("active","done");}); fill.style.height="0"; packet.classList.remove("on"); packet.style.transform="translateY(0)"; render(0); }
+
+  function play(){
+    if(playing){ stopPlay(); return; }
+    reset(); playing=true; document.getElementById("play").textContent="⏸  Pause";
+    var i=0;
+    function step(){
+      if(!playing) return;
+      render(i); moveTo(i,true);
+      i++;
+      if(i<STAGES.length){ timer=setTimeout(step, reduce?0:speed); }
+      else { nodes.forEach(function(n){n.classList.add("done");}); nodes[STAGES.length-1].classList.add("active"); stopPlay(); }
+    }
+    step();
+  }
+
+  document.getElementById("play").addEventListener("click",play);
+  document.getElementById("reset").addEventListener("click",reset);
+  Array.prototype.forEach.call(document.querySelectorAll(".speed button"),function(btn){
+    btn.addEventListener("click",function(){
+      document.querySelectorAll(".speed button").forEach(function(b){b.classList.remove("on");});
+      btn.classList.add("on"); speed=parseInt(btn.getAttribute("data-s"),10);
+    });
+  });
+  window.addEventListener("resize",function(){ var sel=nodes.findIndex(function(n){return n.getAttribute("aria-selected")==="true";}); if(sel>=0) moveTo(sel,false); });
+})();
+</script>
