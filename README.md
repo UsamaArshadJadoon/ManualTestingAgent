@@ -18,6 +18,37 @@ You type one command:
 
 **On our live run (Jira `ABYR-2167` — “Client Profile View & Risk Results”):** 12 acceptance criteria → 26 test cases → **22 passed · 2 failed · 2 blocked**, 7 findings surfaced, GO ⚠ verdict — with real screenshots captured for every case.
 
+## How the agents work — step by step
+
+Each agent reads the previous stage's file from a shared run folder, does its job, writes its own file for the next agent, and is independently re-checked by the validator before the pipeline advances. Two human gates guard the consequential actions.
+
+```mermaid
+flowchart TD
+    U([👤 You — /qa-run ABYR-2167]):::you --> ORCH{{Orchestrator}}:::orch
+    ORCH -->|writes run-context.json| S1[qa-story]:::agent
+    S1 -->|story.json| V1{{qa-validator}}:::val
+    V1 -.->|gaps → fix · max 2| S1
+    V1 -->|ok| S2[qa-test-writer]:::agent
+    S2 -->|test-cases.json| S3[qa-gap-analyzer]:::agent
+    S3 -->|gap-report.json · 12/12| G1[/🚦 Gate 1 — approve test plan/]:::gate
+    G1 -->|you say go| S4[qa-test-executor]:::agent
+    S4 -->|results.json + screenshots| V2{{qa-validator}}:::val
+    V2 --> S5A[qa-bug-logger — Phase A]:::agent
+    S5A -->|bugs-proposed.json · drafts only| G2[/🚦 Gate 2 — approve bugs/]:::gate
+    G2 -->|approved refs| S5B[qa-bug-logger — Phase B]:::agent
+    S5B -->|bugs-created.json| S6[qa-reviewer]:::agent
+    S6 -->|review.json · GO / NO-GO| R[[📄 report.html + bug-report.html]]:::report
+
+    classDef you fill:#6d5ae0,stroke:#4b3ec9,color:#fff;
+    classDef orch fill:#334155,stroke:#1e293b,color:#fff;
+    classDef agent fill:#0e7c86,stroke:#0a5960,color:#fff;
+    classDef val fill:#b9791a,stroke:#8a5a12,color:#fff;
+    classDef gate fill:#3b6fd4,stroke:#2a52a0,color:#fff;
+    classDef report fill:#1f9d57,stroke:#167243,color:#fff;
+```
+
+> **Legend:** teal = agent · amber = independent validator (loops back on gaps, max 2 retries) · blue = human approval gate · green = published reports. Nothing runs against your app before Gate 1; nothing reaches Jira before Gate 2.
+
 ## The pipeline — seven agents + a validator
 
 | # | Agent | Reads → Writes | Job |
