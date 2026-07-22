@@ -2,3 +2,7 @@
 .superpowers/
 # Local QA run outputs
 qa-runs/
+# Playwright MCP page snapshots (may contain credentials/PII — never commit)
+.playwright-mcp/
+# Local project config that references credential env-var names
+.qa-config.json
