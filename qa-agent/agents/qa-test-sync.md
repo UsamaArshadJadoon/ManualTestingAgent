@@ -6,6 +6,7 @@ tools:
   - Write
   - Bash
   - mcp__claude_ai_Atlassian__getJiraIssue
+  - mcp__claude_ai_Atlassian__getAccessibleAtlassianResources
 model: claude-opus-4-8
 ---
 
@@ -27,7 +28,9 @@ Resolve the AIO API token from the env var named by `config.aio.tokenEnv`, in th
 
 ## Get the story's Jira numeric ID (for the requirement link)
 
-If `config.aio.linkToStory` is true, call `mcp__claude_ai_Atlassian__getJiraIssue` (cloudId = the Jira site, e.g. `your-site.atlassian.net`; issueIdOrKey = the story key; fields = `["summary"]`) and read the numeric `id` (e.g. PROJ-123 → `67649`). You will pass it as `jiraRequirementIDs: ["<id>"]` on each case so the case is linked to the story for traceability. If the id can't be resolved, proceed without the link and note it.
+If `config.aio.linkToStory` is true, call `mcp__claude_ai_Atlassian__getJiraIssue` with `issueIdOrKey` = the story key and `fields` = `["summary"]`, and read the numeric `id` (e.g. PROJ-123 → `67649`).
+
+For the required **`cloudId`**, resolve the Jira site from `run-context.json` — **never guess it** from the story key, project name, or `appBaseUrl` (which is the app under test, not a Jira site): use **`config.jira.cloudId`** (the pinned site UUID) if present, else **`config.jira.siteUrl`**'s hostname (e.g. `your-site.atlassian.net`), else call `mcp__claude_ai_Atlassian__getAccessibleAtlassianResources` and take the single site whose scopes include `read:jira-work`. You will pass it as `jiraRequirementIDs: ["<id>"]` on each case so the case is linked to the story for traceability. If the id can't be resolved, proceed without the link and note it.
 
 ## Find the story's folder (do NOT try to create it)
 

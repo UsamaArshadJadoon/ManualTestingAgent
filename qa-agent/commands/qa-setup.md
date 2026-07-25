@@ -15,7 +15,12 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
 
 ```json
 {
-  "jira": { "projectKey": "PROJ", "defaultBugType": "Bug" },
+  "jira": {
+    "projectKey": "PROJ",
+    "defaultBugType": "Bug",
+    "siteUrl": "https://your-site.atlassian.net",
+    "cloudId": ""
+  },
   "app": {
     "baseUrl": "https://staging.example.com",
     "login": {
@@ -49,6 +54,7 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
 
 3. **Ask the setup questions with `AskUserQuestion`.** Gather the following (batch related questions together where the tool allows it):
    - **Jira `projectKey`** — the Jira project key this QA run will file bugs against (e.g. `PROJ`).
+   - **Jira `siteUrl`** — the Atlassian site the project lives on (e.g. `https://your-site.atlassian.net`). This is REQUIRED: every Atlassian MCP call needs a `cloudId`, and without a pinned site the Jira-facing agents have to guess a hostname — a wrong guess surfaces as a confusing "access denied / not granted" error rather than a clear one. If the Atlassian connector is authorized, you can offer the accessible sites as choices instead of making the user type the URL.
    - **App `baseUrl`** — the base URL of the application under test (e.g. `https://staging.example.com`).
    - **Whether login is required** for the app under test.
      - If yes, also ask for:
@@ -62,6 +68,7 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
 
 4. **Write `.qa-config.json`.** Using the embedded default config above as the base shape, fill in the answers from step 3:
    - `jira.projectKey` from the answer given (keep `jira.defaultBugType` as `"Bug"` from the template unless the user overrides it).
+   - `jira.siteUrl` from the answer given. Also set `jira.cloudId` to that site's UUID when you can obtain it (e.g. from `getAccessibleAtlassianResources` if the connector is authorized); otherwise leave it as `""` — the agents fall back to the `siteUrl` hostname.
    - `app.baseUrl` from the answer given.
    - `app.login.required`, `app.login.loginUrl`, `app.login.usernameEnv`, `app.login.passwordEnv` from the answers given (keep `app.login.sessionReuse: true` from the template).
    - `safety.allowProduction` from the answer given.

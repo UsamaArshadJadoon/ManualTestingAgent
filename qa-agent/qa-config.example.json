@@ -1,5 +1,10 @@
 {
-  "jira": { "projectKey": "PROJ", "defaultBugType": "Bug" },
+  "jira": {
+    "projectKey": "PROJ",
+    "defaultBugType": "Bug",
+    "siteUrl": "https://your-site.atlassian.net",
+    "cloudId": ""
+  },
   "aio": {
     "enabled": false,
     "baseUrl": "https://tcms.aiojiraapps.com/aio-tcms/api/v1",

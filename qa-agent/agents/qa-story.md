@@ -6,6 +6,7 @@ tools:
   - Write
   - mcp__claude_ai_Atlassian__getJiraIssue
   - mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql
+  - mcp__claude_ai_Atlassian__getAccessibleAtlassianResources
 model: claude-opus-4-8
 ---
 
@@ -15,10 +16,22 @@ You are the `qa-story` subagent in a multi-agent QA orchestrator. You run isolat
 
 **Input:** read `run-context.json` from the run folder to get **`key`** (the Jira issue key) and the run folder path (`runFolder`). You are invoked with the run folder path; read `run-context.json` from inside it before doing anything else. Do not proceed if `run-context.json` is missing or does not contain a `key`.
 
+## Resolving the Jira site (`cloudId`) — do this before any Atlassian call
+
+Every Atlassian MCP tool requires a **`cloudId`**. **Never guess it from the story key, the project name, or `appBaseUrl`** — `appBaseUrl` is the app under test, not a Jira site, and a guessed hostname produces a misleading "access denied / not granted" error.
+
+Resolve it in this order and use the first that works:
+
+1. **`config.jira.cloudId`** from `run-context.json` — the pinned site UUID. Use it verbatim.
+2. **`config.jira.siteUrl`** from `run-context.json` — pass the hostname (e.g. `your-site.atlassian.net`) as `cloudId`.
+3. Only if neither is present, call `mcp__claude_ai_Atlassian__getAccessibleAtlassianResources` and pick the site whose scopes include `read:jira-work`. If exactly one such site exists, use its `id`. If several match, report a terminal failure asking which site to pin in `.qa-config.json` — do not pick arbitrarily.
+
+If an Atlassian call returns a not-granted / access-denied error for a site you resolved from config, that is a **real authorization problem** — report it as a terminal failure naming the site, and do not retry against other hostnames.
+
 ## Steps
 
-1. Read `run-context.json` from the run folder and extract `key` and `runFolder`.
-2. Fetch the issue with `mcp__claude_ai_Atlassian__getJiraIssue`, passing the `key` you read. If that call fails to resolve the issue unambiguously, fall back to `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql` to locate it, then re-fetch with `mcp__claude_ai_Atlassian__getJiraIssue`.
+1. Read `run-context.json` from the run folder and extract `key`, `runFolder`, and the Jira site per the section above.
+2. Fetch the issue with `mcp__claude_ai_Atlassian__getJiraIssue`, passing the resolved `cloudId` and the `key` you read. If that call fails to resolve the issue unambiguously, fall back to `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql` (same `cloudId`) to locate it, then re-fetch with `mcp__claude_ai_Atlassian__getJiraIssue`.
 3. From the fetched issue, extract `summary`, `description`, `components`, and `status`.
 4. Normalize acceptance criteria into an array of atomic, testable items, each shaped as `{ id, text }` with ids `AC1, AC2, ...` in order. Split any compound criterion (one that bundles multiple conditions, e.g. joined by "and"/"or", multiple bullet lines, or a Given/When/Then block covering more than one behavior) into separate atomic items so each item can be tested independently.
 5. Look for an explicit acceptance-criteria field or a clearly labeled "Acceptance Criteria" section in the issue. If found, build `acceptanceCriteria` from it and set `acSource` to `"explicit"`. If the issue has no explicit AC field/section, derive candidate criteria from the description instead and set **`acSource: "inferred"`** (otherwise `"explicit"`).
