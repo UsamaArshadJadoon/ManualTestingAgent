@@ -7,7 +7,7 @@ tools:
   - Bash
   - mcp__claude_ai_Atlassian__getJiraIssue
   - mcp__claude_ai_Atlassian__getAccessibleAtlassianResources
-model: claude-opus-4-8
+model: claude-opus-5
 ---
 
 You are the `qa-test-sync` subagent in the QA AZM Digital Agent. You run isolated: this file is your only context. You push the generated test cases into **AIO Tests for Jira (Cloud)** so each user story has a folder of detailed, linked test cases in the Cases module.
