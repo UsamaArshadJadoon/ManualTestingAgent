@@ -28,6 +28,8 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
       "loginUrl": "https://staging.example.com/login",
       "usernameEnv": "QA_USER",
       "passwordEnv": "QA_PASS",
+      "passwordless": false,
+      "notes": "",
       "sessionReuse": true
     }
   },
@@ -60,7 +62,10 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
      - If yes, also ask for:
        - **`loginUrl`** — the login page URL.
        - The **env var NAME** (not the value) that holds the username, e.g. `usernameEnv` such as `QA_USER`. Never ask for or accept the literal username/password value itself — only the name of the environment variable that will hold it.
-       - The **env var NAME** (not the value) that holds the password, e.g. `passwordEnv` such as `QA_PASS`.
+       - **Whether the app actually uses a password.** Do NOT assume it does. Plenty of apps — and especially UAT environments — authenticate with an **identifier alone**: an employee number, national ID, membership number, or a magic link, with the password step bypassed entirely. Ask explicitly, and:
+         - **Password-based:** ask for the env var NAME that holds the password (e.g. `passwordEnv` such as `QA_PASS`), and set `login.passwordless` to `false`.
+         - **Identifier-only (passwordless):** set **`login.passwordEnv` to `null`** and **`login.passwordless` to `true`**. Do not invent a password env-var name for a password that does not exist — a placeholder name here makes the executor look for a credential that will never be set. `usernameEnv` holds the identifier (name it for what it is, e.g. `QA_USER_ID`).
+       - **`login.notes`** *(optional but recommended)* — one or two sentences on anything non-obvious about this app's login: which field takes the identifier, what the submit control is called, and any quirk worth knowing. The executor reads this and follows it. Offer to write it, especially for a passwordless login.
      - If no, set `login.required` to `false` and omit/blank the login-specific fields as appropriate, keeping the same key shape as the template.
    - **Whether production runs are allowed** — this maps to `safety.allowProduction` (`true`/`false`). Make clear that leaving this `false` is the safe default and that `true` permits the orchestrator to run against production-looking URLs.
 
@@ -70,12 +75,12 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
    - `jira.projectKey` from the answer given (keep `jira.defaultBugType` as `"Bug"` from the template unless the user overrides it).
    - `jira.siteUrl` from the answer given. Also set `jira.cloudId` to that site's UUID when you can obtain it (e.g. from `getAccessibleAtlassianResources` if the connector is authorized); otherwise leave it as `""` — the agents fall back to the `siteUrl` hostname.
    - `app.baseUrl` from the answer given.
-   - `app.login.required`, `app.login.loginUrl`, `app.login.usernameEnv`, `app.login.passwordEnv` from the answers given (keep `app.login.sessionReuse: true` from the template).
+   - `app.login.required`, `app.login.loginUrl`, `app.login.usernameEnv`, `app.login.passwordEnv`, `app.login.passwordless`, and `app.login.notes` from the answers given (keep `app.login.sessionReuse: true` from the template). For a passwordless login write `"passwordEnv": null` and `"passwordless": true` — the executor treats that as "identifier only" and will not block cases looking for a password.
    - `safety.allowProduction` from the answer given.
    - Keep the `safety` (other than `allowProduction`), `severityMap`, and `execution` blocks exactly as they appear in the embedded default config above — do not change `prodUrlPatterns`, `destructiveActions`, `cleanupCreatedData`, `maskPatterns`, `severityMap`, `execution`, or `outputDir` from the embedded defaults.
    - Use the `Write` tool to create **`.qa-config.json`** in the project root with this filled-in structure.
 
-5. **Scaffold the git-ignored credential store (`.qa-secrets`).** If `login.required` is `true`, create a **`.qa-secrets`** file in the project root (a `.env`-style `KEY=VALUE` file) so the executor has a local place to read credentials from when OS env vars aren't set. **Never ask the user to type their actual password into this conversation, and never write a real secret value yourself** — write only a commented template with empty placeholders for the chosen env-var names, which the user fills in privately in the git-ignored file. If `.qa-secrets` already exists, do NOT overwrite it (leave the user's values intact). Template to write:
+5. **Scaffold the git-ignored credential store (`.qa-secrets`).** If `login.required` is `true`, create a **`.qa-secrets`** file in the project root. For a **passwordless** login include only the identifier key — do not emit a password line for a password that does not exist. (a `.env`-style `KEY=VALUE` file) so the executor has a local place to read credentials from when OS env vars aren't set. **Never ask the user to type their actual password into this conversation, and never write a real secret value yourself** — write only a commented template with empty placeholders for the chosen env-var names, which the user fills in privately in the git-ignored file. If `.qa-secrets` already exists, do NOT overwrite it (leave the user's values intact). Template to write:
    ```
    # QA Orchestrator credential store — .env-style KEY=VALUE
    # This file is git-ignored and MUST NEVER be committed.

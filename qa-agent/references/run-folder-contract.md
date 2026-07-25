@@ -41,6 +41,17 @@ Screenshots under `screenshots/` are captured by `qa-test-executor` at a 1920×1
 ```
 { key, appBaseUrl, config, bugProjectKey, mode: "run|rerun|resume", runFolder, timestamp }
 ```
+**`config.app.login`** — how the executor authenticates: `{ required, loginUrl, usernameEnv, passwordEnv, passwordless, notes, sessionReuse }`.
+
+| Field | Meaning |
+| --- | --- |
+| `usernameEnv` / `passwordEnv` | Env-var **names** (never values) holding the credentials. Resolved from the OS env first, then a git-ignored `.qa-secrets`/`.env`. |
+| `passwordless` | `true` when the app authenticates on an **identifier alone** — an employee number, national ID, membership number, magic link. `passwordEnv` is then `null`. |
+| `notes` | Free-text guidance on how this app's login actually works (which field takes the identifier, what to click, quirks). The executor reads and follows it. |
+| `sessionReuse` | `true` means the executor logs in **once before the first case** and reuses the session throughout. |
+
+**A passwordless login is not a missing credential.** With `passwordless: true` (or `passwordEnv: null`) the executor resolves only the identifier and must never block a case for the absent password. `qa-test-writer` likewise must not write password steps or put a password in `testData`. Because `sessionReuse` means auth is already established, test cases start from the authenticated state rather than repeating login steps — except cases that deliberately test the auth boundary (unauthenticated access, route guards, logout).
+
 `bugProjectKey` is the Jira project `qa-bug-logger` files bugs against for this run — chosen once by the user at run-folder creation (section 3 of `/qa-run`) and may differ from `config.jira.projectKey` (the configured default, offered as the recommended option). The story `key` itself is unaffected — every bug still links back to the same story regardless of which project it's filed in. Older run folders created before this field existed won't have it; `qa-bug-logger` falls back to `config.jira.projectKey` in that case.
 
 ### `story.json`
