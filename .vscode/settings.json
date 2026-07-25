@@ -1,0 +1,8 @@
+{
+  // .qa-secrets is a .env-style KEY=VALUE credential store, not YAML.
+  // Without this, VS Code's YAML parser reports "Unexpected scalar token in YAML stream".
+  "files.associations": {
+    ".qa-secrets": "properties",
+    ".qa-config.json": "jsonc"
+  }
+}

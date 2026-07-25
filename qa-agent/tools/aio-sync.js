@@ -28,6 +28,7 @@ const flag = (name) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : nul
 const onlyArg = flag('--only');
 const only = onlyArg ? onlyArg.split(',').map((s) => s.trim()) : null;
 const storyJiraIdArg = flag('--story-jira-id');
+const allowDuplicates = argv.includes('--allow-duplicates');
 
 function die(msg) {
   console.error(msg);
@@ -36,10 +37,21 @@ function die(msg) {
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
+/** Read a required run-folder input, failing with a readable message instead of a stack trace. */
+function readInput(name) {
+  const p = path.join(runFolder, name);
+  if (!fs.existsSync(p)) die(`Cannot sync to AIO: ${name} not found in run folder ${runFolder}`);
+  try {
+    return readJson(p);
+  } catch (e) {
+    die(`Cannot sync to AIO: ${name} in ${runFolder} is not valid JSON (${e.message})`);
+  }
+}
 
-const ctx = readJson(path.join(runFolder, 'run-context.json'));
-const story = readJson(path.join(runFolder, 'story.json'));
-const testCases = readJson(path.join(runFolder, 'test-cases.json'));
+if (!fs.existsSync(runFolder)) die(`Cannot sync to AIO: run folder not found: ${runFolder}`);
+const ctx = readInput('run-context.json');
+const story = readInput('story.json');
+const testCases = readInput('test-cases.json');
 const cfg = ctx.config || {};
 const aio = cfg.aio || {};
 if (aio.enabled !== true) die('AIO sync disabled (config.aio.enabled is not true)');
@@ -207,13 +219,34 @@ function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
 (async () => {
   const outPath = path.join(runFolder, 'aio-sync.json');
 
-  // Idempotency: never re-create a case this run already created (AIO has no DELETE).
+  // Idempotency, layer 1: never re-create a case this run already created (AIO has no DELETE).
   const prior = fs.existsSync(outPath) ? readJson(outPath) : null;
   const alreadyCreated = new Map(
     ((prior && prior.cases) || [])
       .filter((c) => c.aioKey)
       .map((c) => [c.testId, c])
   );
+
+  // Idempotency, layer 2: re-running the same story creates a NEW run folder, so layer 1
+  // cannot see cases an earlier run already pushed — and AIO offers no way to delete the
+  // duplicates that would result (no DELETE endpoint, and its search API has no
+  // server-side folder filter to check against cheaply). So scan sibling run folders for
+  // the same story key and match on title, which is the case's human identity across runs
+  // (test ids like TC1 are positional and can mean a different case in a later run).
+  const priorTitles = new Map();
+  try {
+    const runsRoot = path.dirname(path.resolve(runFolder));
+    for (const dir of fs.readdirSync(runsRoot)) {
+      if (!dir.startsWith(storyKey + '_')) continue;
+      const p = path.join(runsRoot, dir, 'aio-sync.json');
+      if (path.resolve(path.join(runsRoot, dir)) === path.resolve(runFolder) || !fs.existsSync(p)) continue;
+      for (const c of readJson(p).cases || []) {
+        if (c.aioKey && c.title) priorTitles.set(c.title.trim().toLowerCase(), { ...c, fromRun: dir });
+      }
+    }
+  } catch (_) {
+    /* a missing or unreadable sibling run must never block a sync */
+  }
 
   const folder = await resolveFolder();
   const st = await resolveScriptTypeId();
@@ -245,6 +278,18 @@ function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
       const p = alreadyCreated.get(tc.id);
       console.log(`SKIP ${tc.id} already created as ${p.aioKey}`);
       results.push(p);
+      continue;
+    }
+    const dupe = priorTitles.get((tc.title || '').trim().toLowerCase());
+    if (dupe && !allowDuplicates) {
+      console.log(`SKIP ${tc.id} same title already in AIO as ${dupe.aioKey} (from run ${dupe.fromRun})`);
+      results.push({
+        testId: tc.id,
+        aioKey: dupe.aioKey,
+        aioID: dupe.aioID,
+        title: tc.title,
+        reusedFromRun: dupe.fromRun,
+      });
       continue;
     }
     const body = buildBody(Object.assign({ cfgLoginNote: loginNote }, tc), folder.ID, st.id, storyJiraId);
@@ -287,6 +332,10 @@ function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
             { item: 'token never printed', pass: true },
             { item: 'requirement link applied when enabled', pass: aio.linkToStory === false || !!storyJiraId },
             { item: 'no duplicate creation on re-run (idempotent by testId)', pass: true },
+            {
+              item: 'no duplicate creation across run folders for the same story (matched by title)',
+              pass: !allowDuplicates,
+            },
           ],
           selfConfident: createdCount === (testCases.cases || []).length,
           notes: `scriptType ID ${st.id} ${st.source}. AIO exposes no DELETE for cases, so already-created cases are skipped rather than re-posted.`,
