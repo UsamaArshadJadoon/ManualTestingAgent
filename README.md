@@ -17,7 +17,7 @@
 You type one command:
 
 ```
-/qa-run ABYR-2167
+/qa-run SEK-1934
 ```
 
 …and the agent reads the Jira story, designs the tests, drives your live app in a **real browser**, and hands you a signed-off report — pausing only at two human approval gates. Behind that one command, an **orchestrator** dispatches the specialist subagents (seven core + an optional **`qa-test-sync`** that mirrors the approved cases into **AIO Tests**) and re-checks every stage with an independent validator.
@@ -32,7 +32,7 @@ Each agent reads the previous stage's file from a shared run folder, does its jo
 
 ```mermaid
 flowchart TD
-    U(["You: /qa-run ABYR-2167"]):::you
+    U(["You: /qa-run SEK-1934"]):::you
     U --> ORCH{{"Orchestrator (runs the whole pipeline)"}}:::orch
     ORCH == run-context.json ==> S1["1 - qa-story"]:::agent
     S1 == story.json ==> S2["2 - qa-test-writer"]:::agent
@@ -64,7 +64,7 @@ flowchart TD
 
 **How to read it:** the flow runs **top → bottom**, 1 through 7. Each **bold arrow is the file** one agent writes for the next. Diamonds are the **two human gates** (nothing runs against the app before Gate 1; nothing reaches Jira before Gate 2). The amber **qa-validator** independently re-checks every stage and dashed-loops a stage back to the orchestrator if it finds a gap. The dashed **qa-test-sync** branch runs only when `config.aio.enabled` is `true`; it does **not** gate execution and runs once per story.
 
-> 📁 **Prerequisite for AIO sync:** AIO's API can't create folders, so **before the run you create one folder in the AIO *Cases* module named with the story key** (e.g. `ABYR-2167`). `qa-test-sync` finds that folder by name and fills it with the approved cases, each linked to the Jira story. If the folder is missing, the agent stops and tells you the exact name to create, then you re-run it.
+> 📁 **Prerequisite for AIO sync:** AIO's API can't create folders, so **before the run you create one folder in the AIO *Cases* module named with the story key** (e.g. `SEK-1934`). `qa-test-sync` finds that folder by name and fills it with the approved cases, each linked to the Jira story. If the folder is missing, the agent stops and tells you the exact name to create, then you re-run it.
 
 **Legend:** 🟣 you · ⬛ orchestrator · 🟢 agent · 🟠 validator · 🔵 human gate · 🟩 published reports.
 
@@ -183,7 +183,7 @@ You should see the 8 `qa-*` agents (`qa-story`, `qa-test-writer`, `qa-gap-analyz
 
 1. In the project you want to test, run `/qa-setup` (writes `.qa-config.json`, scaffolds a git-ignored `.qa-secrets`, hardens `.gitignore`).
 2. **Provide credentials** — fill the git-ignored `.qa-secrets`, or set `$env:QA_USER` / `$env:QA_PASS`.
-3. *(Optional — AIO Tests)* set `aio.enabled: true` in `.qa-config.json`, add `AIO_TOKEN` to `.qa-secrets`, and **create a folder named with the story key** (e.g. `ABYR-2167`) in the AIO **Cases** module — `qa-test-sync` fills that folder with the approved cases.
+3. *(Optional — AIO Tests)* set `aio.enabled: true` in `.qa-config.json`, add `AIO_TOKEN` to `.qa-secrets`, and **create a folder named with the story key** (e.g. `SEK-1934`) in the AIO **Cases** module — `qa-test-sync` fills that folder with the approved cases.
 4. **Run** — `/qa-run <STORY-KEY>` (add `--rerun` to re-test prior failures, `--resume` to continue an interrupted run).
 
 > **Updating later:** to get a newer version, download/clone again and re-run `powershell -File qa-agent\install.ps1` — it overwrites the deployed copies with the latest.

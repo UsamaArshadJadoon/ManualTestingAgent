@@ -11,6 +11,7 @@
     "tokenEnv": "AIO_TOKEN",
     "projectKey": "PROJ",
     "folder": "",
+    "scriptTypeId": null,
     "linkToStory": true
   },
   "app": {

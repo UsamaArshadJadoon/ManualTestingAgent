@@ -42,7 +42,7 @@ through the `Task` tool.
     (Cloud)** inside the story's folder and links each to the Jira story for
     traceability. It runs once per story and does not gate execution. Because
     the AIO API cannot create folders, **you must first create a folder named
-    with the story key** (e.g. `ABYR-2167`) in the AIO *Cases* module; if it
+    with the story key** (e.g. `SEK-1934`) in the AIO *Cases* module; if it
     is missing, `qa-test-sync` stops and tells you the exact name to create.
 
 Every subagent runs isolated with no shared memory: the orchestrator passes
@@ -75,7 +75,7 @@ files inside the run folder.
 4. **(Optional — only for AIO Tests sync)** set `aio.enabled: true` in
    `.qa-config.json`, add the AIO API token to `.qa-secrets` under the name
    in `aio.tokenEnv` (default `AIO_TOKEN`), and **create one folder named with
-   the story key** (e.g. `ABYR-2167`) in the AIO **Cases** module. The AIO
+   the story key** (e.g. `SEK-1934`) in the AIO **Cases** module. The AIO
    public API cannot create folders, so this one-time UI step is required per
    story; `qa-test-sync` then finds the folder by name and fills it with the
    approved cases.
