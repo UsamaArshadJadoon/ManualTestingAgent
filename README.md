@@ -163,7 +163,7 @@ Pick either option — both give you the `qa-agent/` folder that holds all 8 age
   git clone https://github.com/UsamaArshadJadoon/ManualTestingAgent.git
   ```
 
-> The **Source code (zip)** asset *is* the agent code — it contains the whole repo, including `qa-agent\agents\` (the 8 `qa-*` agents), `qa-agent\commands\` (`qa-run`, `qa-setup`), and `qa-agent\install.ps1`.
+> Either way you get the whole repo, including `qa-agent\agents\` (the 8 `qa-*` agents), `qa-agent\commands\` (`qa-run`, `qa-setup`), and `qa-agent\install.ps1` — that *is* the agent code; there is nothing separate to build or compile.
 
 ### 2 · Authorize the connectors
 
