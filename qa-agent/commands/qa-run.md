@@ -88,10 +88,35 @@ After stage 9 (and its validation), produce the report. **Branding:** every repo
    - **Screenshot links**: the per-case screenshot paths from `results.json`.
    - A **validation summary**: per stage, whether it passed clean, how many fix-retries it took, and whether it was escalated to the user (from the `validation/<stage>.json` files and the outcomes you recorded in section 4).
 2. Write **`report.html`** into the run folder — the same content as a self-contained HTML page — and **publish it as an Artifact** (call the Artifact tool on the `report.html` file). Include the same sections: summary, GO/NO-GO, traceability matrix, tallies, coverage %, proposed-vs-created bugs, screenshot links, and the validation summary.
-3. **ALWAYS write a detailed `bug-report.html` with embedded screenshots** whenever `bugs-proposed.json` has ≥1 draft (this is mandatory on every run that found anything — not optional). It is a self-contained HTML page with one **card per bug** (every draft in `bugs-proposed.json`), and each card shows the **full standard bug details**: `ref`/ID, title, a severity chip, priority, status, linked AC, originating test id(s), environment, numbered **steps to reproduce**, **expected result**, **actual result**, any **console/network errors**, **possible duplicates**, a **recommendation**, and the discovered date — plus a **summary table** of all bugs at the top and the run/verdict header.
-   - **Embed each bug's screenshots inline as base64 data URIs** so they render anywhere (the Artifact CSP blocks external/local file refs). For every `screenshots` path on every draft, use the **Bash** tool to base64-encode the PNG from the run folder and inline it as `data:image/png;base64,<...>` in the page (e.g. author the HTML with `{{IMG:<name>}}` placeholders, then run a small `node`/`base64` step that replaces each placeholder with the encoded file's data URI). Each screenshot appears in a `<figure>` with a caption naming its test case. Never reference a screenshot by file path in the published page.
+3. **Write a detailed `bug-report.html` — MANDATORY at the end of every run that found anything.** If `bugs-proposed.json` has ≥1 draft, you MUST produce and publish this file. It is not optional, not conditional on the user asking, and not something to skip because the main `report.html` already lists the bugs — the two files serve different readers. Skip it ONLY when there were zero drafts (a genuinely clean run), and say so explicitly.
+
+   It is a self-contained HTML page whose job is to explain **every bug in full detail, with HD visual evidence**, so a developer can act on it without opening the run folder or re-reading the story.
+
+   **Required structure, in this order:**
+   - A **run/verdict header**: story key + summary, verdict, bug counts (proposed vs created), test tallies, environment, discovery timestamp.
+   - A **summary table of all bugs** at the top — one row per draft: `ref`, Jira key (linked to the browse URL when created), title, severity chip, status, linked AC, originating test id(s), and possible-duplicate keys.
+   - **One card per bug**, for EVERY draft in `bugs-proposed.json` — including drafts the user did NOT approve for Jira creation (mark those clearly as "not filed"), because an unfiled finding is still a finding the team needs to see.
+
+   **Each bug card must show the full standard field set — omit nothing:** `ref`/ID and Jira key, title, severity chip, priority, status, linked AC, originating test id(s), environment, a prose **description** explaining the defect and its root cause, numbered **steps to reproduce**, **expected result** and **actual result** side by side, **console/network errors** (state "none observed" explicitly rather than dropping the section), **possible duplicates** (likewise), a **recommendation** for the fix, the **discovered date**, and an **evidence** block of screenshots.
+
+   **Evidence — HD screenshots embedded, one figure per image:**
+   - Collect the images for each bug as the **union** of the draft's own `screenshots` array and the `screenshots` of every originating test case in `results.json` (`testId` plus any case referenced in the draft). A bug's evidence should show both the failure and enough surrounding context to understand it.
+   - Screenshots are captured by `qa-test-executor` at a **1920×1080 viewport, full-page PNG** (its HD evidence standard). **Embed the original PNG bytes at full size — never downscale, crop, re-encode, or thumbnail them.** In CSS, let each image render at `width: 100%; height: auto` inside its figure so it scales to the reader's screen while keeping full pixel data for zooming.
+   - Each image goes in a `<figure>` with a `<figcaption>` that names the originating test case and states **what the image proves** (draw that from the case's step `note`s and the draft's actual-result text) — not just "TC3 screenshot".
+   - Every image MUST be inlined as a `data:image/png;base64,...` URI. The Artifact CSP blocks external and local file refs, so a screenshot referenced by path silently fails to render in the published page. **Never reference a screenshot by file path.**
+   - **Do the embedding with the deterministic tool, not by hand.** Author the HTML with `{{IMG:<filename>}}` placeholders (e.g. `{{IMG:TC3-fail.png}}`), then run the embed tool once over the file with the **Bash** tool. Resolve it the same way `qa-test-sync` resolves its script — installed copy first, repo checkout as fallback:
+
+     ```bash
+     EMBED="$HOME/.claude/qa-agent/tools/embed-screenshots.js"
+     [ -f "$EMBED" ] || EMBED="qa-agent/tools/embed-screenshots.js"
+     node "$EMBED" "<runFolder>/bug-report.html"
+     ```
+
+     The tool replaces every placeholder with the encoded PNG, enforces the ≥1280px HD floor, and **exits non-zero** if a placeholder has no matching file, if any placeholder survives, or if an `<img>` still points at a path. If it fails, FIX the cause (wrong filename, missing capture, low-resolution image) and re-run it — never publish a page with broken or unembedded evidence, and never hand-patch base64 yourself. Add `--min-width 0` only when the user has explicitly accepted sub-HD evidence.
+   - Also include, after the bug cards: a clearly-labeled **"not filed as a bug" section** for any `blocked` case (what could not be verified and why, with its screenshot) and a short **table of passed cases** for completeness. These make the report honest about what the run did and did not establish — a blocked case must never be presentable as a pass.
+
    - Apply the same `safety.maskPatterns` redaction to all text before writing.
-   - **Publish `bug-report.html` as an Artifact** (Artifact tool) and give the user its URL. If there were zero drafts (a clean run), skip this file and say so.
+   - **Publish `bug-report.html` as an Artifact** (Artifact tool) and give the user its URL.
 4. Tell the user the run folder path, the verdict, the report Artifact URL, and (when produced) the bug-report Artifact URL.
 
 ## 7. Fresh-run wrap-up
@@ -104,7 +129,7 @@ When invoked with **`--resume`**:
 
 1. Locate the **latest** run folder for the key: under `outputDir`, find folders matching `<KEY>_*` and pick the one with the newest timestamp. If none exists, tell the user there is nothing to resume and offer to start a fresh run.
 2. Read its `run-context.json` (do NOT create a new run folder). Set `mode` to `"resume"`.
-3. Determine the **first missing output file** in pipeline order and restart from that stage: `story.json` → `test-cases.json` → `gap-report.json` → `results.json` → (`bugs-proposed.json` → `bugs-created.json`, only if there were failures) → `review.json` → `report.md`/`report.html`. The first stage whose output file is absent (or whose `validation/<stage>.json` shows an unresolved `pass=false`) is where you resume; every stage before it is considered done and is not re-run.
+3. Determine the **first missing output file** in pipeline order and restart from that stage: `story.json` → `test-cases.json` → `gap-report.json` → `results.json` → (`bugs-proposed.json` → `bugs-created.json`, only if there were failures) → `review.json` → `report.md`/`report.html`/`bug-report.html`. The first stage whose output file is absent (or whose `validation/<stage>.json` shows an unresolved `pass=false`) is where you resume; every stage before it is considered done and is not re-run.
    - **Empty-`bugs-created.json` rule on resume:** if the resume point is the reviewer stage (or later) but `bugs-created.json` is absent because `results.json` had zero `failed` cases OR the user approved no drafts (no `bugs-proposed.json`, or drafts exist with no approvals), you MUST first write the same empty `bugs-created.json` = `{ "created": [], "_validation": { "checklist": [{ "item": "no bugs approved for creation", "pass": true }], "selfConfident": true, "notes": "..." } }` with the `Write` tool before dispatching `qa-reviewer`, exactly as in the stage 6 / stage 7 skip branches — otherwise the reviewer terminal-fails on a missing mandatory input.
 4. From that stage onward, follow the normal section 5 pipeline (including validation, the test-plan approval gate if execution hasn't happened yet, and the bug approval gate), then produce the report (section 6).
 
@@ -124,6 +149,8 @@ When invoked with **`--rerun`**:
 - The two human approval gates (**Test-plan approval gate** before execution, **Bug approval gate** before Jira writes) are hard gates: never execute the browser without plan approval, and never create a Jira bug or apply a Jira transition without explicit approval.
 - The validation loop is a soft gate capped at **max 2** fix-retries per stage before escalating to the user.
 - Redact `safety.maskPatterns` matches before writing any report file.
+- **Every run that produced ≥1 bug draft ends with a published `bug-report.html`** — each bug explained in full detail with its HD PNG evidence embedded as base64 (section 6.3). A run is not complete without it; the only exception is a run with zero drafts, which must be stated explicitly.
+- Screenshot embedding always goes through `qa-agent/tools/embed-screenshots.js`, which hard-fails on a missing image, a surviving placeholder, a non-`data:` `<img>` src, or an image below the 1280px HD floor. Never hand-roll base64 substitution, and never publish evidence the tool rejected.
 
 ---
 

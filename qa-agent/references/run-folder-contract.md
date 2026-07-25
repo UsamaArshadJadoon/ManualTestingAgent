@@ -21,8 +21,19 @@ qa-runs/<PROJ-KEY>_<runId>/
 │   └── <stage>.json
 ├── aio-sync.json         # optional: written by qa-test-sync when config.aio.enabled
 ├── report.md
-└── report.html
+├── report.html
+└── bug-report.html       # mandatory whenever bugs-proposed.json has >= 1 draft
 ```
+
+### Report files (written by the `/qa-run` orchestrator, not by a subagent)
+
+| File | When | Contents |
+| --- | --- | --- |
+| `report.md` | every run | Human-readable run summary: verdict, traceability matrix, tallies, coverage, bugs, screenshot paths, validation summary. |
+| `report.html` | every run | Same content as a self-contained HTML page; published as an Artifact. |
+| `bug-report.html` | **whenever `bugs-proposed.json` has ≥1 draft** | One detail card per bug (all standard fields: description, numbered repro steps, expected vs actual, console/network errors, duplicates, recommendation, discovered date) plus a summary table, a "not filed" section for `blocked` cases, and a passed-case table. Every screenshot is embedded as a base64 `data:image/png;base64,...` URI at full HD size via `qa-agent/tools/embed-screenshots.js` — never by file path, which the Artifact CSP blocks. Published as an Artifact. |
+
+Screenshots under `screenshots/` are captured by `qa-test-executor` at a 1920×1080 viewport as full-page PNGs (≥1280px wide). `embed-screenshots.js` enforces that floor and hard-fails rather than publishing degraded or unembedded evidence.
 
 ## File schemas
 

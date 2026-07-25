@@ -185,7 +185,7 @@ qa-runs/PROJ-123_20260722-143001/
   aio-sync.json          # only when AIO sync is enabled (testId → AIO key/ID)
   report.md
   report.html
-  bug-report.html
+  bug-report.html        # mandatory whenever >= 1 bug draft was proposed
 ```
 
 `report.html` and the detailed `bug-report.html` are also published as Artifacts, and `report.md` /
@@ -193,6 +193,36 @@ qa-runs/PROJ-123_20260722-143001/
 traceability matrix, tallies, coverage %, bug counts, screenshot links, and a
 per-stage validation summary. Both reports are redacted against
 `safety.maskPatterns` before being written.
+
+### The detailed bug report
+
+Every run that proposes at least one bug ends with a published
+**`bug-report.html`** — this is mandatory, not optional. It carries one card per
+bug (every draft, including any the user chose not to file), each explained in
+full: description and root cause, numbered steps to reproduce, expected vs.
+actual result, console/network errors, possible duplicates, a fix
+recommendation, linked AC, originating test ids, environment, and the discovered
+date. A summary table of all bugs sits at the top; a clearly-labeled "not filed"
+section covers `blocked` cases (what could not be verified, and why), and a
+passed-case table closes it out — so the report never lets a blocked case read
+as a pass.
+
+**Evidence is embedded, in HD.** `qa-test-executor` captures full-page PNGs at a
+1920×1080 viewport (≥1280px wide, never cropped or downscaled). The orchestrator
+authors the page with `{{IMG:<file>}}` placeholders and runs
+`qa-agent/tools/embed-screenshots.js`, which swaps each one for a
+`data:image/png;base64,...` URI inside a `<figure>` whose caption says what the
+image proves. This matters because the Artifact CSP blocks external and local
+file references — a screenshot linked by path silently fails to render once
+published. The tool **hard-fails** (non-zero exit) on a missing image, a
+surviving placeholder, an `<img>` still pointing at a path, or an image below the
+1280px floor, so a report with broken or thumbnail evidence can't ship quietly:
+
+```bash
+EMBED="$HOME/.claude/qa-agent/tools/embed-screenshots.js"
+[ -f "$EMBED" ] || EMBED="qa-agent/tools/embed-screenshots.js"
+node "$EMBED" "qa-runs/<KEY>_<runId>/bug-report.html"
+```
 
 ## Known limitation: Jira screenshot attachments
 
@@ -202,8 +232,10 @@ in the description/repro steps — the image files themselves are not
 uploaded or attached to the Jira issue. To view a failure's screenshot,
 open the corresponding `screenshots/` file inside the run folder locally
 (or from the published `report.html` Artifact, which links to the same
-paths); it will not appear as a Jira attachment. The detailed
-`bug-report.html` embeds those screenshots inline for convenient sharing.
+paths); it will not appear as a Jira attachment. The practical workaround is
+the detailed `bug-report.html`, which embeds every screenshot inline at full
+HD — share that Artifact URL on the ticket, or download the images from the run
+folder and attach them to Jira by hand.
 
 ---
 
