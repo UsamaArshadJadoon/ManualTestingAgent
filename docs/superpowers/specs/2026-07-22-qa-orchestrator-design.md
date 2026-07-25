@@ -17,13 +17,16 @@ It runs entirely inside **Claude Code in VS Code**. It uses **no Anthropic API**
 execution is through the **Playwright MCP**.
 
 ### Goals
+
 - One command: `/qa-run PROJ-123` runs the whole pipeline.
 - Specialized, isolated subagents, each with one clear job.
 - Human-in-the-loop gates before the two consequential actions: **running the browser
   suite** and **writing bugs to Jira**.
+
 - A durable, auditable run folder with all evidence.
 
 ### Non-goals (out of scope for v1)
+
 - Full 12-dimension / 50–75 test matrix (we do AC-driven functional E2E).
 - Persisting reusable `.spec.ts` files (execution is live-browser only).
 - CI/Jenkins triggering, credential vaults, auto token rotation.
@@ -32,7 +35,7 @@ execution is through the **Playwright MCP**.
 
 Installed **globally** so it works in any VS Code project:
 
-```
+```text
 ~/.claude/
 ├── commands/
 │   ├── qa-run.md          # Orchestrator (entry point): /qa-run PROJ-123 [--rerun] [--resume]
@@ -59,7 +62,7 @@ Subagents run isolated and cannot share memory, so they communicate through **fi
 in a per-run folder under the current project. This gives robustness, debuggability,
 and a full audit trail.
 
-```
+```text
 <project>/qa-runs/PROJ-123_<timestamp>/
 ├── run-context.json     # orchestrator: key, app URL, resolved config, mode
 ├── story.json           # qa-story
@@ -125,6 +128,7 @@ Each subagent definition is a `~/.claude/agents/*.md` file with frontmatter
 its input files, and its exact output file + schema.
 
 ### 4.1 qa-story
+
 - **Job:** Fetch the story from Jira and normalize it.
 - **Tools:** Atlassian MCP (`getJiraIssue`, `searchJiraIssuesUsingJql`).
 - **Input:** `run-context.json` (story key).
@@ -133,6 +137,7 @@ its input files, and its exact output file + schema.
   mark `acSource: "inferred"` with low confidence for the orchestrator to surface.
 
 ### 4.2 qa-test-writer
+
 - **Job:** Generate AC-driven functional E2E test cases (happy path, negative, edge).
 - **Tools:** Read/Write (no external calls).
 - **Input:** `story.json` (+ `gap-report.json` on later iterations).
@@ -140,6 +145,7 @@ its input files, and its exact output file + schema.
   `{ id, title, linkedAC: [acId], type: "happy|negative|edge", steps: [..], testData: {..}, expectedResult }`.
 
 ### 4.3 qa-gap-analyzer
+
 - **Job:** Verify every AC maps to >=1 test case; identify missing coverage.
 - **Tools:** Read/Write.
 - **Input:** `story.json`, `test-cases.json`.
@@ -149,42 +155,55 @@ its input files, and its exact output file + schema.
   than looping forever.
 
 ### 4.4 qa-test-executor
+
 - **Job:** Execute each test case against the live app in a real browser.
 - **Tools:** Playwright MCP (navigate, click, type, snapshot, screenshot, console,
   network), Read/Write.
+
 - **Input:** `test-cases.json`, `run-context.json`.
 - **Behavior:**
   - **Environment guard:** before navigating, check `baseUrl` against
     `safety.prodUrlPatterns`. If it looks like production and `allowProduction=false`,
     stop and require explicit user confirmation.
+
   - **Non-destructive posture:** prefer read/create over update/delete on shared data.
     Any step flagged destructive requires confirmation when
     `safety.destructiveActions="confirm"`. Data the tests create is tracked and, if
     `cleanupCreatedData=true`, cleaned up (or flagged) at the end.
+
   - **Login session reuse:** authenticate once at the start (using `usernameEnv` /
     `passwordEnv`), reuse the session for all cases.
+
   - **Timeouts:** each step is bounded by `stepTimeoutMs`; the whole run by
     `maxRunMinutes`. A step timeout marks that case `blocked` and moves on.
+
   - Run each case's steps; capture a screenshot per case (and on any failure).
   - **Flaky-retry:** on failure, retry once with fresh state. Only a *consistent*
     failure is recorded as `failed`; a pass-on-retry is recorded as `flaky`.
+
   - **Console/JS error findings:** collect uncaught JS + console errors during each
     case and record them as findings even when the functional assertion passes.
+
   - One failing/blocked test never stops the rest.
   - If the app URL is unreachable or login fails, mark affected tests `blocked` (not
     `failed`) and record the reason.
+
 - **Output:** `results.json` — per case
   `{ id, status: "passed|failed|flaky|blocked", steps: [{ step, ok, note }], screenshots: [path], consoleErrors: [..], jsErrorFindings: [..], createdData: [..], reason }`.
 
 ### 4.5 qa-bug-logger (two-phase, human-approved)
+
 - **Job:** Turn consistent failures into Jira bugs — but only after user approval.
 - **Tools:** Atlassian MCP (`searchJiraIssuesUsingJql`, `createJiraIssue`,
   `createIssueLink`), Read/Write.
+
 - **Phase A — propose (no Jira writes):**
   - For each `failed` test, draft a bug: `{ title, description, reproSteps, severity,
     linkedAC, testId, screenshots }` using `severityMap`.
+
   - **Duplicate detection:** run a JQL search for existing open bugs with a similar
     summary on the project; annotate each draft with `possibleDuplicate: [key]`.
+
   - Write `bugs-proposed.json`. **Return control to the orchestrator.**
 - **Phase B — create (only after approval):**
   - The orchestrator passes the approved subset. For each, `createJiraIssue` +
@@ -192,37 +211,56 @@ its input files, and its exact output file + schema.
     (`{ testId, key, url }`).
 
 ### 4.6 qa-reviewer
+
 - **Job:** Objective sign-off.
 - **Tools:** Read/Write.
 - **Input:** all prior JSON files.
 - **Output:** `review.json` — `{ acCoveragePct, totalTests, passed, failed, flaky,
   blocked, bugsLogged, blockers, verdict: "GO|NO-GO", rationale }`.
+
 - **Rule:** verdict is `NO-GO` if any AC is uncovered, any blocker-severity test
   failed, or coverage < 100% of testable AC.
+  > **Superseded — amendment, 2026-07-26.** A **fourth** NO-GO condition was added
+  > after this spec was approved: **any AC with no *passing* linked case**. The three
+  > conditions above can all pass while the story is plainly broken — every AC covered
+  > (100%, none uncovered) by cases that all *failed* at non-blocker severity would have
+  > been signed off `GO`. A `GO` now requires demonstrated behavior, and an AC covered
+  > only by a `blocked` case counts as unverified rather than working. This block is left
+  > as originally approved for the record; `qa-agent/agents/qa-reviewer.md` is the
+  > authoritative rule.
 
 ### 4.7 qa-validator (independent per-stage verification)
+
 - **Job:** After each stage, independently confirm that stage missed nothing. It does
   NOT redo the work — it *checks* the output against the stage's inputs and checklist.
+
 - **Tools:** Read/Write only (Atlassian MCP read allowed when it must confirm against
   Jira, e.g. that no AC was dropped from the source issue).
+
 - **Input:** the stage name + that stage's input and output files.
 - **Output:** `validation/<stage>.json` —
   `{ stage, pass: bool, gaps: [{ item, detail }], checklist: [{ item, pass }], iteration }`.
+
 - **Independence:** it re-derives expectations from the *source* (e.g. re-reads the
   Jira issue's AC rather than trusting `story.json`) so it can catch omissions the
   producing agent made. This is why it is a separate agent, not self-review.
 
 ### 4.8 qa-test-sync (optional — AIO Tests mirror)
+
 - **Job:** When `aio.enabled` is true, after the test-plan gate, create the approved
   test cases in **AIO Tests for Jira (Cloud)** inside the story's folder and link each
   to the Jira story for traceability. Runs once per story; does not gate execution.
+
 - **Tools:** Read/Write, Bash (for the AIO REST calls via `fetch`/`curl` and to read
   the token from `.qa-secrets`), and Atlassian MCP read (to resolve the story's numeric
   Jira ID for the requirement link).
+
 - **Input:** `run-context.json` (`config.aio`, project key, story key), `story.json`
   (AC text for rich case descriptions), `test-cases.json` (the cases to sync).
+
 - **Output:** `aio-sync.json` — `{ project, folderID, folderName, storyJiraId,
   createdCount, total, cases: [{ testId, aioKey, aioID, title }], _validation }`.
+
 - **Folder prerequisite (hard constraint):** the AIO public API returns HTTP 500 on
   folder/set creation and 404 on case deletion, so folders are **pre-created once in
   the AIO Cases UI, named with the story key** (e.g. `SEK-1934`). `qa-test-sync`
@@ -250,11 +288,13 @@ its input files, and its exact output file + schema.
    to authorize it in claude.ai connector settings and stop cleanly. **Environment
    guard:** if `baseUrl` matches a production pattern and `allowProduction=false`,
    require explicit confirmation before proceeding.
+
 3. **Create run folder** `qa-runs/<KEY>_<timestamp>/`, write `run-context.json`.
 4. **qa-story** → `story.json` → **validate**. If AC was inferred, surface a note.
 5. **qa-test-writer** → `test-cases.json` → **validate**.
 6. **qa-gap-analyzer** → `gap-report.json` → **validate**; loop to test-writer if
    incomplete (max 2).
+
 7. **Test-plan approval gate.** Present the final test list (id, title, linked AC,
    type). Wait for the user's `go` before the slow browser phase. User may drop/edit
    cases first.
@@ -263,11 +303,14 @@ its input files, and its exact output file + schema.
     the story-key folder name, pre-created in the AIO Cases UI) and link each to the
     Jira story → `aio-sync.json`. Non-gating: on any failure (e.g. missing folder) it
     reports the exact folder name to create and the pipeline continues.
+
 8. **qa-test-executor** → `results.json` + screenshots → **validate**.
 9. **qa-bug-logger Phase A** → `bugs-proposed.json` (drafts + duplicate flags) →
    **validate**.
+
 10. **Bug approval gate.** Present a numbered list (title, severity, failed test,
     possible-duplicate). User replies `all` / `none` / `1,3,4` / or edits a field.
+
 11. **qa-bug-logger Phase B** → `bugs-created.json` (only approved) → **validate**.
 12. **qa-reviewer** → `review.json` → **validate**.
 13. **Report.** Write `report.md` and publish `report.html` as an Artifact:
@@ -284,6 +327,7 @@ its input files, and its exact output file + schema.
   gate). Avoids redoing the Jira fetch, test-writing, or an expensive browser run.
 
 ### 5.2 Re-run / verify mode (`--rerun`)
+
 - Locate the most recent run folder for the key.
 - Re-execute only tests with status `failed` or `flaky`.
 - Write a new run folder; report shows before/after.
@@ -298,6 +342,7 @@ Every stage is verified twice:
 - **Layer 1 — self-validation.** Before returning, each producing agent runs its own
   stage checklist and embeds a `_validation` block in its output file
   (`{ checklist: [{item, pass}], selfConfident, notes }`). Cheap, catches obvious slips.
+
 - **Layer 2 — independent validation.** `qa-validator` re-derives expectations from the
   *source* and checks the output, writing `validation/<stage>.json`. Because it is a
   separate agent working from the source (not the producing agent's summary), it
@@ -341,6 +386,7 @@ pass-clean vs. number of fix-retries vs. gaps escalated to the user.
 ## 7. Human-in-the-loop gates (summary)
 
 Two hard gates, nothing consequential happens without approval:
+
 1. **Test-plan gate** — before executing the browser suite.
 2. **Bug gate** — before writing anything to Jira (and before transitioning bugs in
    `--rerun`).
@@ -356,16 +402,20 @@ Applies across all stages:
 - **Environment guard.** Never run against production unless `allowProduction=true` or
   the user explicitly confirms. The URL is checked at preflight and again in the
   executor.
+
 - **Non-destructive by default.** Prefer read/create; confirm before destructive
   steps; track and clean up test-created data.
+
 - **Secrets & PII masking.** Before anything is written to `report.md`, `report.html`,
   screenshots metadata, or a Jira bug, redact values matching `safety.maskPatterns`
   (passwords, tokens, auth headers, emails, long digit sequences). Jira bugs are
   team-visible — this prevents leaking credentials or customer data into a ticket.
+
 - **Timeouts.** Per-step (`stepTimeoutMs`) and whole-run (`maxRunMinutes`) caps keep a
   stuck app from freezing the pipeline.
 
 ### Known limitation
+
 Screenshot **attachments** to Jira are not supported by the Atlassian MCP
 `createJiraIssue` tool. v1 stores screenshots in the run folder, references them in the
 report, and includes their paths in the bug description rather than attaching binaries.

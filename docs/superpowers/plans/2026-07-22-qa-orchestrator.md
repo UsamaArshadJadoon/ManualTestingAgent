@@ -19,6 +19,7 @@
 - **Data bus:** every subagent reads/writes only files inside the run folder path passed to it. No shared memory.
 - **Run folder layout** (canonical — see `qa-agent/references/run-folder-contract.md`):
   `run-context.json`, `story.json`, `test-cases.json`, `gap-report.json`, `results.json`, `screenshots/`, `bugs-proposed.json`, `bugs-created.json`, `review.json`, `validation/<stage>.json`, `report.md`, `report.html`.
+
 - **Atlassian MCP tool names (exact):** `mcp__claude_ai_Atlassian__getJiraIssue`, `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql`, `mcp__claude_ai_Atlassian__createJiraIssue`, `mcp__claude_ai_Atlassian__createIssueLink`, `mcp__claude_ai_Atlassian__getTransitionsForJiraIssue`, `mcp__claude_ai_Atlassian__transitionJiraIssue`.
 - **Playwright MCP tool names (exact):** `mcp__playwright__browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_fill_form`, `browser_take_screenshot`, `browser_console_messages`, `browser_network_requests`, `browser_wait_for`, `browser_evaluate`.
 - **Bounded loops:** gap-analysis max 2 iterations; validation fix-retry max 2.
@@ -30,7 +31,7 @@
 
 ## File Structure
 
-```
+```text
 c:\QCAgent\qa-agent\
 ├── install.ps1                      # copies agents/ + commands/ into ~/.claude
 ├── README.md                        # install + usage
@@ -60,11 +61,13 @@ Each `.md` artifact is self-contained (subagents only receive their own file). T
 ## Task 1: Scaffold, config template, contract reference, and structural checker
 
 **Files:**
+
 - Create: `qa-agent/qa-config.example.json`
 - Create: `qa-agent/references/run-folder-contract.md`
 - Create: `qa-agent/tools/check-artifacts.ps1`
 
 **Interfaces:**
+
 - Produces: `check-artifacts.ps1` — verifier invoked as
   `pwsh qa-agent/tools/check-artifacts.ps1 -File <path> -Requires <substr1>,<substr2>,...`
   Exit 0 if the file exists, has valid `---` frontmatter with `name:`/`description:`/`tools:` (for agent/command files, toggled by `-Frontmatter`), and contains every `-Requires` substring; exit 1 otherwise, printing each missing item. Every later task calls this as its test.
@@ -102,6 +105,7 @@ Create `qa-agent/qa-config.example.json`:
 - [ ] **Step 2: Create the run-folder contract reference**
 
 Create `qa-agent/references/run-folder-contract.md` containing: the run-folder tree (from Global Constraints), and the exact JSON schema for each file:
+
 - `run-context.json`: `{ key, appBaseUrl, config, mode: "run|rerun|resume", runFolder, timestamp }`
 - `story.json`: `{ key, summary, description, acceptanceCriteria: [{ id, text }], components: [..], status, acSource: "explicit|inferred", _validation: {...} }`
 - `test-cases.json`: `{ cases: [{ id, title, linkedAC: [acId], type: "happy|negative|edge", steps: [str], testData: {}, expectedResult }], _validation: {...} }`
@@ -148,10 +152,12 @@ exit 0
 - [ ] **Step 4: Verify the checker works (negative + positive)**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/nonexistent.md; echo "exit=$?"
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/qa-config.example.json -Requires '"projectKey"','"maskPatterns"','"stepTimeoutMs"'; echo "exit=$?"
 ```
+
 Expected: first prints `MISSING FILE` and `exit=1`; second prints `CHECK PASSED` and `exit=0`.
 
 - [ ] **Step 5: Commit**
@@ -166,9 +172,11 @@ git commit -m "feat(qa): scaffold config, run-folder contract, structural checke
 ## Task 2: qa-story subagent
 
 **Files:**
+
 - Create: `qa-agent/agents/qa-story.md`
 
 **Interfaces:**
+
 - Consumes: `run-context.json` (`key`, `runFolder`).
 - Produces: `story.json` per the contract (Task 1 Step 2). Later consumed by qa-test-writer, qa-gap-analyzer, qa-validator, qa-reviewer.
 
@@ -190,6 +198,7 @@ model: claude-opus-4-8
 ```
 
 Body MUST specify (exact strings required by the checker in bold):
+
 - **Input:** read `run-context.json` from the run folder to get **`key`** and the run folder path.
 - Fetch the issue with `mcp__claude_ai_Atlassian__getJiraIssue`.
 - Normalize acceptance criteria into an array of atomic, testable items, each `{ id, text }` with ids `AC1, AC2, ...`. Split compound criteria into separate items.
@@ -200,9 +209,11 @@ Body MUST specify (exact strings required by the checker in bold):
 - [ ] **Step 2: Verify structure**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/agents/qa-story.md -Frontmatter -Requires 'run-context.json','mcp__claude_ai_Atlassian__getJiraIssue','story.json','acSource','_validation','acceptanceCriteria'
 ```
+
 Expected: `CHECK PASSED`.
 
 - [ ] **Step 3: Commit**
@@ -217,9 +228,11 @@ git commit -m "feat(qa): add qa-story subagent"
 ## Task 3: qa-test-writer subagent
 
 **Files:**
+
 - Create: `qa-agent/agents/qa-test-writer.md`
 
 **Interfaces:**
+
 - Consumes: `story.json`; on later iterations also `gap-report.json`.
 - Produces: `test-cases.json` per contract. Consumed by qa-gap-analyzer, qa-test-executor, qa-validator.
 
@@ -239,6 +252,7 @@ model: claude-opus-4-8
 ```
 
 Body MUST specify (bold = required substrings):
+
 - **Input:** read **`story.json`**; if **`gap-report.json`** exists, read its `suggestions` and ADD cases to cover them without discarding existing valid cases.
 - For every AC, produce at least one **happy**, one **negative**, and (where meaningful) one **edge** case.
 - Each case: `{ id (TC1..), title, linkedAC: [acId], type, steps: [imperative UI steps], testData, expectedResult }`. Steps must be concrete and executable by a browser agent (semantic actions like "click the 'Submit' button", not CSS selectors).
@@ -248,9 +262,11 @@ Body MUST specify (bold = required substrings):
 - [ ] **Step 2: Verify structure**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/agents/qa-test-writer.md -Frontmatter -Requires 'story.json','gap-report.json','test-cases.json','linkedAC','happy','negative','edge','_validation'
 ```
+
 Expected: `CHECK PASSED`.
 
 - [ ] **Step 3: Commit**
@@ -265,9 +281,11 @@ git commit -m "feat(qa): add qa-test-writer subagent"
 ## Task 4: qa-gap-analyzer subagent
 
 **Files:**
+
 - Create: `qa-agent/agents/qa-gap-analyzer.md`
 
 **Interfaces:**
+
 - Consumes: `story.json`, `test-cases.json`.
 - Produces: `gap-report.json` per contract. Consumed by orchestrator (loop decision) and qa-validator.
 
@@ -287,6 +305,7 @@ model: claude-opus-4-8
 ```
 
 Body MUST specify (bold = required substrings):
+
 - **Input:** read **`story.json`** and **`test-cases.json`**.
 - Build the AC→case coverage map. An AC is covered only if a case's `linkedAC` includes it AND the case's steps actually exercise it.
 - **Output:** write **`gap-report.json`** = `{ covered, uncovered, suggestions, complete, _validation }`. `complete` is true iff `uncovered` is empty. `suggestions` are concrete missing-case descriptions the test-writer can act on. `_validation` checklist: coverage verdict matches test-cases; suggestions are specific.
@@ -295,9 +314,11 @@ Body MUST specify (bold = required substrings):
 - [ ] **Step 2: Verify structure**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/agents/qa-gap-analyzer.md -Frontmatter -Requires 'story.json','test-cases.json','gap-report.json','uncovered','suggestions','complete','_validation'
 ```
+
 Expected: `CHECK PASSED`.
 
 - [ ] **Step 3: Commit**
@@ -312,9 +333,11 @@ git commit -m "feat(qa): add qa-gap-analyzer subagent"
 ## Task 5: qa-test-executor subagent
 
 **Files:**
+
 - Create: `qa-agent/agents/qa-test-executor.md`
 
 **Interfaces:**
+
 - Consumes: `test-cases.json`, `run-context.json` (for `appBaseUrl`, `config.safety`, `config.execution`, `config.app.login`).
 - Produces: `results.json` + `screenshots/*.png` per contract. Consumed by qa-bug-logger, qa-reviewer, qa-validator.
 
@@ -344,6 +367,7 @@ model: claude-opus-4-8
 ```
 
 Body MUST specify (bold = required substrings):
+
 - **Input:** read **`run-context.json`** and **`test-cases.json`**.
 - **Environment guard:** compare `appBaseUrl` against `config.safety.prodUrlPatterns`; if it matches and `allowProduction` is false, STOP and report that the run needs explicit production confirmation. (`prodUrlPatterns`)
 - **Login session reuse:** if `config.app.login.required`, authenticate once at the start using the env vars named by `usernameEnv`/`passwordEnv` (read via a shell `echo $env:VAR`; NEVER print the value), then reuse the session. (`sessionReuse`)
@@ -359,9 +383,11 @@ Body MUST specify (bold = required substrings):
 - [ ] **Step 2: Verify structure**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/agents/qa-test-executor.md -Frontmatter -Requires 'run-context.json','test-cases.json','mcp__playwright__browser_navigate','prodUrlPatterns','stepTimeoutMs','maxRunMinutes','flaky','jsErrorFindings','createdData','results.json','_validation'
 ```
+
 Expected: `CHECK PASSED`.
 
 - [ ] **Step 3: Commit**
@@ -376,9 +402,11 @@ git commit -m "feat(qa): add qa-test-executor subagent"
 ## Task 6: qa-bug-logger subagent (two-phase)
 
 **Files:**
+
 - Create: `qa-agent/agents/qa-bug-logger.md`
 
 **Interfaces:**
+
 - Consumes (Phase A): `results.json`, `story.json`, `run-context.json` (`config.severityMap`, `config.safety.maskPatterns`, `config.jira`). Consumes (Phase B): `bugs-proposed.json` + an approved-refs list from the orchestrator.
 - Produces: `bugs-proposed.json` (Phase A), `bugs-created.json` (Phase B), per contract.
 
@@ -401,6 +429,7 @@ model: claude-opus-4-8
 ```
 
 Body MUST specify (bold = required substrings):
+
 - The agent runs in one of two modes, chosen by the orchestrator's instruction: **`Phase A`** (propose) or **`Phase B`** (create).
 - **`Phase A` — propose (NO Jira writes):**
   - Read **`results.json`**; for each case with status **`failed`**, draft a bug `{ ref (B1..), title, description, reproSteps, severity, linkedAC, testId, screenshots, possibleDuplicate }`.
@@ -417,9 +446,11 @@ Body MUST specify (bold = required substrings):
 - [ ] **Step 2: Verify structure**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/agents/qa-bug-logger.md -Frontmatter -Requires 'Phase A','Phase B','results.json','possibleDuplicate','maskPatterns','bugs-proposed.json','bugs-created.json','mcp__claude_ai_Atlassian__createJiraIssue','mcp__claude_ai_Atlassian__createIssueLink','_validation'
 ```
+
 Expected: `CHECK PASSED`.
 
 - [ ] **Step 3: Commit**
@@ -434,9 +465,11 @@ git commit -m "feat(qa): add qa-bug-logger subagent (two-phase, approved)"
 ## Task 7: qa-reviewer subagent
 
 **Files:**
+
 - Create: `qa-agent/agents/qa-reviewer.md`
 
 **Interfaces:**
+
 - Consumes: `story.json`, `test-cases.json`, `gap-report.json`, `results.json`, `bugs-created.json`.
 - Produces: `review.json` per contract. Consumed by orchestrator (report) and qa-validator.
 
@@ -456,6 +489,7 @@ model: claude-opus-4-8
 ```
 
 Body MUST specify (bold = required substrings):
+
 - **Input:** read `story.json`, `test-cases.json`, `gap-report.json`, **`results.json`**, `bugs-created.json`.
 - Compute `acCoveragePct`, `totalTests`, `passed`, `failed`, `flaky`, `blocked`, `bugsLogged`, and `blockers` (list of blocker-severity failures).
 - **Verdict rule:** **`NO-GO`** if any AC is uncovered, any blocker-severity test failed, or coverage < 100% of testable AC; otherwise **`GO`**. (`GO`, `NO-GO`)
@@ -465,9 +499,11 @@ Body MUST specify (bold = required substrings):
 - [ ] **Step 2: Verify structure**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/agents/qa-reviewer.md -Frontmatter -Requires 'results.json','review.json','acCoveragePct','GO','NO-GO','verdict','_validation'
 ```
+
 Expected: `CHECK PASSED`.
 
 - [ ] **Step 3: Commit**
@@ -482,9 +518,11 @@ git commit -m "feat(qa): add qa-reviewer subagent"
 ## Task 8: qa-validator subagent (independent per-stage verification)
 
 **Files:**
+
 - Create: `qa-agent/agents/qa-validator.md`
 
 **Interfaces:**
+
 - Consumes: a `stage` name (from the orchestrator) + that stage's input and output files in the run folder; may re-read Jira for the story stage.
 - Produces: `validation/<stage>.json` per contract. Consumed by the orchestrator (pass/fail + gaps → fix-retry decision).
 
@@ -505,6 +543,7 @@ model: claude-opus-4-8
 ```
 
 Body MUST specify (bold = required substrings):
+
 - The orchestrator passes the **`stage`** name and the run folder. Do NOT redo the work — CHECK the stage's output against its inputs and the stage checklist.
 - **Independence:** for the `story` stage, re-read the Jira issue with `mcp__claude_ai_Atlassian__getJiraIssue` and confirm no AC was dropped, rather than trusting `story.json`.
 - Apply the **per-stage checklist**:
@@ -521,9 +560,11 @@ Body MUST specify (bold = required substrings):
 - [ ] **Step 2: Verify structure**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/agents/qa-validator.md -Frontmatter -Requires 'stage','validation/','gaps','checklist','mcp__claude_ai_Atlassian__getJiraIssue','bug-logger-propose','bug-logger-create','iteration'
 ```
+
 Expected: `CHECK PASSED`.
 
 - [ ] **Step 3: Commit**
@@ -538,9 +579,11 @@ git commit -m "feat(qa): add qa-validator subagent (independent per-stage checks
 ## Task 9: qa-setup command
 
 **Files:**
+
 - Create: `qa-agent/commands/qa-setup.md`
 
 **Interfaces:**
+
 - Produces: a `.qa-config.json` in the current project root (interactively), matching `qa-config.example.json`.
 
 - [ ] **Step 1: Write the command file**
@@ -559,6 +602,7 @@ tools:
 ```
 
 Body MUST specify (bold = required substrings):
+
 - If **`.qa-config.json`** already exists, show it and ask whether to overwrite before proceeding.
 - Ask for: Jira `projectKey`; app `baseUrl`; whether login is required and, if so, `loginUrl` + the env var NAMES for username/password (never the values); whether prod runs are allowed.
 - Write **`.qa-config.json`** to the project root using `qa-config.example.json` as the template, filling answers and keeping the `safety`, `severityMap`, and `execution` defaults.
@@ -567,9 +611,11 @@ Body MUST specify (bold = required substrings):
 - [ ] **Step 2: Verify structure**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/commands/qa-setup.md -Frontmatter -Requires '.qa-config.json','baseUrl','projectKey','usernameEnv','AskUserQuestion'
 ```
+
 Expected: `CHECK PASSED`.
 
 - [ ] **Step 3: Commit**
@@ -584,9 +630,11 @@ git commit -m "feat(qa): add /qa-setup config scaffolder command"
 ## Task 10: qa-run orchestrator command
 
 **Files:**
+
 - Create: `qa-agent/commands/qa-run.md`
 
 **Interfaces:**
+
 - Consumes: `$ARGUMENTS` (story key + optional `--rerun`/`--resume`), `.qa-config.json`, and every subagent from Tasks 2–8 via the Task tool.
 - Produces: the run folder, `report.md`, and `report.html` (Artifact).
 
@@ -609,6 +657,7 @@ tools:
 ```
 
 Body MUST specify (bold = required substrings) — a numbered orchestration procedure:
+
 - Parse **`$ARGUMENTS`**: the story key and optional flags **`--rerun`** / **`--resume`**.
 - **Load config:** read **`.qa-config.json`**; if missing, tell the user to run **`/qa-setup`** and stop.
 - **Preflight:** confirm the Atlassian connector is authorized (attempt a lightweight read; on auth error, instruct the user to authorize it in claude.ai connector settings and stop). **Environment guard:** if `baseUrl` matches `safety.prodUrlPatterns` and `allowProduction` is false, require explicit confirmation. (`Environment guard`)
@@ -631,9 +680,11 @@ Body MUST specify (bold = required substrings) — a numbered orchestration proc
 - [ ] **Step 2: Verify structure**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File qa-agent/commands/qa-run.md -Frontmatter -Requires '$ARGUMENTS','--rerun','--resume','.qa-config.json','/qa-setup','Environment guard','qa-story','qa-test-writer','qa-gap-analyzer','qa-test-executor','qa-bug-logger','qa-reviewer','qa-validator','Phase A','Phase B','Test-plan approval gate','Bug approval gate','max 2','traceability matrix','validation summary','report.html'
 ```
+
 Expected: `CHECK PASSED`.
 
 - [ ] **Step 3: Commit**
@@ -648,10 +699,12 @@ git commit -m "feat(qa): add /qa-run orchestrator command"
 ## Task 11: Install script, README, and global deployment
 
 **Files:**
+
 - Create: `qa-agent/install.ps1`
 - Create: `qa-agent/README.md`
 
 **Interfaces:**
+
 - Consumes: everything in `qa-agent/agents/` and `qa-agent/commands/`.
 - Produces: deployed copies in `~/.claude/agents/` and `~/.claude/commands/`.
 
@@ -679,20 +732,24 @@ Create `qa-agent/README.md` covering: what it is; prerequisites (authorize Atlas
 - [ ] **Step 3: Run the install and verify deployment**
 
 Run:
+
 ```bash
 pwsh qa-agent/install.ps1
 pwsh qa-agent/tools/check-artifacts.ps1 -File "$HOME/.claude/agents/qa-story.md" -Frontmatter -Requires 'story.json'
 pwsh qa-agent/tools/check-artifacts.ps1 -File "$HOME/.claude/commands/qa-run.md" -Frontmatter -Requires 'qa-validator'
 ls "$HOME/.claude/agents/qa-"*.md "$HOME/.claude/commands/qa-"*.md
 ```
+
 Expected: install prints all agents + 2 commands; both checks print `CHECK PASSED`; `ls` lists the `qa-*` agents (7 core, plus `qa-test-sync` once Task 13 is done) and 2 `qa-*` commands.
 
 - [ ] **Step 4: Remove the stale monolithic agent**
 
 The old single-file `~/.claude/agents/qa-orchestrator.md` (Slack/Anthropic-API era) is superseded. Confirm with the user, then:
+
 ```bash
 rm "$HOME/.claude/agents/qa-orchestrator.md"
 ```
+
 (If the user wants to keep it, skip — the new files use distinct `qa-*` names and won't collide.)
 
 - [ ] **Step 5: Commit**
@@ -707,9 +764,11 @@ git commit -m "feat(qa): add install script and README; deploy globally"
 ## Task 12: End-to-end smoke verification (guided)
 
 **Files:**
+
 - None (verification only). Uses a temporary fixture run folder.
 
 **Interfaces:**
+
 - Consumes: the deployed agents/commands and a hand-written fixture `story.json`.
 
 - [ ] **Step 1: Create a fixture to test file-handoff logic without Jira/browser**
@@ -737,10 +796,12 @@ Run `qa-gap-analyzer` on the same folder. Expected: `gap-report.json` with `comp
 - [ ] **Step 4: Verify fixture outputs**
 
 Run:
+
 ```bash
 pwsh qa-agent/tools/check-artifacts.ps1 -File /c/tmp/qa-smoke/qa-runs/SMOKE-1_fixture/test-cases.json -Requires 'AC1','AC2','_validation'
 pwsh qa-agent/tools/check-artifacts.ps1 -File /c/tmp/qa-smoke/qa-runs/SMOKE-1_fixture/gap-report.json -Requires '"complete"','AC1','AC2'
 ```
+
 Expected: both `CHECK PASSED`.
 
 - [ ] **Step 5: Full live run (manual, requires connectors + config)**
@@ -759,14 +820,17 @@ git commit -m "fix(qa): address issues found in smoke verification"
 ## Task 13: qa-test-sync subagent (optional — AIO Tests integration)
 
 **Files:**
+
 - Create: `qa-agent/agents/qa-test-sync.md`
 - Modify: `qa-agent/commands/qa-run.md` (dispatch after the test-plan gate when `config.aio.enabled`), `qa-agent/commands/qa-setup.md` (scaffold `AIO_TOKEN` in `.qa-secrets`), `qa-agent/qa-config.example.json` (`aio` block)
 
 **Interfaces:**
+
 - Consumes: `run-context.json` (`config.aio`, project key, story key), `story.json` (AC text), `test-cases.json` (the approved cases).
 - Produces: `aio-sync.json` per the run-folder contract; consumed by nobody downstream (side-integration) but recorded for the audit trail.
 
 **Behavior (from the reverse-engineered AIO Cloud REST API):**
+
 - Guard: run only when `config.aio.enabled` is `true`; otherwise return `AIO sync disabled`.
 - Token: read `config.aio.tokenEnv` (default `AIO_TOKEN`) from OS env → `.qa-secrets`; never printed; sent as `Authorization: AioAuth <token>`.
 - Folder: `GET /project/{proj}/testcase/folder`, match the folder whose name starts with the story key. **The AIO API cannot create folders (HTTP 500), so the folder must be pre-created once in the AIO Cases UI, named with the story key.** If missing, STOP and return the exact folder name to create.

@@ -109,6 +109,7 @@ docs/superpowers/        design spec + implementation plan
 You install the agents **once per machine**; after that they work in **every** project via `/qa-run` and `/qa-setup`. Requires **Windows + VS Code + Claude Code** and **PowerShell 5.1**.
 
 > ### ⚠️ Where to run each command — this trips everyone up once
+>
 > There are **two different places** you type things, and mixing them up gives a *"term is not recognized"* error:
 >
 > | Command | Where to type it |
@@ -155,7 +156,7 @@ That's the whole install. Next, [authorize the connectors](#2--authorize-the-con
 
 Pick either option — both give you the `qa-agent/` folder that holds all 8 agents + 2 commands:
 
-- **Download the release (no Git needed):** open the **[latest release](https://github.com/UsamaArshadJadoon/ManualTestingAgent/releases/latest)** → **Assets** → **Source code (zip)** → download it, then **right-click → Extract All** to a folder (e.g. `C:\ManualTestingAgent`).
+- **Download the current code (no Git needed):** grab **[main.zip](https://github.com/UsamaArshadJadoon/ManualTestingAgent/archive/refs/heads/main.zip)**, then **right-click → Extract All** to a folder (e.g. `C:\ManualTestingAgent`). Prefer this over the [releases page](https://github.com/UsamaArshadJadoon/ManualTestingAgent/releases/latest) — a tagged release only carries the fixes that existed when it was cut, and this project has shipped fixes for bugs that write unrecoverable data (see the warning above).
 - **or clone with Git:**
 
   ```powershell
