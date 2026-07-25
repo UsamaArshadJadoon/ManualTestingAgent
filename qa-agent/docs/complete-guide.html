@@ -599,7 +599,7 @@ AIO_TOKEN=<span class="you">•••••••••••••••••�
         <div class="win-body"><span class="ok">✔</span> qa-reviewer   verdict <span class="warnc">GO ⚠ </span>· coverage 100% · 0 bugs filed   <span class="dim">→ validated</span>
 <span class="dim">▸ report.html + bug-report.html published as Artifacts</span></div>
       </div>
-      <div class="call warn"><span class="lbl">Read the verdict correctly</span><p><b>GO ⚠</b> means all AC are covered and no <em>blocker-severity</em> test failed — but AC1 has real High-severity failures. Treat it as <b>GO pending product sign-off</b>, not a clean pass. You can make the gate stricter (NO-GO on any failed test) in one line.</p></div>
+      <div class="call warn"><span class="lbl">Read the verdict correctly</span><p>A <b>GO</b> requires that <em>every acceptance criterion has at least one <b>passing</b> linked case</em> — not merely a linked one. So a story whose cases all failed at non-blocker severity can no longer be signed off, and an AC that was only ever <code>blocked</code> counts as <em>unverified</em> rather than working: unverified is not the same as working, so it does not earn a GO either. The other three NO-GO conditions still apply (any uncovered AC, any blocker-severity failure, coverage under 100%).</p><p><b>Coverage is linkage, not satisfaction.</b> <code>acCoveragePct</code> measures whether each AC has a test case pointing at it, never whether that AC works — an AC can read 100% covered while every case linked to it failed. When those diverge, <code>qa-reviewer</code> must name the covered-but-unsatisfied AC in its rationale, so the percentage can never be true and misleading at the same time.</p></div>
     </div>
   </details>
 </section>
