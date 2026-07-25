@@ -28,8 +28,9 @@ qa-runs/<PROJ-KEY>_<runId>/
 
 ### `run-context.json`
 ```
-{ key, appBaseUrl, config, mode: "run|rerun|resume", runFolder, timestamp }
+{ key, appBaseUrl, config, bugProjectKey, mode: "run|rerun|resume", runFolder, timestamp }
 ```
+`bugProjectKey` is the Jira project `qa-bug-logger` files bugs against for this run — chosen once by the user at run-folder creation (section 3 of `/qa-run`) and may differ from `config.jira.projectKey` (the configured default, offered as the recommended option). The story `key` itself is unaffected — every bug still links back to the same story regardless of which project it's filed in. Older run folders created before this field existed won't have it; `qa-bug-logger` falls back to `config.jira.projectKey` in that case.
 
 ### `story.json`
 ```

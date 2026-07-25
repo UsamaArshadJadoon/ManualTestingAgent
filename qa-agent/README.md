@@ -138,6 +138,17 @@ Re-executes only the `failed`/`flaky` cases from the latest run for
 pass (never auto-applied — always presented for your approval first), and
 recomputes the verdict.
 
+### Bug project prompt (asked once, at run start)
+
+Right after creating the run folder — before `qa-story` is even dispatched —
+`/qa-run` asks which Jira project bugs should be filed into for this run,
+offering the `.qa-config.json` default as the recommended option (and the
+story's own project as an alternative if it differs). This is a one-time
+input, not an approval gate: it doesn't change which story you asked about
+— the story key you passed in is fixed for the whole run, and every bug
+still links back to it — it only controls which project/board the bug
+*issues themselves* land in.
+
 ### The three approval gates
 
 `/qa-run` stops and waits for you at these points — it never proceeds past
