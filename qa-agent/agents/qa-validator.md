@@ -41,6 +41,7 @@ For every stage, first read that stage's output file plus the upstream input fil
 
 - **`story`** — inputs: `run-context.json` (for the issue `key`) + a fresh `mcp__claude_ai_Atlassian__getJiraIssue` re-fetch. Output checked: `story.json`.
   Checklist:
+
   - every AC captured (your independent Jira re-fetch has no AC that `story.json`'s `acceptanceCriteria` is missing)
   - each AC atomic/testable (no compound item bundling multiple conditions remains)
   - nothing dropped from the description (no requirement visible in the raw description is absent from `story.json`)
@@ -48,6 +49,7 @@ For every stage, first read that stage's output file plus the upstream input fil
 
 - **`test-writer`** — inputs: `story.json`. Output checked: `test-cases.json`.
   Checklist:
+
   - every AC in `story.json`'s `acceptanceCriteria` → ≥1 case in `test-cases.json` whose `linkedAC` includes it
   - happy + negative + edge covered (across the case set, all three `type` values appear where applicable to the AC)
   - steps executable (each case's `steps` are concrete, ordered, unambiguous actions — not vague restatements of the AC)
@@ -57,10 +59,12 @@ For every stage, first read that stage's output file plus the upstream input fil
 
 - **`gap-analyzer`** — inputs: `story.json`, `test-cases.json`. Output checked: `gap-report.json`.
   Checklist:
+
   - coverage verdict matches `test-cases.json` (your own recount of `linkedAC` across all cases produces the same `covered`/`uncovered` partition and the same `complete` boolean that `gap-report.json` reports — validate the validator)
 
 - **`test-executor`** — inputs: `test-cases.json`. Output checked: `results.json` (+ `screenshots/`).
   Checklist:
+
   - every planned case in `test-cases.json` has a corresponding result entry in `results.json` (no case silently skipped)
   - evidence per case (each result has `screenshots` and/or `steps` notes backing its `status`, not an empty evidence trail)
   - no case skipped (the two case-id sets match exactly)
@@ -68,6 +72,7 @@ For every stage, first read that stage's output file plus the upstream input fil
 
 - **`bug-logger-propose`** — inputs: `results.json`, `test-cases.json`, `run-context.json`. Output checked: `bugs-proposed.json`.
   Checklist:
+
   - every case with `status: "failed"` in `results.json` → a draft in `bugs-proposed.json`, matched through the draft's `testIds` array (a consolidated draft legitimately covers several cases, and every one it covers must be listed there — a case mentioned only in the draft's description prose is a gap, not a match)
   - every draft has a `testIds` array containing its own `testId` plus every other case it consolidates
   - severity mapped (each draft's `severity` is a value from `run-context.json`'s `config.severityMap`, never invented)
@@ -76,12 +81,14 @@ For every stage, first read that stage's output file plus the upstream input fil
 
 - **`bug-logger-create`** — inputs: `bugs-proposed.json` + the orchestrator-supplied approved-refs list. Output checked: `bugs-created.json`.
   Checklist:
+
   - every approved bug created (each `ref` in the approved-refs list has a matching entry in `created`)
   - linked (creation happened alongside a story link — inferable from the entry existing per the `qa-bug-logger` Phase B contract; flag if evidence of linking is absent from context)
   - keys/URLs returned (every entry in `created` has a non-empty `key` and `url`, never fabricated-looking placeholders)
 
 - **`reviewer`** — inputs: `story.json`, `test-cases.json`, `gap-report.json`, `results.json`, `run-context.json`, and `bugs-proposed.json` (optional — read it if present; its absence is not a terminal failure, see below). Output checked: `review.json`. This is the one stage where you must fully recompute the reviewer's numbers yourself from the upstream files, not just read `review.json`'s own claims — a self-consistency check against `review.json` alone would not catch a wrong number that happens to be internally consistent.
   Checklist (each item is an independent recompute, compared against what `review.json` reports — any mismatch is a gap):
+
   - `acCoveragePct` recomputed independently: from `story.json`'s `acceptanceCriteria` and `gap-report.json`'s `covered`/`uncovered`, compute `round(covered.length / (covered.length + uncovered.length) * 100)` yourself and compare to `review.json`'s `acCoveragePct` — flag any divergence.
   - `passed`/`failed`/`flaky`/`blocked` counts recomputed independently: tally `results.json`'s `cases` by `status` yourself and compare to `review.json`'s four counts (and confirm they sum to `results.json`'s case count) — flag any divergence.
   - blocker set recomputed independently, using the same rule `qa-reviewer` itself uses: for each `status: "failed"` case in `results.json`, find the draft in `bugs-proposed.json` (when present) that **accounts for** it — the case's `id` appears in the draft's `testIds` array, or equals its singular `testId` for legacy run folders written before `testIds` existed — and treat the case as blocker-severity iff that draft's `severity` equals `run-context.json`'s `config.severityMap.blocker`; when `bugs-proposed.json` is absent/malformed or no draft accounts for that case, fall back to: blocker-severity iff the matching `test-cases.json` case (same `id`) has `type: "happy"`. **Match through `testIds`, not `testId` alone** — a case folded into a consolidated draft must inherit that draft's real severity, otherwise your recompute will manufacture a phantom blocker the reviewer correctly excluded (or vice versa) and you will report a gap that isn't one. Compare your independently-derived blocker set to `review.json`'s `blockers` — flag any case your recompute calls blocker-severity that is missing from `blockers`, or vice versa.
@@ -105,6 +112,7 @@ For every stage, first read that stage's output file plus the upstream input fil
 Use the `Write` tool to create this file at `<runFolder>/validation/<stage>.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
 Example shape:
+
 ```json
 {
   "stage": "test-writer",
@@ -128,4 +136,4 @@ After writing `validation/<stage>.json`, return a one-line summary to the orches
 
 ---
 
-_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._
+*Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital.*

@@ -80,8 +80,9 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
    - Keep the `safety` (other than `allowProduction`), `severityMap`, and `execution` blocks exactly as they appear in the embedded default config above — do not change `prodUrlPatterns`, `destructiveActions`, `cleanupCreatedData`, `maskPatterns`, `severityMap`, `execution`, or `outputDir` from the embedded defaults.
    - Use the `Write` tool to create **`.qa-config.json`** in the project root with this filled-in structure.
 
-5. **Scaffold the git-ignored credential store (`.qa-secrets`).** If `login.required` is `true`, create a **`.qa-secrets`** file in the project root. For a **passwordless** login include only the identifier key — do not emit a password line for a password that does not exist. (a `.env`-style `KEY=VALUE` file) so the executor has a local place to read credentials from when OS env vars aren't set. **Never ask the user to type their actual password into this conversation, and never write a real secret value yourself** — write only a commented template with empty placeholders for the chosen env-var names, which the user fills in privately in the git-ignored file. If `.qa-secrets` already exists, do NOT overwrite it (leave the user's values intact). Template to write:
-   ```
+5. **Scaffold the git-ignored credential store (`.qa-secrets`).** If `login.required` is `true`, create a **`.qa-secrets`** file (a `.env`-style `KEY=VALUE` file) in the project root, so the executor has a local place to read credentials from when OS env vars aren't set. For a **passwordless** login include only the identifier key — do not emit a password line for a password that does not exist. **Never ask the user to type their actual password into this conversation, and never write a real secret value yourself** — write only a commented template with empty placeholders for the chosen env-var names, which the user fills in privately in the git-ignored file. If `.qa-secrets` already exists, do NOT overwrite it (leave the user's values intact). Template to write:
+
+   ```text
    # QA Orchestrator credential store — .env-style KEY=VALUE
    # This file is git-ignored and MUST NEVER be committed.
    # Fill in the values below; the executor reads these when the matching OS env var is unset.
@@ -90,6 +91,7 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
    # AIO Tests API token (only needed if config.aio.enabled is true; used by qa-test-sync)
    AIO_TOKEN=
    ```
+
    (substitute the actual `usernameEnv`/`passwordEnv` names chosen in step 3 for `QA_USER`/`QA_PASS`).
 
 6. **Harden `.gitignore`.** Read the project's `.gitignore` (create it if absent) and ensure it contains each of these entries (add any that are missing; never remove existing lines): `.qa-secrets`, `.env`, `.env.*`, `.qa-config.json`, `.playwright-mcp/`, `qa-runs/`. This guarantees credentials, config, browser snapshots, and run outputs are never committed.
@@ -97,11 +99,14 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
 7. **Remind the user of follow-up steps.** After writing the files, tell the user they can supply credentials either way:
    - **Option A — fill in `.qa-secrets`** (the git-ignored file just created): put the real values after `QA_USER=` / `QA_PASS=`. Convenient for repeated runs; never committed.
    - **Option B — OS environment variables** (nothing on disk), using PowerShell syntax, e.g.:
+
      ```powershell
      $env:QA_USER = "your-username"
      $env:QA_PASS = "your-password"
      ```
+
      (substitute the actual `usernameEnv`/`passwordEnv` names chosen in step 3). The executor checks the OS env var first, then `.qa-secrets`.
+
    - Authorize the Atlassian connector in claude.ai connector settings if it is not already connected, since the QA orchestrator's Jira-facing subagents depend on it.
 
 ## Output
@@ -110,4 +115,4 @@ This command writes **`.qa-config.json`** (always), a **`.qa-secrets`** template
 
 ---
 
-_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._
+*Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital.*

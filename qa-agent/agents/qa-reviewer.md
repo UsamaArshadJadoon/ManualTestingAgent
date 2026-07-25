@@ -47,6 +47,7 @@ You are the `qa-reviewer` subagent in a multi-agent QA orchestrator. You run iso
 ## Verdict rule
 
 Set `verdict` to **`NO-GO`** if any one of the following holds:
+
 - `gap-report.json`'s `uncovered` array is non-empty (any AC is uncovered), or
 - `blockers` is non-empty (any blocker-severity test failed), or
 - `acCoveragePct` is less than `100` (coverage is under 100% of testable AC), or
@@ -65,6 +66,7 @@ Write `rationale` as one or two sentences that name exactly which condition(s) d
 **Output:** write **`review.json`** into the run folder with exactly these top-level fields: `acCoveragePct, totalTests, passed, failed, flaky, blocked, bugsLogged, blockers, verdict, rationale, _validation`, where `verdict` is `"GO"` or `"NO-GO"` and `blockers` is an array of strings (empty array if none). Use the `Write` tool to create this file at `<runFolder>/review.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
 Build the self-validation block using exactly this shape: `"_validation": { "checklist": [{ "item": "...", "pass": true }], "selfConfident": true, "notes": "..." }`. The `checklist` must include at least these items, each with a boolean `pass`:
+
 - `passed + failed + flaky + blocked` equals `totalTests` (no case from `results.json` silently dropped or double-counted)
 - `acCoveragePct` was computed from `gap-report.json`'s `covered`/`uncovered`, not guessed
 - `blockers` used real `severityMap`-mapped severity from `bugs-proposed.json` wherever a draft accounted for the failed case — matched via the draft's `testIds` array (legacy singular `testId` only as a fallback), so cases folded into a consolidated draft inherit its real severity — falling back to the `test-cases.json` `type: "happy"` heuristic only when no draft severity was available (plus any unmatched failed case, conservatively included)
@@ -74,6 +76,7 @@ Build the self-validation block using exactly this shape: `"_validation": { "che
 `selfConfident` MUST be a **boolean** (`true`/`false`) — never a number, percentage, or string — reflecting whether you are confident the tallies and verdict are complete and accurate. Set `notes` to any caveats (e.g. a failed case had no matching entry in `test-cases.json`, `bugs-proposed.json` was absent so the happy-path fallback was used for all failures, `bugs-created.json` was empty because no bugs were approved).
 
 Example shape:
+
 ```json
 {
   "acCoveragePct": 80,
@@ -107,4 +110,4 @@ After writing `review.json`, return a one-line summary to the orchestrator stati
 
 ---
 
-_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._
+*Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital.*

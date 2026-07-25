@@ -96,4 +96,4 @@ Return a one-line summary, e.g. `aio-sync.json written: 7/7 cases created in AIO
 
 ---
 
-_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._
+*Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital.*

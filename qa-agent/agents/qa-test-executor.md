@@ -70,6 +70,7 @@ A config may also carry `config.app.login.notes` — free-text guidance about ho
    a. **OS environment variable** of that name (e.g. if `usernameEnv` is `"QA_USER"`, read the `QA_USER` environment variable). If set and non-empty, use it.
    b. **Git-ignored secrets file** — if the env var is unset, read the value for that key from a `.qa-secrets` file in the project root (a `.env`-style `KEY=VALUE` file, e.g. a line `QA_USER=...`). This file is git-ignored and is the local credential store; parse the line whose key equals the configured name. (If `.qa-secrets` does not exist, also check a `.env` file the same way.)
    Hold each value only in working memory for the immediate purpose of logging in — never write either value to a file, never echo it, never include it in a tool call's visible arguments beyond the login form fields themselves, and never let it appear in your reasoning output, `results.json`, `notes`/`reason` fields, screenshots, or any other artifact. Use Bash for nothing else in this run.
+
 2. If a **required** credential resolves to nothing from either the env var or the `.qa-secrets`/`.env` file, do NOT fabricate a value or attempt a login: mark every case that depends on being logged in as **`blocked`** with `reason: "credential <NAME> not set (no env var and no .qa-secrets entry)"` (substituting the actual variable name), and continue to the rest of the run per the isolation rule below. On a passwordless login the password is **not** a required credential — never block for it.
 3. Otherwise, navigate to `config.app.login.loginUrl` (or the app's login entry point) with `mcp__playwright__browser_navigate`, then submit the credential value(s) you read into the login form using `mcp__playwright__browser_type` / `browser_fill_form` (guided by `browser_snapshot` to locate the fields) and `browser_click` to submit. This is the only place the credential values are used.
 4. Once authenticated, reuse that same browser session for every case (`config.app.login.sessionReuse`) — do not log in again per case, and do not re-invoke Bash for credentials again during this run.
@@ -124,6 +125,7 @@ One failing, blocked, or flaky case must never stop execution of the remaining c
 **Output:** write **`results.json`** into the run folder with exactly these top-level fields: `cases, _validation`. Each entry in `cases` has exactly these fields: `id, status, steps, screenshots, consoleErrors, jsErrorFindings, createdData, reason`, where `status` is one of `"passed"`, `"failed"`, `"flaky"`, `"blocked"`, `steps` is an array of `{ step, ok, note }`, and `screenshots`, `consoleErrors`, `jsErrorFindings`, `createdData` are arrays (empty arrays where nothing applies). `reason` is a string explaining the status — required (non-empty) for `failed`/`flaky`/`blocked`, and may be empty for `passed`. Use the `Write` tool to create this file at `<runFolder>/results.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
 Build the self-validation block using exactly this shape: `"_validation": { "checklist": [{ "item": "...", "pass": true }], "selfConfident": true, "notes": "..." }`. The `checklist` must include at least these items, each with a boolean `pass`:
+
 - every case from `test-cases.json` has a corresponding result in `cases` (none silently skipped)
 - every case has supporting evidence (at least one screenshot, and steps recorded)
 - every screenshot meets the HD evidence standard (captured at a 1920×1080 viewport, PNG, ≥1280px wide, not cropped or downscaled) and every `failed`/`blocked` case has at least one screenshot that actually shows why it failed or was blocked
@@ -133,6 +135,7 @@ Build the self-validation block using exactly this shape: `"_validation": { "che
 `selfConfident` MUST be a **boolean** (`true`/`false`) — never a number, percentage, or string — reflecting whether you are confident the execution and results are complete and accurate. Set `notes` to any caveats (e.g. cases cut short by `maxRunMinutes`, env vars that were missing, destructive steps left unconfirmed).
 
 Example shape:
+
 ```json
 {
   "cases": [
@@ -192,4 +195,4 @@ After writing `results.json` and running the cleanup above, return a one-line su
 
 ---
 
-_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._
+*Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital.*
