@@ -131,8 +131,8 @@ files inside the run folder.
 
 ## Install
 
-From the project root (Windows PowerShell 5.1 — `pwsh` is not available on
-this host, use `powershell`):
+From the project root. Invoke it with `powershell` rather than `pwsh` — many
+Windows installs ship only PowerShell 5.1, where `pwsh` is not on PATH:
 
 ```powershell
 powershell -File qa-agent\install.ps1
