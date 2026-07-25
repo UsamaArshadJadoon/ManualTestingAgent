@@ -34,7 +34,10 @@ through the `Task` tool.
     approval) creates them in Jira and links them to the story; it also
     handles fix-forward Jira transitions on `--rerun`.
   - `qa-reviewer` — independently recomputes coverage and tallies and issues
-    the GO/NO-GO verdict.
+    the GO/NO-GO verdict. A `GO` requires that **every AC has at least one
+    passing linked case** — not merely a linked one — so a story whose cases all
+    failed at non-blocker severity can never be signed off, and an AC that was
+    only ever `blocked` counts as unverified rather than working.
   - `qa-validator` — the soft validation gate run after every producing
     stage, checking each stage's output before the pipeline advances.
   - `qa-test-sync` *(optional)* — when `aio.enabled` is `true`, after the

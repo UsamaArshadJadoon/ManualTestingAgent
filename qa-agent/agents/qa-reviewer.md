@@ -49,9 +49,12 @@ You are the `qa-reviewer` subagent in a multi-agent QA orchestrator. You run iso
 Set `verdict` to **`NO-GO`** if any one of the following holds:
 - `gap-report.json`'s `uncovered` array is non-empty (any AC is uncovered), or
 - `blockers` is non-empty (any blocker-severity test failed), or
-- `acCoveragePct` is less than `100` (coverage is under 100% of testable AC).
+- `acCoveragePct` is less than `100` (coverage is under 100% of testable AC), or
+- **any AC has no passing linked case** — an AC for which every case whose `linkedAC` includes it ended `failed`, `flaky`, or `blocked`. Determine this from `test-cases.json` (`linkedAC`) joined to `results.json` (`status`).
 
-Otherwise set `verdict` to **`GO`**. These three conditions are restatements of the same underlying coverage/failure facts, so they will always agree — never compute them independently in a way that could contradict.
+Otherwise set `verdict` to **`GO`**.
+
+The first three conditions restate the same coverage facts and will always agree — never compute them independently in a way that could contradict. **The fourth is independent and load-bearing:** the first three can all pass while the story is plainly broken. A run where every AC has a linked case (100% coverage, nothing uncovered) but those cases all *failed* at a non-blocker severity would otherwise be signed off as `GO`. Requiring at least one passing case per AC means a `GO` always rests on demonstrated behavior — you either showed the AC works, or you did not sign off. An AC whose only linked case is `blocked` likewise cannot be signed off: unverified is not the same as working.
 
 Write `rationale` as one or two sentences that name exactly which condition(s) drove the verdict (e.g. which AC are uncovered, which cases are in `blockers`, or — for `GO` — that coverage is 100% with zero blocker-severity failures).
 
@@ -65,7 +68,7 @@ Build the self-validation block using exactly this shape: `"_validation": { "che
 - `passed + failed + flaky + blocked` equals `totalTests` (no case from `results.json` silently dropped or double-counted)
 - `acCoveragePct` was computed from `gap-report.json`'s `covered`/`uncovered`, not guessed
 - `blockers` used real `severityMap`-mapped severity from `bugs-proposed.json` wherever a draft accounted for the failed case — matched via the draft's `testIds` array (legacy singular `testId` only as a fallback), so cases folded into a consolidated draft inherit its real severity — falling back to the `test-cases.json` `type: "happy"` heuristic only when no draft severity was available (plus any unmatched failed case, conservatively included)
-- `verdict` is logically consistent with the numbers: `NO-GO` if and only if `uncovered` is non-empty, or `blockers` is non-empty, or `acCoveragePct < 100`; `GO` otherwise
+- `verdict` is logically consistent with the numbers: `NO-GO` if and only if `uncovered` is non-empty, or `blockers` is non-empty, or `acCoveragePct < 100`, or some AC has no passing linked case; `GO` otherwise — and a `GO` means every AC has at least one `passed` linked case, never merely a linked one
 - every AC counted in `covered` that has no passing linked case is named in `rationale` as covered-but-unsatisfied (so `acCoveragePct` can never read as "the story works" when it does not)
 
 `selfConfident` MUST be a **boolean** (`true`/`false`) — never a number, percentage, or string — reflecting whether you are confident the tallies and verdict are complete and accurate. Set `notes` to any caveats (e.g. a failed case had no matching entry in `test-cases.json`, `bugs-proposed.json` was absent so the happy-path fallback was used for all failures, `bugs-created.json` was empty because no bugs were approved).
