@@ -160,7 +160,26 @@ async function resolveFolder() {
       walk(n.children);
     }
   })(Array.isArray(res.json) ? res.json : res.json.folders || []);
-  const hit = flat.find((f) => (f.name || '').trim().startsWith(storyKey));
+  // Match the story key as a whole token, not a bare prefix: a plain startsWith would let
+  // story PROJ-12 match folder "PROJ-123 - ..." and file its cases in the wrong story's
+  // folder — permanently, since AIO has no DELETE. Require the key to be followed by a
+  // non-alphanumeric boundary (space, dash, colon, end of name).
+  const keyMatches = (name) => {
+    const n = (name || '').trim();
+    if (!n.startsWith(storyKey)) return false;
+    const next = n.charAt(storyKey.length);
+    return next === '' || !/[A-Za-z0-9]/.test(next);
+  };
+  const hits = flat.filter((f) => keyMatches(f.name));
+  if (hits.length > 1) {
+    die(
+      `Ambiguous AIO folder for ${storyKey}: ${hits.length} folders match ` +
+        `(${hits.map((f) => `"${f.name}" [ID ${f.ID}]`).join(', ')}). ` +
+        `Rename or remove the duplicates so exactly one folder starts with ${storyKey}. ` +
+        `Refusing to guess — cases filed in the wrong folder cannot be deleted via the API.`
+    );
+  }
+  const hit = hits[0];
   if (!hit) {
     die(
       `No AIO folder found for ${storyKey}. Please create a folder named ` +
@@ -248,6 +267,25 @@ function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
     /* a missing or unreadable sibling run must never block a sync */
   }
 
+  // Resolve the selection BEFORE any network call: these checks are local and free, so a
+  // typo'd --only id should fail immediately rather than after two round trips to AIO.
+  const allCases = testCases.cases || [];
+  const selected = allCases.filter((tc) => !only || only.includes(tc.id));
+
+  // A --only id that matches nothing must fail loudly. Silently selecting zero cases and
+  // exiting 0 reads as "sync succeeded" when nothing was pushed — usually a typo'd id.
+  if (only) {
+    const known = new Set(allCases.map((tc) => tc.id));
+    const unknown = only.filter((id) => !known.has(id));
+    if (unknown.length) {
+      die(
+        `Cannot sync to AIO: --only names case id(s) not in test-cases.json: ${unknown.join(', ')}. ` +
+          `Available ids: ${allCases.map((tc) => tc.id).join(', ') || '(none)'}`
+      );
+    }
+  }
+  if (!selected.length) die(`Cannot sync to AIO: no test cases to sync (test-cases.json has no cases)`);
+
   const folder = await resolveFolder();
   const st = await resolveScriptTypeId();
   const storyJiraId = storyJiraIdArg || (prior && prior.storyJiraId) || process.env.QA_STORY_JIRA_ID || null;
@@ -257,13 +295,19 @@ function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
         `without the requirement link to ${storyKey}.`
     );
   }
-
-  const selected = (testCases.cases || []).filter((tc) => !only || only.includes(tc.id));
+  // Precondition note. Derive it from config — never hardcode a role, environment, or
+  // credential shape here: this script runs against any project, and a case body written
+  // into AIO cannot be deleted, so wrong wording is permanent. `login.notes` is the
+  // team's own description of how their login works and wins when present.
   const login = (cfg.app && cfg.app.login) || {};
-  const loginNote = login.required
-    ? `Logged in as a Manager at ${login.loginUrl || (cfg.app && cfg.app.baseUrl)}` +
-      (login.passwordless ? ' (passwordless in UAT — user identifier only, no password).' : '.')
-    : '';
+  const loginNote = !login.required
+    ? ''
+    : (login.notes || '').trim()
+      ? (login.notes || '').trim()
+      : `Authenticated at ${login.loginUrl || (cfg.app && cfg.app.baseUrl) || 'the application'}` +
+        (login.passwordless
+          ? ` using the identifier in ${login.usernameEnv || 'the configured identifier'} only (no password).`
+          : '.');
 
   console.log(`folder: ${folder.name} (ID ${folder.ID})`);
   console.log(`scriptType ID: ${st.id} — ${st.source}`);
@@ -326,7 +370,10 @@ function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
         cases,
         _validation: {
           checklist: [
-            { item: 'every selected case attempted', pass: selected.length > 0 },
+            {
+              item: 'every selected case resolved to an AIO key (created this run, or already present)',
+              pass: selected.every((tc) => cases.some((c) => c.testId === tc.id && c.aioKey)),
+            },
             { item: 'folder resolved by numeric ID', pass: !!folder.ID },
             { item: 'scriptType resolved at runtime (not hardcoded)', pass: true },
             { item: 'token never printed', pass: true },
@@ -337,7 +384,10 @@ function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
               pass: !allowDuplicates,
             },
           ],
-          selfConfident: createdCount === (testCases.cases || []).length,
+          // Confidence is about the cases this invocation was asked to sync, not the whole
+          // file — a scoped `--only` run that fully succeeded is a confident result even
+          // though `total` is larger.
+          selfConfident: selected.every((tc) => cases.some((c) => c.testId === tc.id && c.aioKey)),
           notes: `scriptType ID ${st.id} ${st.source}. AIO exposes no DELETE for cases, so already-created cases are skipped rather than re-posted.`,
         },
       },
