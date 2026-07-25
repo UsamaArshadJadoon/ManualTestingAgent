@@ -227,8 +227,14 @@ its input files, and its exact output file + schema.
   folder/set creation and 404 on case deletion, so folders are **pre-created once in
   the AIO Cases UI, named with the story key** (e.g. `PROJ-123`). `qa-test-sync`
   resolves the folder by name; if it is missing it stops and returns the exact name to
-  create, then the user re-runs it. It creates each case with `scriptType {ID:5}`
-  (Classic), `TEXT` steps, and `folder {ID}`; run once per story to avoid duplicates.
+  create, then the user re-runs it. It creates each case with `TEXT` steps, `folder {ID}`,
+  and the Classic `scriptType` **resolved at runtime** — that id is per-project
+  configuration and must never be hardcoded (a wrong value fails every case with
+  `400 "Invalid or missing value for Test Script Type."`). Since AIO publishes no
+  script-type metadata endpoint, `qa-agent/tools/aio-sync.js` reads the id off an
+  existing case in the target project, or stops and asks for `aio.scriptTypeId` to be
+  pinned rather than guessing. The script is idempotent by test id, but still run once
+  per story to avoid duplicates.
 
 ## 5. Orchestrator flow (`/qa-run PROJ-123 [--rerun] [--resume]`)
 
