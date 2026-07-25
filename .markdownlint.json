@@ -1,0 +1,15 @@
+{
+  "//": "Lint config for the QA AZM Digital Agent docs. Every rule below is disabled for a stated structural reason, not to paper over sloppiness — the mechanical rules (MD022/MD031/MD032/MD040) are all enforced and clean.",
+
+  "MD041": false,
+  "//MD041": "first-line-heading. Agent and command files MUST open with a YAML frontmatter block (`---`) — that is the Claude Code harness contract, and the loader reads `name`/`description`/`tools` from it. Inserting an H1 above the frontmatter would break every agent in the framework, so this rule cannot apply to these documents.",
+
+  "MD013": false,
+  "//MD013": "line-length. These are prompts, not prose for humans to wrap by hand — a sentence is one logical instruction to the model, and hard-wrapping it adds nothing and risks breaking inline code spans.",
+
+  "MD033": false,
+  "//MD033": "no-inline-html. The report templates the orchestrator emits are HTML by design (figure/figcaption for embedded evidence), so inline HTML appears in the instructions that describe them.",
+
+  "MD024": false,
+  "//MD024": "no-duplicate-heading. Per-stage sections legitimately repeat the same sub-heading (`Checklist:`, `Output`, `Return`) across agents and across stages within qa-validator."
+}

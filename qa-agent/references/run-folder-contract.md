@@ -6,7 +6,7 @@ the run folder path it is given — there is no shared memory between subagents.
 
 ## Run folder tree
 
-```
+```text
 qa-runs/<PROJ-KEY>_<runId>/
 ├── run-context.json
 ├── story.json
@@ -38,9 +38,11 @@ Screenshots under `screenshots/` are captured by `qa-test-executor` at a 1920×1
 ## File schemas
 
 ### `run-context.json`
-```
+
+```text
 { key, appBaseUrl, config, bugProjectKey, mode: "run|rerun|resume", runFolder, timestamp }
 ```
+
 **`config.app.login`** — how the executor authenticates: `{ required, loginUrl, usernameEnv, passwordEnv, passwordless, notes, sessionReuse }`.
 
 | Field | Meaning |
@@ -55,27 +57,32 @@ Screenshots under `screenshots/` are captured by `qa-test-executor` at a 1920×1
 `bugProjectKey` is the Jira project `qa-bug-logger` files bugs against for this run — chosen once by the user at run-folder creation (section 3 of `/qa-run`) and may differ from `config.jira.projectKey` (the configured default, offered as the recommended option). The story `key` itself is unaffected — every bug still links back to the same story regardless of which project it's filed in. Older run folders created before this field existed won't have it; `qa-bug-logger` falls back to `config.jira.projectKey` in that case.
 
 ### `story.json`
-```
+
+```text
 { key, summary, description, acceptanceCriteria: [{ id, text }], components: [..], status, acSource: "explicit|inferred", _validation: {...} }
 ```
 
 ### `test-cases.json`
-```
+
+```text
 { cases: [{ id, title, linkedAC: [acId], type: "happy|negative|edge", steps: [str], testData: {}, expectedResult }], _validation: {...} }
 ```
 
 ### `gap-report.json`
-```
+
+```text
 { covered: [acId], uncovered: [acId], suggestions: [str], complete: bool, _validation: {...} }
 ```
 
 ### `results.json`
-```
+
+```text
 { cases: [{ id, status: "passed|failed|flaky|blocked", steps: [{ step, ok, note }], screenshots: [path], consoleErrors: [str], jsErrorFindings: [str], createdData: [str], reason }], _validation: {...} }
 ```
 
 ### `bugs-proposed.json`
-```
+
+```text
 { drafts: [{ ref, title, description, severity, priority, status, linkedAC: [acId], testId, testIds: [caseId],
              environment, reproSteps: [str], expectedResult, actualResult, consoleErrors: [str],
              screenshots: [path], possibleDuplicate: [key], recommendation, discoveredDate }],
@@ -87,24 +94,29 @@ Screenshots under `screenshots/` are captured by `qa-test-executor` at a 1920×1
 **Consumers must match failed cases to drafts through `testIds`**, treating the singular `testId` only as a fallback for run folders written before `testIds` existed. Matching on `testId` alone makes every consolidated secondary case look untriaged, which pushes `qa-reviewer` onto its happy-path heuristic and can yield two contradictory severity verdicts for one defect.
 
 ### `bugs-created.json`
-```
+
+```text
 { created: [{ ref, testId, key, url }], _validation: {...} }
 ```
 
 ### `review.json`
-```
+
+```text
 { acCoveragePct, totalTests, passed, failed, flaky, blocked, bugsLogged, blockers: [str], verdict: "GO|NO-GO", rationale, _validation: {...} }
 ```
 
 ### `validation/<stage>.json`
-```
+
+```text
 { stage, pass: bool, gaps: [{ item, detail }], checklist: [{ item, pass }], iteration }
 ```
 
 ### `aio-sync.json` (optional — written by `qa-test-sync` only when `config.aio.enabled`)
-```
+
+```text
 { project, folderID, folderName, storyJiraId, createdCount, total,
   cases: [ { testId, aioKey, aioID, title } | { testId, error, status } ],
   _validation: {...} }
 ```
+
 Note: the AIO folder (named with the story key) must be created once in the AIO Cases UI beforehand — the AIO API cannot create folders. Runs once per story.

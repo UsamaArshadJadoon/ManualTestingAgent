@@ -48,6 +48,7 @@ Draft one entry per distinct defect, with `ref` values assigned in order startin
 `ref, title, description, severity, priority, status, linkedAC, testId, testIds, environment, reproSteps, expectedResult, actualResult, consoleErrors, screenshots, possibleDuplicate, recommendation, discoveredDate`.
 
 Field-by-field:
+
    - `title` — a short, specific summary of the defect (what broke, in what area).
    - `description` — the defect in context (1–3 sentences), referencing the AC and what the user experiences.
    - `severity` — mapped from `config.severityMap` (see step 2). `priority` — derive a sensible priority from severity (`Highest`→Highest/`High`→High/`Low`→Low) unless the run data says otherwise.
@@ -64,10 +65,12 @@ Field-by-field:
    - `discoveredDate` — the run timestamp from `run-context.json`.
 
 **What to draft (broadened — capture every real defect, not only hard failures):**
+
    1. **Failures** — every case with `status: "failed"`. (Required.)
    2. **Error findings** — any case (even `passed`) whose `consoleErrors` or `jsErrorFindings` contain a real error (HTTP 4xx/5xx, uncaught JS exception, failed API call). Draft it with severity mapped to the impact (a failing functional API call is usually `major`; pure console noise is `minor`).
    3. **Spec-deviation findings** — any case whose `reason`/step notes document a behavior that deviates from the AC/spec even though the case still "passed" (e.g. a missing validation message, a wrong label, a data/display inconsistency). Draft it at `minor`/`major` per impact.
    Consolidate cases that describe the identical underlying defect into ONE draft: set `testId` to the primary case, list **every** contributing case in `testIds`, take the union of their `linkedAC`, merge their `screenshots`, and reference each contributing case in the description. Listing them all in `testIds` is what keeps the consolidation honest downstream — a consolidated case that only appears in the prose is invisible to `qa-reviewer`'s severity lookup. Do NOT draft for `flaky` cases or for `blocked` cases that reveal no defect; DO draft when a `blocked` case exposes a genuine coverage/behavior gap (note it as blocked-derived in the description).
+
 2. **Severity mapping:** derive each draft's `severity` by mapping the case's failure characteristics to a key in `config.severityMap` (e.g. `blocker`/`major`/`minor`) and using the mapped Jira-facing value (e.g. `severityMap.blocker` → `"Highest"`). Never assign a severity string that isn't produced by this mapping, and never leave `severity` empty for a failed case.
 3. **Masking:** before running any duplicate search and before writing any draft to disk, scan `title`, `description`, and every entry in `reproSteps` for any substring matching any pattern in `config.safety.maskPatterns`, and redact each match (e.g. replace with `***`). Apply masking to every draft, not just ones that look sensitive at a glance. This step MUST run before step 4 — a secret must never reach the Jira search API.
 4. **Duplicate detection (`possibleDuplicate`):** for each draft, run `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql` with a JQL query built from the run's bug project key (top-level `bugProjectKey`, falling back to `config.jira.projectKey` if absent) and keywords pulled from the draft's **already-masked** `title`, for example `project = <bugProjectKey> AND statusCategory != Done AND summary ~ "<keywords>"`. Set `possibleDuplicate` to the array of matching issue keys returned (empty array if none, or if the search itself fails/errors — never fabricate a key). Do this for every draft, after masking; do not skip the search and do not derive keywords from the unmasked title.
@@ -77,6 +80,7 @@ Field-by-field:
 **Output:** write **`bugs-proposed.json`** into the run folder with exactly these top-level fields: `drafts, _validation`. Use the `Write` tool to create this file at `<runFolder>/bugs-proposed.json`. Do not add extra top-level fields and do not omit any of the required ones. Do NOT call `mcp__claude_ai_Atlassian__createJiraIssue` or `mcp__claude_ai_Atlassian__createIssueLink` in this phase — create nothing in Jira. Return control to the orchestrator once the file is written; the orchestrator (with the human) decides which drafts get approved.
 
 Build the self-validation block using exactly this shape: `"_validation": { "checklist": [{ "item": "...", "pass": true }], "selfConfident": true, "notes": "..." }`. The `checklist` must include at least these items, each with a boolean `pass`:
+
 - every case with `status: "failed"` in `results.json` has a corresponding draft (none silently skipped)
 - every failed case id appears in the `testIds` of exactly one draft — including cases folded into a consolidated draft, which must be listed in `testIds` and not merely mentioned in the description
 - every real error finding (case with a genuine `consoleErrors`/`jsErrorFindings` entry) and every documented spec-deviation was captured as a draft
@@ -89,6 +93,7 @@ Build the self-validation block using exactly this shape: `"_validation": { "che
 `selfConfident` MUST be a **boolean** (`true`/`false`) — never a number, percentage, or string. Set `notes` to any caveats (e.g. a case had no matching entry in `test-cases.json`, a duplicate search returned no results, a mask pattern was ambiguous).
 
 Example shape:
+
 ```json
 {
   "drafts": [
@@ -155,6 +160,7 @@ For each `ref` in the approved-refs list, find its matching draft in `bugs-propo
 **Output:** write **`bugs-created.json`** into the run folder with exactly these top-level fields: `created, _validation`. Use the `Write` tool to create this file at `<runFolder>/bugs-created.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
 Build the self-validation block using exactly this shape: `"_validation": { "checklist": [{ "item": "...", "pass": true }], "selfConfident": true, "notes": "..." }`. The `checklist` must include at least these items, each with a boolean `pass`:
+
 - every approved `ref` has a corresponding entry in `created` (none silently skipped)
 - every created bug was linked to the story via `createIssueLink`
 - every entry has a real `key` and `url` returned by Jira (none fabricated)
@@ -162,6 +168,7 @@ Build the self-validation block using exactly this shape: `"_validation": { "che
 `selfConfident` MUST be a **boolean** (`true`/`false`) — never a number, percentage, or string. Set `notes` to any caveats (e.g. an approved ref had no matching draft, a link call failed for one bug).
 
 Example shape:
+
 ```json
 {
   "created": [
@@ -194,6 +201,7 @@ Separately from Phase A / Phase B, the orchestrator may invoke you in **Transiti
 ### Applying
 
 For each `{ bugKey, targetStatus }` in the supplied list:
+
 1. Call `mcp__claude_ai_Atlassian__getTransitionsForJiraIssue` for `bugKey` to look up the available transitions and find the transition whose destination matches `targetStatus`.
 2. If a matching transition exists, apply it with `mcp__claude_ai_Atlassian__transitionJiraIssue`. If no transition matches `targetStatus` from the issue's current status, skip that issue and note it — never force or fabricate a transition.
 3. Transition ONLY the bugs explicitly passed in — never any other issue, and never re-open, close, or alter anything not in the approved list.
@@ -206,4 +214,4 @@ Whichever phase you ran, your final return to the orchestrator is always a singl
 
 ---
 
-_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._
+*Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital.*

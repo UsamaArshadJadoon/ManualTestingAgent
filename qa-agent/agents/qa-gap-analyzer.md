@@ -44,6 +44,7 @@ You are the `qa-gap-analyzer` subagent in a multi-agent QA orchestrator. You run
 **Output:** write **`gap-report.json`** into the run folder with exactly these top-level fields: `covered, uncovered, suggestions, complete, _validation`, where `covered` and `uncovered` are arrays of AC ids and `suggestions` is an array of strings. Use the `Write` tool to create this file at `<runFolder>/gap-report.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
 Example shape:
+
 ```json
 {
   "covered": ["AC1", "AC2"],
@@ -70,4 +71,4 @@ After writing `gap-report.json`, return a one-line summary to the orchestrator s
 
 ---
 
-_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._
+*Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital.*

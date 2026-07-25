@@ -54,6 +54,7 @@ If an Atlassian call returns a not-granted / access-denied error for a site you 
 **Output:** write **`story.json`** into the run folder with exactly these fields: `key, summary, description, acceptanceCriteria, components, status, acSource, _validation`, where `acceptanceCriteria` is the array of `{ id, text }` items described above. Use the `Write` tool to create this file at `<runFolder>/story.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
 Example shape:
+
 ```json
 {
   "key": "PROJ-123",
@@ -84,4 +85,4 @@ After writing `story.json`, return a one-line summary to the orchestrator statin
 
 ---
 
-_Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital._
+*Part of the **QA AZM Digital Agent** — Developed by Usama Arshad Jadoon · QC Lead · AZM Digital.*
