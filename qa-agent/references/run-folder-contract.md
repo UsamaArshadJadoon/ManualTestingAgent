@@ -65,8 +65,15 @@ Screenshots under `screenshots/` are captured by `qa-test-executor` at a 1920×1
 
 ### `bugs-proposed.json`
 ```
-{ drafts: [{ ref, title, description, reproSteps: [str], severity, linkedAC: [acId], testId, screenshots: [path], possibleDuplicate: [key] }], _validation: {...} }
+{ drafts: [{ ref, title, description, severity, priority, status, linkedAC: [acId], testId, testIds: [caseId],
+             environment, reproSteps: [str], expectedResult, actualResult, consoleErrors: [str],
+             screenshots: [path], possibleDuplicate: [key], recommendation, discoveredDate }],
+  _validation: {...} }
 ```
+
+`testId` is the **primary** originating case id; **`testIds` lists every case the draft accounts for**, primary first. They differ when `qa-bug-logger` consolidates several cases sharing one root cause into a single draft (`testId: "TC1"`, `testIds: ["TC1", "TC3"]`).
+
+**Consumers must match failed cases to drafts through `testIds`**, treating the singular `testId` only as a fallback for run folders written before `testIds` existed. Matching on `testId` alone makes every consolidated secondary case look untriaged, which pushes `qa-reviewer` onto its happy-path heuristic and can yield two contradictory severity verdicts for one defect.
 
 ### `bugs-created.json`
 ```
