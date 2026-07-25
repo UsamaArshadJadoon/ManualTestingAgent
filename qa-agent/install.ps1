@@ -19,3 +19,20 @@ Write-Host "  by Usama Arshad Jadoon (QC Lead, AZM Digital)"
 Get-ChildItem (Join-Path $dest "agents") -Filter "qa-*.md" | ForEach-Object { Write-Host "  agent:   $($_.Name)" }
 Get-ChildItem (Join-Path $dest "commands") -Filter "qa-*.md" | ForEach-Object { Write-Host "  command: $($_.Name)" }
 Get-ChildItem (Join-Path $dest "qa-agent\tools") | ForEach-Object { Write-Host "  tool:    $($_.Name)" }
+
+# Orphan check. A `qa-*.md` sitting in ~\.claude\agents that this repo no longer
+# ships is almost always a leftover from an older version of the framework — and
+# it stays registered as a dispatchable agent, so a stale orchestrator can be
+# invoked by mistake and quietly contradict the current pipeline. Report them and
+# let the human delete; never remove files from a home directory unasked.
+$repoAgents = Get-ChildItem (Join-Path $src "agents") -Filter "qa-*.md" | ForEach-Object { $_.Name }
+$orphans = Get-ChildItem (Join-Path $dest "agents") -Filter "qa-*.md" |
+  Where-Object { $repoAgents -notcontains $_.Name }
+if ($orphans) {
+  Write-Host ""
+  Write-Host "WARNING: these qa-* agents are installed but are NOT part of this framework:" -ForegroundColor Yellow
+  $orphans | ForEach-Object { Write-Host "  orphan:  $($_.Name)" -ForegroundColor Yellow }
+  Write-Host "They remain dispatchable and may shadow or contradict the current pipeline." -ForegroundColor Yellow
+  Write-Host "Remove any you no longer want, e.g.:" -ForegroundColor Yellow
+  $orphans | ForEach-Object { Write-Host "  Remove-Item '$($_.FullName)'" -ForegroundColor Yellow }
+}
