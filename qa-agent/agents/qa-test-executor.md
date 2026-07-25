@@ -11,6 +11,7 @@ tools:
   - mcp__playwright__browser_type
   - mcp__playwright__browser_fill_form
   - mcp__playwright__browser_take_screenshot
+  - mcp__playwright__browser_resize
   - mcp__playwright__browser_console_messages
   - mcp__playwright__browser_network_requests
   - mcp__playwright__browser_wait_for
@@ -83,8 +84,20 @@ For each case in `test-cases.json`, in order:
 
 1. Execute the case's `steps` one at a time via the Playwright MCP tools (`browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_fill_form`, `browser_wait_for`, `browser_evaluate`), using `testData` for concrete input values and checking the outcome against `expectedResult`.
 2. Record each executed step as `{ step, ok, note }` in that case's `steps` output array — `ok` is whether that step behaved as expected, `note` is a short observation (what happened, what was seen/asserted).
-3. Capture at least one screenshot per case with `browser_take_screenshot`, saved under a `screenshots/` subfolder of the run folder (e.g. `screenshots/<caseId>.png`), and take an additional screenshot immediately on any step failure (e.g. `screenshots/<caseId>-fail.png`). Record every screenshot path in that case's `screenshots` array.
+3. Capture at least one screenshot per case with `browser_take_screenshot`, saved under a `screenshots/` subfolder of the run folder (e.g. `screenshots/<caseId>.png`), and take an additional screenshot immediately on any step failure (e.g. `screenshots/<caseId>-fail.png`). Record every screenshot path in that case's `screenshots` array. Screenshots must meet the **HD evidence standard** below — they are the primary evidence in the bug report a human will read, so a cropped or low-resolution capture is a defect in your output.
 4. Use `browser_console_messages` after each case (and after any failure) to collect uncaught JS errors and console errors observed during that case. Put plain console warnings/errors into `consoleErrors`, and put specifically **uncaught JS exceptions / error-level console entries that indicate a real defect** into `jsErrorFindings` — record these findings even when the case's own assertion passed, since a passing assertion can still coexist with a JS error worth flagging. Use `browser_network_requests` as supporting evidence when a step's failure looks network-related.
+
+### HD evidence standard (screenshots)
+
+Every screenshot you save is embedded, at full size, into the `bug-report.html` a human reviews and attaches to a Jira ticket. Treat capture quality as part of the deliverable, not an afterthought:
+
+- **Set a full-HD viewport once, before executing the first case:** call `browser_resize` with `width: 1920`, `height: 1080`, and keep it for the whole run so every capture is consistently sized and comparable. Re-assert it after any step that resizes the window. If a case is explicitly about a narrow/mobile viewport, resize for that case and resize back to 1920×1080 afterwards.
+- **Capture PNG, full page.** Ask `browser_take_screenshot` for a `.png` filename (never JPEG — text and UI chrome must stay crisp) and prefer a **full-page** capture so evidence isn't cut off below the fold. Fall back to a viewport capture only if the full-page capture fails, and say so in that step's `note`.
+- **Minimum width 1280px; 1920px is the target.** A capture narrower than 1280px is not acceptable evidence — the report tooling (`embed-screenshots.js`) rejects it outright and the run's bug report will hard-fail.
+- **Never crop, scale down, or re-encode.** Save the original bytes the browser produced. Do not try to shrink files to save space.
+- **Make the failure visible in the frame.** Before capturing a failure, ensure the thing that proves the defect is on screen — the offending control, the open dropdown, the error text, the empty state, the wrong value. A screenshot that doesn't show *why* the case failed is not evidence. If the proof spans two views, capture two screenshots (e.g. `<caseId>-fail.png` and `<caseId>-fail-2.png`).
+- **Name for traceability.** `screenshots/<caseId>.png` for the case's main state, `screenshots/<caseId>-fail.png` (then `-fail-2`, `-fail-3`) for failure proof, `screenshots/<caseId>-blocked.png` for a blocked case's evidence. List every file in that case's `screenshots` array in the order a reader should see them, and describe what each one shows in the corresponding step `note` — those notes become the figure captions in the bug report.
+- **Never let a secret into a frame.** Before capturing, confirm no credential, token, or masked-pattern value is visible on screen (e.g. a filled password field, a pasted token, an auth header in an open devtools panel). If one is, clear or navigate away from it first, or capture a view that excludes it.
 
 ### Flaky-retry
 
@@ -104,6 +117,7 @@ One failing, blocked, or flaky case must never stop execution of the remaining c
 Build the self-validation block using exactly this shape: `"_validation": { "checklist": [{ "item": "...", "pass": true }], "selfConfident": true, "notes": "..." }`. The `checklist` must include at least these items, each with a boolean `pass`:
 - every case from `test-cases.json` has a corresponding result in `cases` (none silently skipped)
 - every case has supporting evidence (at least one screenshot, and steps recorded)
+- every screenshot meets the HD evidence standard (captured at a 1920×1080 viewport, PNG, ≥1280px wide, not cropped or downscaled) and every `failed`/`blocked` case has at least one screenshot that actually shows why it failed or was blocked
 - no case was silently skipped or omitted from the output
 - each case's `status` is justified by its recorded `steps` (a `passed`/`failed` verdict follows from what the steps actually showed, not asserted without evidence)
 
