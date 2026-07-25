@@ -149,11 +149,56 @@ Example shape:
 
 For each `ref` in the approved-refs list, find its matching draft in `bugs-proposed.json`'s `drafts` array (match by `ref` exactly):
 
-1. Call `mcp__claude_ai_Atlassian__createJiraIssue` using the draft's `title`, `description`, `severity`, using issue type `config.jira.defaultBugType` (from `run-context.json`) and project `bugProjectKey` (falling back to `config.jira.projectKey` only if `bugProjectKey` is absent from `run-context.json`).
+1. Call `mcp__claude_ai_Atlassian__createJiraIssue` with the draft's `title` as the summary and the **description body composed exactly as specified below**, using issue type `config.jira.defaultBugType` (from `run-context.json`) and project `bugProjectKey` (falling back to `config.jira.projectKey` only if `bugProjectKey` is absent from `run-context.json`).
 2. Call `mcp__claude_ai_Atlassian__createIssueLink` to link the newly created bug to the story `key` (unchanged from `story.json`, regardless of which project the bug was filed in; link type "Relates" or "Blocks").
 3. Record `{ ref, testId, key, url }` in `created` — `testId` copied from the draft, `key` and `url` from the `createJiraIssue` response.
 
 **Only create approved refs — never create a draft whose `ref` is not in the approved-refs list, even if it is present in `bugs-proposed.json`.** If a `ref` in the approved-refs list has no matching draft in `bugs-proposed.json`, skip it and note the mismatch in `_validation.notes` rather than fabricating one.
+
+#### The description body — use MARKDOWN, and use this exact section order
+
+The draft's `description` field is one prose paragraph, but a filed bug needs the full detail a developer can act on. Compose the Jira description from the draft's fields using the template below. Two rules matter more than the rest:
+
+- **Use markdown (`###`, `-`, `1.`, `**bold**`, backticks). NEVER Jira wiki markup (`h3.`, `*bold*`, `{{code}}`, `{code}` blocks).** The Atlassian MCP renders markdown; wiki markup passes through as literal text, so a heading written `h3. Steps to reproduce` appears in the ticket as the characters `h3. Steps to reproduce`. This has actually happened — one issue in a run was filed with `h3.` headings while its siblings used `###`, so the same run produced two differently-formatted tickets. Pick markdown every time; do not switch syntax between issues in a run.
+- **Same section order for every bug.** Consistency is the point: a reader scanning three tickets from one run should find the same information in the same place.
+
+```markdown
+[the draft's `description`, verbatim — the prose paragraph explaining the defect and its root cause]
+
+### Steps to reproduce
+1. [reproSteps[0]]
+2. [reproSteps[1]]
+   …
+
+### Expected result
+[expectedResult]
+
+### Actual result
+[actualResult]
+
+### Environment
+[environment]
+
+### Console and network errors
+[each consoleErrors entry as a `-` bullet, wrapped in backticks — or the literal line "None observed." when the array is empty]
+
+### Evidence
+[each screenshots path as a `-` bullet. Note in one line that these are run-folder paths, not Jira attachments — the MCP has no attachment-upload tool — and that the run's bug-report.html embeds them inline.]
+
+### Recommendation
+[recommendation]
+
+### Traceability
+- Story: [story key]
+- Acceptance criteria: [linkedAC joined, or "n/a — incidental finding" when empty]
+- Originating test case(s): [testIds joined]
+- Severity: [severity] · Priority: [priority] · Discovered: [discoveredDate]
+- Possible duplicates: [possibleDuplicate keys joined, or "none found"]
+```
+
+**When `possibleDuplicate` is non-empty**, state plainly in that last line that the listed issue(s) may already track this defect and that the user approved filing anyway — so a triager reading only the ticket understands why a near-duplicate exists. Do **not** create a Jira `Duplicate` link: triage automation can auto-close the new bug. The story link from step 2 is the only link in scope.
+
+Never invent content that is not in the draft. If a field is `"—"` or an empty array, render the section with an explicit "None observed." / "none found" rather than dropping the heading — a missing section reads as an oversight, whereas an explicit "none" reads as a checked fact.
 
 ### Output
 
