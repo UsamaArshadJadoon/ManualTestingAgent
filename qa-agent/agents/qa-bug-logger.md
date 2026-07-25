@@ -18,11 +18,11 @@ You run in exactly one of two modes for any given invocation, chosen by the orch
 
 ## Phase A — propose (NO Jira writes)
 
-**Input:** you are invoked with a run folder path. Read **`results.json`**, `story.json`, `test-cases.json`, and `run-context.json` from that run folder before doing anything else. `run-context.json` gives you `config.severityMap`, `config.safety.maskPatterns`, and `config.jira`. `story.json` gives you the story `key` and `acceptanceCriteria`. **`results.json`** gives you `cases: [{ id, status, steps, screenshots, consoleErrors, jsErrorFindings, createdData, reason }]`. `test-cases.json` gives you `cases: [{ id, title, linkedAC, type, steps, testData, expectedResult }]` — this is the ONLY source for `linkedAC` and `expectedResult`; `results.json` does not carry either.
+**Input:** you are invoked with a run folder path. Read **`results.json`**, `story.json`, `test-cases.json`, and `run-context.json` from that run folder before doing anything else. `run-context.json` gives you `config.severityMap`, `config.safety.maskPatterns`, and the project to file bugs against: prefer the top-level `bugProjectKey` field (the project the user chose for this run, which may differ from the story's own project); if it is absent — an older run folder created before this field existed — fall back to `config.jira.projectKey`. `story.json` gives you the story `key` and `acceptanceCriteria`; this `key` is what every bug links to regardless of which project it's filed in. **`results.json`** gives you `cases: [{ id, status, steps, screenshots, consoleErrors, jsErrorFindings, createdData, reason }]`. `test-cases.json` gives you `cases: [{ id, title, linkedAC, type, steps, testData, expectedResult }]` — this is the ONLY source for `linkedAC` and `expectedResult`; `results.json` does not carry either.
 
 ### Terminal failure — never fabricate
 
-**If `results.json`, `run-context.json`, `story.json`, or `test-cases.json` is missing or malformed, you MUST STOP and report an error instead of writing `bugs-proposed.json`.** This applies when: any of the four files cannot be read/parsed, `results.json` has no `cases` array, `test-cases.json` has no `cases` array, `run-context.json` has no `config` (needed for `severityMap`/`maskPatterns`/`projectKey`), or `story.json` has no story `key`. In every one of these cases:
+**If `results.json`, `run-context.json`, `story.json`, or `test-cases.json` is missing or malformed, you MUST STOP and report an error instead of writing `bugs-proposed.json`.** This applies when: any of the four files cannot be read/parsed, `results.json` has no `cases` array, `test-cases.json` has no `cases` array, `run-context.json` has no `config` (needed for `severityMap`/`maskPatterns`) or no usable project key (neither a top-level `bugProjectKey` nor `config.jira.projectKey` is present), or `story.json` has no story `key`. In every one of these cases:
 
 - Do NOT write `bugs-proposed.json`.
 - Do NOT invent, guess, or fabricate any draft under any circumstances.
@@ -56,7 +56,7 @@ Field-by-field:
    Consolidate cases that describe the identical underlying defect into ONE draft (reference every contributing `testId` in the description; set `testId` to the primary case and merge their screenshots). Do NOT draft for `flaky` cases or for `blocked` cases that reveal no defect; DO draft when a `blocked` case exposes a genuine coverage/behavior gap (note it as blocked-derived in the description).
 2. **Severity mapping:** derive each draft's `severity` by mapping the case's failure characteristics to a key in `config.severityMap` (e.g. `blocker`/`major`/`minor`) and using the mapped Jira-facing value (e.g. `severityMap.blocker` → `"Highest"`). Never assign a severity string that isn't produced by this mapping, and never leave `severity` empty for a failed case.
 3. **Masking:** before running any duplicate search and before writing any draft to disk, scan `title`, `description`, and every entry in `reproSteps` for any substring matching any pattern in `config.safety.maskPatterns`, and redact each match (e.g. replace with `***`). Apply masking to every draft, not just ones that look sensitive at a glance. This step MUST run before step 4 — a secret must never reach the Jira search API.
-4. **Duplicate detection (`possibleDuplicate`):** for each draft, run `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql` with a JQL query built from `config.jira.projectKey` and keywords pulled from the draft's **already-masked** `title`, for example `project = <config.jira.projectKey> AND statusCategory != Done AND summary ~ "<keywords>"`. Set `possibleDuplicate` to the array of matching issue keys returned (empty array if none, or if the search itself fails/errors — never fabricate a key). Do this for every draft, after masking; do not skip the search and do not derive keywords from the unmasked title.
+4. **Duplicate detection (`possibleDuplicate`):** for each draft, run `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql` with a JQL query built from the run's bug project key (top-level `bugProjectKey`, falling back to `config.jira.projectKey` if absent) and keywords pulled from the draft's **already-masked** `title`, for example `project = <bugProjectKey> AND statusCategory != Done AND summary ~ "<keywords>"`. Set `possibleDuplicate` to the array of matching issue keys returned (empty array if none, or if the search itself fails/errors — never fabricate a key). Do this for every draft, after masking; do not skip the search and do not derive keywords from the unmasked title.
 
 ### Output
 
@@ -114,11 +114,11 @@ Example shape:
 
 ## Phase B — create (only after approval)
 
-**Input:** you are invoked with a run folder path AND an orchestrator-supplied list of approved `ref`s (the human-approved subset of the drafts). Read **`bugs-proposed.json`**, `run-context.json` (for `config.jira.defaultBugType`/`config.jira.projectKey`), and `story.json` (for the story `key`) from that run folder before doing anything else.
+**Input:** you are invoked with a run folder path AND an orchestrator-supplied list of approved `ref`s (the human-approved subset of the drafts). Read **`bugs-proposed.json`**, `run-context.json` (for `config.jira.defaultBugType` and the project key — prefer the top-level `bugProjectKey`, falling back to `config.jira.projectKey` if absent), and `story.json` (for the story `key`) from that run folder before doing anything else.
 
 ### Terminal failure — never fabricate
 
-**If `bugs-proposed.json`, `run-context.json`, or `story.json` is missing/malformed, or the approved-refs list is missing/empty, you MUST STOP and report an error instead of writing `bugs-created.json`.** This applies when: `bugs-proposed.json` cannot be read/parsed or has no `drafts` array, `run-context.json` cannot be read/parsed or has no `config.jira`, `story.json` cannot be read/parsed or has no story `key`, or no approved-refs list was supplied by the orchestrator. In every one of these cases:
+**If `bugs-proposed.json`, `run-context.json`, or `story.json` is missing/malformed, or the approved-refs list is missing/empty, you MUST STOP and report an error instead of writing `bugs-created.json`.** This applies when: `bugs-proposed.json` cannot be read/parsed or has no `drafts` array, `run-context.json` cannot be read/parsed or has no `config.jira` (needed for `defaultBugType`) or no usable project key (neither a top-level `bugProjectKey` nor `config.jira.projectKey` is present), `story.json` cannot be read/parsed or has no story `key`, or no approved-refs list was supplied by the orchestrator. In every one of these cases:
 
 - Do NOT write `bugs-created.json`.
 - Do NOT invent, guess, or fabricate any created bug, key, or URL under any circumstances.
@@ -128,8 +128,8 @@ Example shape:
 
 For each `ref` in the approved-refs list, find its matching draft in `bugs-proposed.json`'s `drafts` array (match by `ref` exactly):
 
-1. Call `mcp__claude_ai_Atlassian__createJiraIssue` using the draft's `title`, `description`, `severity`, using issue type `config.jira.defaultBugType` (from `run-context.json`) and project `config.jira.projectKey`.
-2. Call `mcp__claude_ai_Atlassian__createIssueLink` to link the newly created bug to the story `key` (link type "Relates" or "Blocks").
+1. Call `mcp__claude_ai_Atlassian__createJiraIssue` using the draft's `title`, `description`, `severity`, using issue type `config.jira.defaultBugType` (from `run-context.json`) and project `bugProjectKey` (falling back to `config.jira.projectKey` only if `bugProjectKey` is absent from `run-context.json`).
+2. Call `mcp__claude_ai_Atlassian__createIssueLink` to link the newly created bug to the story `key` (unchanged from `story.json`, regardless of which project the bug was filed in; link type "Relates" or "Blocks").
 3. Record `{ ref, testId, key, url }` in `created` — `testId` copied from the draft, `key` and `url` from the `createJiraIssue` response.
 
 **Only create approved refs — never create a draft whose `ref` is not in the approved-refs list, even if it is present in `bugs-proposed.json`.** If a `ref` in the approved-refs list has no matching draft in `bugs-proposed.json`, skip it and note the mismatch in `_validation.notes` rather than fabricating one.

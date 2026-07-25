@@ -46,7 +46,7 @@ For every case in `test-cases.json`, `POST {baseUrl}/project/{projectKey}/testca
   "title": "<case.title>",
   "precondition": "<tailored precondition text>",
   "description": "<rich description: story, test type, covered AC text (from story.json), overall expected result>",
-  "scriptType": { "ID": 5 },
+  "scriptType": { "ID": 9 },
   "folder": { "ID": <folderID> },
   "jiraRequirementIDs": ["<storyJiraId>"],
   "steps": [
@@ -55,8 +55,10 @@ For every case in `test-cases.json`, `POST {baseUrl}/project/{projectKey}/testca
 }
 ```
 
-Rules and gotchas (all learned from the live API):
-- `scriptType` MUST be `{ "ID": 5 }` (Classic) — omitting it returns 400 "specify Test Script Type".
+**This exact schema is confirmed correct — do NOT send trial/probe requests to "discover" or re-verify it.** Every probe or malformed POST creates a real, permanent test case in AIO with no delete endpoint available (confirmed: `DELETE` returns 404) — there is no way to clean up a bad guess afterward, so guessing at the schema pollutes the customer's AIO project. Use the body shape above verbatim on the first attempt for every case.
+
+Rules and gotchas (all learned from the live API — settled, not to be re-derived):
+- `scriptType` MUST be `{ "ID": 9 }` (Classic) for any case that has a `steps[]` array — `{ "ID": 5 }` returns 400 "Invalid or missing value for Test Script Type" as soon as steps are present. (A bare case with no steps at all silently tolerates other ID values and defaults to Classic, which is a trap — always use `{ "ID": 9 }` since every real case here has steps.)
 - Each step MUST have `stepType: "TEXT"` (valid enum: BDD_*/REFERENCE/TEXT — use `TEXT` for classic steps) and a non-empty `step` field (the field is `step`, NOT `description`).
 - Map the case's `steps[]` (strings) to AIO steps in order; put the case's overall `expectedResult` on the **last** step's `expectedResult` (leave intermediate steps' expectedResult empty — never invent per-step expected results).
 - `folder: { "ID": <id> }` places the case in the story folder. Assigning by folder NAME does NOT work — use the numeric ID from the folder lookup.
