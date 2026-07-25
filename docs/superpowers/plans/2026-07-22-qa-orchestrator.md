@@ -16,6 +16,12 @@
 - **Install target:** `~/.claude/agents/` and `~/.claude/commands/` (global).
 - **Source of truth:** `c:\QCAgent\qa-agent/` (git-tracked), deployed via `install.ps1`.
 - **Subagent frontmatter keys (required):** `name`, `description`, `tools`, `model: claude-opus-4-8`.
+  > **Amendment, 2026-07-26.** The model pin has since moved to **`claude-opus-5`** across all
+  > eight subagents (`claude-opus-4-8` is now the previous-generation Opus). The frontmatter
+  > *keys* are unchanged; only the pinned value moved, and the two later `model:` occurrences in
+  > this plan's code blocks are equally superseded. This plan is left as originally written for
+  > the record — the installed `qa-agent/agents/*.md` files are authoritative.
+
 - **Data bus:** every subagent reads/writes only files inside the run folder path passed to it. No shared memory.
 - **Run folder layout** (canonical — see `qa-agent/references/run-folder-contract.md`):
   `run-context.json`, `story.json`, `test-cases.json`, `gap-report.json`, `results.json`, `screenshots/`, `bugs-proposed.json`, `bugs-created.json`, `review.json`, `validation/<stage>.json`, `report.md`, `report.html`.
