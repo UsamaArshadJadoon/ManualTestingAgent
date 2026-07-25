@@ -16,13 +16,15 @@
 
 You type one command:
 
-```
+```text
 /qa-run PROJ-123
 ```
 
 …and the agent reads the Jira story, designs the tests, drives your live app in a **real browser**, and hands you a signed-off report — pausing only at two human approval gates. Behind that one command, an **orchestrator** dispatches the specialist subagents (seven core + an optional **`qa-test-sync`** that mirrors the approved cases into **AIO Tests**) and re-checks every stage with an independent validator.
 
-**On our live run (Jira `PROJ-123` — “a worked example story”):** 12 acceptance criteria → 26 test cases → **22 passed · 2 failed · 2 blocked**, 7 findings surfaced, GO ⚠ verdict — with real screenshots captured for every case.
+**On our live run (Jira `PROJ-123` — “a worked example story”):** 12 acceptance criteria → 26 test cases → **22 passed · 2 failed · 2 blocked**, 7 findings surfaced — with real screenshots captured for every case.
+
+> That run was signed off `GO ⚠` under the original verdict rule. **The rule has since been tightened and the same results would now return `NO-GO`:** a `GO` requires every acceptance criterion to have at least one *passing* linked case, so failed cases — and criteria covered only by `blocked` ones, which are *unverified* rather than working — now prevent sign-off. See [the verdict rule](qa-agent/README.md) for the current conditions.
 
 ## How the agents work — step by step
 
@@ -87,12 +89,15 @@ Every subagent runs isolated with no shared memory — all data flows through JS
 
 ## Repository layout
 
-```
+```text
 qa-agent/
 ├── commands/            /qa-run and /qa-setup
 ├── agents/              the 7 core qa-* subagents + optional qa-test-sync (AIO)
 ├── references/          run-folder JSON contract
-├── tools/               structural checker
+├── tools/               aio-sync.js (AIO Tests writes), embed-screenshots.js
+│                        (inlines HD evidence into bug-report.html),
+│                        check-artifacts.ps1 (structural lint)
+├── docs/                complete-guide.html + workflow-diagram.html
 ├── install.ps1          deploys agents/commands to ~/.claude
 ├── qa-config.example.json
 └── README.md            full documentation
@@ -115,13 +120,15 @@ You install the agents **once per machine**; after that they work in **every** p
 
 ### ⚡ Fastest way — download the ZIP &amp; install all agents (copy-paste)
 
-Open **Windows PowerShell** and paste this whole block. It **downloads** the release ZIP, **extracts** it, and **installs all 8 agents + 2 commands** into `~/.claude`:
+Open **Windows PowerShell** and paste this whole block. It **downloads** the current `main` branch, **extracts** it, and **installs all 8 agents + 2 commands** into `~/.claude`:
+
+> ⚠️ **Install from `main`, not from a release tag.** This block deliberately fetches `refs/heads/main.zip` rather than a pinned tag. Tags go stale fast, and a stale install is not a cosmetic problem — earlier versions shipped bugs that blocked every test case on password-less logins and wrote permanently wrong data into AIO Tests (which has no delete endpoint). If you must pin a version for change control, take the [latest release](https://github.com/UsamaArshadJadoon/ManualTestingAgent/releases/latest) and re-check it against `main` before rolling it out to the team.
 
 ```powershell
-# QA AZM Digital Agent — one-shot download & install
+# QA AZM Digital Agent — one-shot download & install (always the latest code)
 $zip  = "$HOME\Downloads\qa-azm-agent.zip"
 $dest = "$HOME\Downloads\qa-azm-agent"
-Invoke-WebRequest "https://github.com/UsamaArshadJadoon/ManualTestingAgent/archive/refs/tags/v1.1.0.zip" -OutFile $zip
+Invoke-WebRequest "https://github.com/UsamaArshadJadoon/ManualTestingAgent/archive/refs/heads/main.zip" -OutFile $zip
 Expand-Archive $zip $dest -Force
 $root = (Get-ChildItem $dest -Directory)[0].FullName
 powershell -ExecutionPolicy Bypass -File "$root\qa-agent\install.ps1"
@@ -150,6 +157,7 @@ Pick either option — both give you the `qa-agent/` folder that holds all 8 age
 
 - **Download the release (no Git needed):** open the **[latest release](https://github.com/UsamaArshadJadoon/ManualTestingAgent/releases/latest)** → **Assets** → **Source code (zip)** → download it, then **right-click → Extract All** to a folder (e.g. `C:\ManualTestingAgent`).
 - **or clone with Git:**
+
   ```powershell
   git clone https://github.com/UsamaArshadJadoon/ManualTestingAgent.git
   ```
