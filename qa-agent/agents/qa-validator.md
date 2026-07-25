@@ -52,6 +52,8 @@ For every stage, first read that stage's output file plus the upstream input fil
   - happy + negative + edge covered (across the case set, all three `type` values appear where applicable to the AC)
   - steps executable (each case's `steps` are concrete, ordered, unambiguous actions — not vague restatements of the AC)
   - test data present (`testData` is populated whenever a step requires input)
+  - no redundant login preamble (when `run-context.json`'s `config.app.login.sessionReuse` is `true`, cases start from the authenticated state instead of repeating login steps — the executor authenticates once, so per-case login steps are dead weight that pollute `results.json` and every downstream bug's repro steps. Cases that deliberately test the auth boundary — unauthenticated access, route guards, logout — are the legitimate exception and are not a gap.)
+  - no fabricated password (when `config.app.login.passwordless` is `true` or `passwordEnv` is `null`, no case has a password step and no `testData` carries a password — the app authenticates on an identifier alone)
 
 - **`gap-analyzer`** — inputs: `story.json`, `test-cases.json`. Output checked: `gap-report.json`.
   Checklist:
