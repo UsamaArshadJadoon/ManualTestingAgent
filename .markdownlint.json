@@ -11,5 +11,11 @@
   "//MD033": "no-inline-html. The report templates the orchestrator emits are HTML by design (figure/figcaption for embedded evidence), so inline HTML appears in the instructions that describe them.",
 
   "MD024": false,
-  "//MD024": "no-duplicate-heading. Per-stage sections legitimately repeat the same sub-heading (`Checklist:`, `Output`, `Return`) across agents and across stages within qa-validator."
+  "//MD024": "no-duplicate-heading. Per-stage sections legitimately repeat the same sub-heading (`Checklist:`, `Output`, `Return`) across agents and across stages within qa-validator.",
+
+  "MD060": false,
+  "//MD060": "table-column-style. Compact separators (`|---|---|`) are used throughout and render identically to padded ones; enforcing a padding style would rewrite every table for no reader benefit.",
+
+  "MD034": false,
+  "//MD034": "no-bare-urls. The dated design records carry a bare contact address in their header block; they are historical documents and are not rewritten for style."
 }
