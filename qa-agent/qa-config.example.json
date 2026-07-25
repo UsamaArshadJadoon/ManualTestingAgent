@@ -10,7 +10,6 @@
     "baseUrl": "https://tcms.aiojiraapps.com/aio-tcms/api/v1",
     "tokenEnv": "AIO_TOKEN",
     "projectKey": "PROJ",
-    "folder": "",
     "scriptTypeId": null,
     "linkToStory": true
   },
@@ -21,6 +20,8 @@
       "loginUrl": "https://staging.example.com/login",
       "usernameEnv": "QA_USER",
       "passwordEnv": "QA_PASS",
+      "passwordless": false,
+      "notes": "",
       "sessionReuse": true
     }
   },
