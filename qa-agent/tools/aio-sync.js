@@ -189,6 +189,41 @@ async function resolveFolder() {
   return hit;
 }
 
+/* ---------- masking ----------
+ * Every string this script sends to AIO is masked first. This matters more here than
+ * anywhere else in the pipeline: AIO exposes no DELETE endpoint for test cases, so a
+ * secret written into a case body is permanent and unremovable — you cannot even fix it
+ * by deleting and re-creating. Jira issues can be edited or deleted; these cannot.
+ *
+ * What flows in from disk and therefore needs masking: `testData` (echoed verbatim into
+ * the precondition), the case `steps`, `title`, `expectedResult`, the story summary, the
+ * AC text, and `config.app.login.notes` (free text a human wrote, which is exactly where
+ * someone inlines a real identifier "just for reference"). */
+const maskPatterns = ((cfg.safety && cfg.safety.maskPatterns) || []).map((p) => {
+  const ci = p.startsWith('(?i)');
+  try {
+    return new RegExp(ci ? p.slice(4) : p, ci ? 'gi' : 'g');
+  } catch (e) {
+    console.log(`WARN ignoring un-compilable maskPattern ${JSON.stringify(p)}: ${e.message}`);
+    return null;
+  }
+}).filter(Boolean);
+
+let maskHits = 0;
+/** Redact every maskPatterns match in a string. Non-strings pass through untouched. */
+function mask(v) {
+  if (typeof v !== 'string' || !v) return v;
+  let out = v;
+  for (const re of maskPatterns) {
+    re.lastIndex = 0;
+    out = out.replace(re, (m) => {
+      maskHits++;
+      return '***';
+    });
+  }
+  return out;
+}
+
 /* ---------- case body ---------- */
 const acText = (ids) =>
   (ids || [])
@@ -199,17 +234,19 @@ const acText = (ids) =>
     .join('\n');
 
 function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
+  // Every value below is masked on the way in — AIO cases cannot be deleted, so this is
+  // the last point at which a secret can be stopped.
   const dataLines = Object.entries(tc.testData || {})
-    .map(([k, v]) => `${k}: ${v}`)
+    .map(([k, v]) => `${mask(k)}: ${mask(String(v))}`)
     .join('\n');
   const description = [
-    `Story: ${storyKey} — ${story.summary}`,
+    `Story: ${storyKey} — ${mask(story.summary)}`,
     `Test type: ${tc.type}`,
-    `Covered acceptance criteria:\n${acText(tc.linkedAC) || '(none)'}`,
-    `Overall expected result: ${tc.expectedResult}`,
+    `Covered acceptance criteria:\n${mask(acText(tc.linkedAC)) || '(none)'}`,
+    `Overall expected result: ${mask(tc.expectedResult)}`,
   ].join('\n\n');
   const precondition = [
-    (tc.cfgLoginNote || '').trim(),
+    mask((tc.cfgLoginNote || '').trim()),
     dataLines ? `Test data:\n${dataLines}` : '',
   ]
     .filter(Boolean)
@@ -217,13 +254,13 @@ function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
   const steps = (tc.steps || []).map((s, i) => ({
     stepIndex: i + 1,
     stepType: 'TEXT',
-    step: String(s),
+    step: mask(String(s)),
     data: '',
     // The case's overall expected result belongs on the LAST step; never invent per-step results.
-    expectedResult: i === (tc.steps || []).length - 1 ? tc.expectedResult || '' : '',
+    expectedResult: i === (tc.steps || []).length - 1 ? mask(tc.expectedResult || '') : '',
   }));
   const body = {
-    title: tc.title,
+    title: mask(tc.title),
     precondition: precondition || 'None',
     description,
     scriptType: { ID: scriptTypeId },
@@ -310,6 +347,7 @@ function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
           : '.');
 
   console.log(`folder: ${folder.name} (ID ${folder.ID})`);
+  if (maskPatterns.length === 0) console.log("WARN no maskPatterns configured — nothing will be redacted before writing to AIO");
   console.log(`scriptType ID: ${st.id} — ${st.source}`);
   if (dryRun) {
     console.log(JSON.stringify(buildBody(Object.assign({ cfgLoginNote: loginNote }, selected[0]), folder.ID, st.id, storyJiraId), null, 2));
@@ -377,6 +415,10 @@ function buildBody(tc, folderId, scriptTypeId, storyJiraId) {
             { item: 'folder resolved by numeric ID', pass: !!folder.ID },
             { item: 'scriptType resolved at runtime (not hardcoded)', pass: true },
             { item: 'token never printed', pass: true },
+            {
+              item: `maskPatterns applied to every string sent to AIO (${maskHits} redaction(s) made)`,
+              pass: maskPatterns.length > 0,
+            },
             { item: 'requirement link applied when enabled', pass: aio.linkToStory === false || !!storyJiraId },
             { item: 'no duplicate creation on re-run (idempotent by testId)', pass: true },
             {
