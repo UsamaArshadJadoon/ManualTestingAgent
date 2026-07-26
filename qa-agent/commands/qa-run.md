@@ -18,7 +18,7 @@ Parse **`$ARGUMENTS`**:
 
 - The first non-flag token is the **story key** (e.g. `PROJ-123`). Uppercase it. A story key is **required in ALL modes** — a fresh run, `--resume`, and `--rerun` all need it (resume/rerun use it to locate the `<KEY>_*` run folders). If no story key is present, stop and tell the user the usage regardless of any flags given: `/qa-run <STORY-KEY> [--resume] [--rerun]`.
 - **`--resume`** — resume the latest existing run for the key from where it left off (see section 8). Mutually exclusive with `--rerun`; if both are present, stop and ask the user which one they meant.
-- **`--rerun`** — re-execute only the `failed`/`flaky` cases from the latest existing run for the key (see section 9).
+- **`--rerun`** — re-execute the unresolved cases from the latest existing run for the key: those whose status is `failed`, `flaky`, **or `blocked`** (see section 9).
 - A bare invocation with a key and no flag is a fresh full run (sections 1–7).
 
 ## 1. Load config
@@ -150,7 +150,13 @@ When invoked with **`--resume`**:
 When invoked with **`--rerun`**:
 
 1. Locate the **latest** run folder for the key (as in section 8) and read its `run-context.json`, `test-cases.json`, and `results.json`. If none exists, tell the user there is nothing to rerun.
-2. Identify the cases whose latest `status` is **`failed`** or **`flaky`**. Before the rerun overwrites/merges anything, read the prior `results.json` into memory (capturing each re-run case's prior status) so the final report can show a before/after comparison. Then re-execute ONLY those cases: dispatch **`qa-test-executor`** scoped to that subset (pass the run-folder path and the list of case ids to re-run), and it merges the new outcomes back into `results.json` by upsert on case `id`. Have the rerun report include prior-vs-new status per re-run case. **→ validate** stage `test-executor`.
+2. Identify the cases whose latest `status` is **`failed`**, **`flaky`**, or **`blocked`**.
+
+   **`blocked` is included deliberately — a blocked case is unfinished work, not a settled outcome.** It proves nothing in either direction: the acceptance criterion behind it is simply untested, yet it sits quietly in the tally looking accounted-for. Excluding it from rerun would make it permanently unreachable by this pipeline, so the only route back to coverage would be a full fresh run of every case. Blocked cases are in fact the *most* worthwhile thing to rerun, because the usual causes — a run that hit `maxRunMinutes`, a missing fixture, a transient outage — are exactly the ones a second attempt resolves.
+
+   When reporting, keep the three groups distinct: a previously-`blocked` case that now passes has been **newly covered**, which is a different claim from a previously-`failed` case that now passes (**fixed**). Do not let a newly-covered case read as evidence that a defect was repaired.
+
+   Before the rerun overwrites/merges anything, read the prior `results.json` into memory (capturing each re-run case's prior status) so the final report can show a before/after comparison. Then re-execute ONLY those cases: dispatch **`qa-test-executor`** scoped to that subset (pass the run-folder path and the list of case ids to re-run), and it merges the new outcomes back into `results.json` by upsert on case `id`. Have the rerun report include prior-vs-new status per re-run case. **→ validate** stage `test-executor`.
 3. **Fix-forward transitions.** For each previously-logged bug in `bugs-created.json`, decide whether it looks fixed — then propose, never apply.
 
    **Determining "fixed" — every originating case must pass, not just the primary one.** Look the bug's `ref` up in `bugs-proposed.json` and take its **`testIds`** array (all the cases that draft accounts for; fall back to the singular `testId` for run folders written before `testIds` existed). The bug is a closure candidate **only if EVERY case in `testIds` now has `status: "passed"`** in the merged `results.json`. This matters for consolidated drafts: `qa-bug-logger` folds several cases sharing one root cause into one bug, so a draft with `testId: "TC1"` and `testIds: ["TC1","TC3"]` is **not** fixed just because TC1 went green — if TC3 still fails, the underlying defect is still live and proposing closure would be wrong. If some but not all of its cases pass, say so explicitly when you report ("partially fixed: TC1 passes, TC3 still fails") and do NOT offer the transition.
