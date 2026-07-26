@@ -22,6 +22,11 @@ All AIO writes go through the deterministic script **`qa-agent/tools/aio-sync.js
 
 **This matters because AIO exposes no DELETE endpoint for test cases** (confirmed: `DELETE` → 404). Every stray or malformed POST that happens to succeed leaves a permanent case in the customer's project that nobody can remove. So: one code path, no guessing, no probe requests.
 
+**The same permanence is why the script masks everything it sends.** AIO is the one destination in this pipeline with no undo: a Jira issue can be edited or deleted, an Artifact can be republished, the run folder is local and git-ignored — an AIO case body is forever. The script therefore applies `config.safety.maskPatterns` to every string it writes: the case `title`, the `description` (story summary, AC text, expected result), the `precondition` — which echoes `config.app.login.notes` and every `testData` key/value verbatim — and each step. Two things follow:
+
+- **Never bypass the script to "just fix one field".** A hand-written request skips masking entirely and cannot be undone.
+- **Check the reported redaction count.** The script prints how many redactions it made and records it in `aio-sync.json`'s `_validation`. A non-zero count on a normal run is worth a look: it means something matching a secret pattern was in `test-cases.json` or `login.notes`, and while it did not reach AIO, it is still sitting in the run folder and probably upstream in the test set. If `maskPatterns` is empty the script warns — treat that warning as a reason to stop and fix the config, not as noise.
+
 Run it with **Bash** from the project root. The script ships in two places — use whichever exists (check in this order, since the agent is normally installed globally and run inside some *other* project):
 
 1. `$HOME/.claude/qa-agent/tools/aio-sync.js` — the installed copy (works in any project).
