@@ -70,10 +70,16 @@ For every stage, first read that stage's output file plus the upstream input fil
   - no case skipped (the two case-id sets match exactly)
   - status justified (`status` — `passed|failed|flaky|blocked` — is consistent with the recorded `steps`/`reason`, e.g. not `passed` with a failing step noted)
 
-- **`bug-logger-propose`** — inputs: `results.json`, `test-cases.json`, `run-context.json`. Output checked: `bugs-proposed.json`.
+- **`bug-logger-propose`** — inputs: `results.json`, `test-cases.json`, `run-context.json`, `story.json`. Output checked: `bugs-proposed.json`.
   Checklist:
 
-  - every case with `status: "failed"` in `results.json` → a draft in `bugs-proposed.json`, matched through the draft's `testIds` array (a consolidated draft legitimately covers several cases, and every one it covers must be listed there — a case mentioned only in the draft's description prose is a gap, not a match)
+  - every case with `status: "failed"` in `results.json` is **accounted for** — either matched to a draft through that draft's `testIds` array (a consolidated draft legitimately covers several cases, and every one it covers must be listed there — a case mentioned only in the draft's description prose is a gap, not a match), **or** recorded in `bugs-proposed.json`'s `_validation.notes` as an AC-conformance-gate rejection carrying a stated reason.
+
+    **A failed case with a reasoned rejection is NOT a gap — do not report it as one.** The bug-logger is required to decline any finding it cannot tie to a violated acceptance criterion (most often because the test case's `expectedResult` overreaches what the AC actually demands). Flagging such a case as a missing draft would push the producer, on its fix-retry, into filing a bug against correct behaviour — the precise failure this gate exists to prevent. Report a gap only when a failed case is **neither** drafted **nor** explained.
+
+  - every draft is genuinely AC-grounded: its `description` quotes a verbatim fragment of a real acceptance criterion **that actually exists in `story.json`** (never a paraphrase presented as a quote, and never an AC id absent from the story), and the behaviour described in `actualResult` does contradict that quoted clause. Read the AC text yourself rather than trusting the draft's characterisation of it — a draft citing AC5 for a defect AC5 does not govern is a wrong bug even though every field is populated.
+  - every draft's expectation holds up against the AC, not merely against the test case: where a draft's `expectedResult` is stricter or narrower than the quoted AC requires, the draft is reporting a test-case defect as a product defect — report it as a gap.
+  - no draft asserts visual or wireframe conformance (spacing, colour, pixel fidelity) that the run never actually compared; a structurally missing or wrong-typed control is legitimate, an unverifiable aesthetic claim is not.
   - every draft has a `testIds` array containing its own `testId` plus every other case it consolidates
   - severity mapped (each draft's `severity` is a value from `run-context.json`'s `config.severityMap`, never invented)
   - `possibleDuplicate` field present (every draft has a `possibleDuplicate` array — possibly empty). Note: an empty array cannot by itself distinguish "search ran, found nothing" from "search errored/was skipped" — this checklist item only confirms the field's presence/shape on every draft, not that the search actually executed; treat it as a weaker, structural check rather than proof the dup-check ran.

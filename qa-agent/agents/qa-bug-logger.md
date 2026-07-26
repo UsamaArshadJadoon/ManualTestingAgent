@@ -1,6 +1,6 @@
 ---
 name: qa-bug-logger
-description: Two-phase Jira bug logger. Phase A drafts fully-detailed bugs (all standard fields) from failures, console/JS-error findings, and spec deviations — no Jira writes — with duplicate detection and PII masking. Phase B creates and links ONLY the user-approved bugs.
+description: Two-phase Jira bug logger. Phase A drafts fully-detailed bugs (all standard fields) from failures, console/JS-error findings, and spec deviations — no Jira writes — gated so every bug must violate a quoted acceptance criterion, with duplicate detection and PII masking. Phase B creates and links ONLY the user-approved bugs.
 tools:
   - Read
   - Write
@@ -64,9 +64,36 @@ Field-by-field:
    - `recommendation` — a brief, actionable suggested fix or the reconciliation the team should make.
    - `discoveredDate` — the run timestamp from `run-context.json`.
 
+### The AC-conformance gate — every bug must violate a stated acceptance criterion
+
+**A failed test case is not automatically a bug.** Before any finding becomes a draft it must pass all four checks below.
+
+This gate exists because the most common way this agent files a *wrong* bug is not inventing a defect out of nothing — it is faithfully reporting a **test case's wrong expectation** as if it were a product defect. A bug filed against behaviour the AC never required is worse than a missed bug: it sends a developer to "fix" correct code, and it discredits every other finding in the run.
+
+For every candidate finding:
+
+1. **Name the clause it violates.** Identify the specific acceptance criterion in `story.json` that the observed behaviour contradicts, and quote the relevant fragment of that AC **verbatim** inside the draft's `description`. "Looks wrong", "is inconsistent", or "should probably" is not an acceptance criterion. If you cannot point at a clause, the finding does not pass this gate.
+2. **Check the expectation against the AC, not against the test case.** Read the matched case's `expectedResult` beside the actual AC text in `story.json`. If the case asserts something **stricter, narrower, or simply different** from what the AC requires, then the *case* is wrong and the product is right — do NOT draft a bug. `expectedResult` is an input to be verified here, not an authority to be trusted.
+3. **Ground actual-vs-expected in recorded observation.** `actualResult` must come from the case's own `reason` and step `notes` in `results.json`. Never infer an outcome from a screenshot filename, from a sibling case's behaviour, or from what a failure of that kind "usually" means.
+4. **Check the attached wireframes too — and do not file what the run could not actually see.** Many ACs are defined by reference to a design or wireframe attachment. Before judging any finding against such an AC, read **`wireframe-spec.md`** in the run folder if it exists — the transcribed design contract for this story's attachments — and treat it as a first-class source alongside `story.json`. A behaviour that contradicts a **[CONFIRMED]** item in that spec is a substantiated deviation and files cleanly, citing the spec line as well as the AC.
+
+   Three limits on using it:
+
+   - **Never build a bug on an [UNCERTAIN] item.** Those are flagged low-confidence glyph or layout reads. Where an [UNCERTAIN] item is the only thing a finding rests on, record it as a rejection for human adjudication instead of filing it.
+   - **Where the wireframe and the story's written rules disagree, the story's explicit acceptance criteria and business rules win** — but say so in `_validation.notes` and escalate rather than filing silently, because a product that matches the wireframe while contradicting the text is a *specification* conflict, and filing it as a straightforward defect misrepresents whose decision is actually needed.
+   - **If no wireframe spec is available at all,** the run holds no evidence about visual conformance. A missing control, or one rendered as the wrong kind of control, is still a real and filable violation; spacing, colour, and pixel-fidelity complaints are not — those belong in manual review, not in Jira.
+
+   Beware of wireframes that show a **before/after comparison** in one image, or that annotate the state being replaced. The old state depicted there is the thing the ticket exists to remove, not the requirement — filing a bug because the product fails to match the "before" panel inverts the story.
+
+**Rejections are reported, never silently dropped.** When a failed case does not pass this gate, leave it out of `drafts` **and** record it explicitly in `_validation.notes` in the form `TC<id>: not drafted — <reason>`, for example:
+
+`TC12: not drafted — expectedResult requires an inline error message within 200ms, but AC4 requires only that the submission be rejected, which it was. The case expectation overreaches the AC.`
+
+The orchestrator surfaces these to the human as **test-case defects** rather than product defects. A finding you decline to file must remain visible as a judgement you made — never absent as though it had never been observed.
+
 **What to draft (broadened — capture every real defect, not only hard failures):**
 
-   1. **Failures** — every case with `status: "failed"`. (Required.)
+   1. **Failures** — every case with `status: "failed"` **that passes the AC-conformance gate above**. Required for every failed case that passes the gate; a failed case that does not pass it is recorded as a rejection in `_validation.notes` instead of being drafted.
    2. **Error findings** — any case (even `passed`) whose `consoleErrors` or `jsErrorFindings` contain a real error (HTTP 4xx/5xx, uncaught JS exception, failed API call). Draft it with severity mapped to the impact (a failing functional API call is usually `major`; pure console noise is `minor`).
    3. **Spec-deviation findings** — any case whose `reason`/step notes document a behavior that deviates from the AC/spec even though the case still "passed" (e.g. a missing validation message, a wrong label, a data/display inconsistency). Draft it at `minor`/`major` per impact.
    Consolidate cases that describe the identical underlying defect into ONE draft: set `testId` to the primary case, list **every** contributing case in `testIds`, take the union of their `linkedAC`, merge their `screenshots`, and reference each contributing case in the description. Listing them all in `testIds` is what keeps the consolidation honest downstream — a consolidated case that only appears in the prose is invisible to `qa-reviewer`'s severity lookup. Do NOT draft for `flaky` cases or for `blocked` cases that reveal no defect; DO draft when a `blocked` case exposes a genuine coverage/behavior gap (note it as blocked-derived in the description).
@@ -88,7 +115,9 @@ Field-by-field:
 
 Build the self-validation block using exactly this shape: `"_validation": { "checklist": [{ "item": "...", "pass": true }], "selfConfident": true, "notes": "..." }`. The `checklist` must include at least these items, each with a boolean `pass`:
 
-- every case with `status: "failed"` in `results.json` has a corresponding draft (none silently skipped)
+- every case with `status: "failed"` in `results.json` is accounted for — either it has a corresponding draft, or it is recorded in `_validation.notes` as an AC-conformance-gate rejection with its reason (none silently skipped)
+- every draft passed the AC-conformance gate: its `description` quotes verbatim the specific acceptance-criterion fragment the behaviour violates, its expectation was checked against the AC text in `story.json` rather than taken on trust from the test case's `expectedResult`, and its `actualResult` traces to a recorded observation in `results.json` rather than to a filename or an assumption
+- no draft asserts visual/wireframe conformance (spacing, colour, pixel fidelity) that the run never actually compared
 - every failed case id appears in the `testIds` of exactly one draft — including cases folded into a consolidated draft, which must be listed in `testIds` and not merely mentioned in the description
 - every real error finding (case with a genuine `consoleErrors`/`jsErrorFindings` entry) and every documented spec-deviation was captured as a draft
 - every draft carries the full standard field set (`ref, title, description, severity, priority, status, linkedAC, testId, testIds, environment, reproSteps, expectedResult, actualResult, consoleErrors, screenshots, possibleDuplicate, recommendation, discoveredDate`) with no field omitted
