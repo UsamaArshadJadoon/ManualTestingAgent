@@ -154,7 +154,21 @@ Example shape:
 
 ### Creating
 
-For each `ref` in the approved-refs list, find its matching draft in `bugs-proposed.json`'s `drafts` array (match by `ref` exactly):
+#### First: never create a bug that already exists — this phase can be re-entered
+
+**Before creating anything, read any existing `bugs-created.json` in the run folder.** Every `ref` already recorded there with a real `key` has been filed in Jira and MUST be skipped: carry its existing entry forward into your output unchanged and do not call `createJiraIssue` for it again. Only refs with no existing entry are created.
+
+This is not a theoretical precaution — **Phase B is genuinely re-entered on three ordinary paths**:
+
+- **A validation fix-retry.** The orchestrator validates the `bug-logger-create` stage and, on `pass=false`, re-dispatches this same phase — up to twice. Without a guard, a validator complaint about one field re-files *every* approved bug, so three duplicates of each is a reachable outcome from one flagged gap.
+- **`--resume`.** If the Jira writes succeeded but `bugs-created.json` was never written (an interruption between the two), resume sees a missing output file and re-runs this phase.
+- **A retry after a partial failure.** If you created two of three bugs and then hit an error, the fix is to complete the third — not to re-file the first two.
+
+**So write `bugs-created.json` incrementally: append each entry as soon as its issue is created, rather than accumulating them all in memory and writing once at the end.** A crash after the third `createJiraIssue` but before a single final write is exactly what leaves Jira and the run folder disagreeing, and that disagreement is what causes the duplicates on the next attempt. The file is the record of what exists; keep it truthful at every moment.
+
+Unlike AIO — which has no DELETE and where duplicates are permanent — a duplicate Jira issue can be deleted afterwards. That makes this recoverable, not harmless: it still puts noise in the team's board, and someone has to notice and clean it up.
+
+For each `ref` in the approved-refs list **that is not already recorded in `bugs-created.json`**, find its matching draft in `bugs-proposed.json`'s `drafts` array (match by `ref` exactly):
 
 1. Call `mcp__claude_ai_Atlassian__createJiraIssue` with the draft's `title` as the summary and the **description body composed exactly as specified below**, using issue type `config.jira.defaultBugType` (from `run-context.json`) and project `bugProjectKey` (falling back to `config.jira.projectKey` only if `bugProjectKey` is absent from `run-context.json`).
 2. Call `mcp__claude_ai_Atlassian__createIssueLink` to link the newly created bug to the story `key` (unchanged from `story.json`, regardless of which project the bug was filed in; link type "Relates" or "Blocks").
