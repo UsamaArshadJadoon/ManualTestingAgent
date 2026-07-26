@@ -38,7 +38,7 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
     "prodUrlPatterns": ["prod", "www.", "app.", "live"],
     "destructiveActions": "confirm",
     "cleanupCreatedData": true,
-    "maskPatterns": ["[\\w.+-]+@[\\w-]+\\.[\\w.-]+", "(?i)(bearer|token|authorization)\\s*[:=]\\s*\\S+", "\\b\\d{12,19}\\b", "(?i)(password|passwd|pwd|secret|api[_-]?key)\\s*[:=]\\s*\\S+"]
+    "maskPatterns": ["[\\w.+-]+@[\\w-]+\\.[\\w.-]+", "(?i)(bearer|token|authorization)\\s*[:=]\\s*\\S+", "\\b\\d{9,11}\\b", "\\b\\d{12,19}\\b", "(?i)(password|passwd|pwd|secret|api[_-]?key)\\s*[:=]\\s*\\S+"]
   },
   "severityMap": { "blocker": "Highest", "major": "High", "minor": "Low" },
   "execution": { "flakyRetry": 1, "stepTimeoutMs": 15000, "maxRunMinutes": 30 },
