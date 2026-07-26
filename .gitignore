@@ -10,3 +10,9 @@ qa-runs/
 .qa-secrets
 .env
 .env.*
+# Run walkthroughs / write-ups generated from a real run. These narrate what the
+# agent actually did, so they quote live app data and — as happened once — can
+# quote a resolved credential verbatim. Keep them local; publish a scrubbed copy
+# deliberately rather than letting one reach a public repo via a stray commit.
+QA-Agent-Walkthrough-*.html
+*-walkthrough*.html
