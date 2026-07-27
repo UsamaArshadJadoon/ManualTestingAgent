@@ -114,15 +114,22 @@ After stage 9 (and its validation), produce the report. **Branding:** every repo
    - Screenshots are captured by `qa-test-executor` at a **1920×1080 viewport, full-page PNG** (its HD evidence standard). **Embed the original PNG bytes at full size — never downscale, crop, re-encode, or thumbnail them.** In CSS, let each image render at `width: 100%; height: auto` inside its figure so it scales to the reader's screen while keeping full pixel data for zooming.
    - Each image goes in a `<figure>` with a `<figcaption>` that names the originating test case and states **what the image proves** (draw that from the case's step `note`s and the draft's actual-result text) — not just "TC3 screenshot".
    - Every image MUST be inlined as a `data:image/png;base64,...` URI. The Artifact CSP blocks external and local file refs, so a screenshot referenced by path silently fails to render in the published page. **Never reference a screenshot by file path.**
-   - **Do the embedding with the deterministic tool, not by hand.** Author the HTML with `{{IMG:<filename>}}` placeholders (e.g. `{{IMG:TC3-fail.png}}`), then run the embed tool once over the file with the **Bash** tool. Resolve it the same way `qa-test-sync` resolves its script — installed copy first, repo checkout as fallback:
+   - **Generate the page with the shipped tool — do not hand-author it.** `gen-bug-report.js` renders every card, field and figure from `bugs-proposed.json` and `results.json`, so the page cannot disagree with the data. Hand-authoring is how a report came to state that a stage "passed clean on first validation" when it had been rejected twice, and how renumbering left links pointing at a step that no longer existed: prose written beside data drifts from it. Resolve the tools the way `qa-test-sync` resolves its script — installed copy first, repo checkout as fallback:
 
      ```bash
-     EMBED="$HOME/.claude/qa-agent/tools/embed-screenshots.js"
-     [ -f "$EMBED" ] || EMBED="qa-agent/tools/embed-screenshots.js"
-     node "$EMBED" "<runFolder>/bug-report.html"
+     T="$HOME/.claude/qa-agent/tools"; [ -d "$T" ] || T="qa-agent/tools"
+     node "$T/crop-screenshots.js" "<runFolder>/screenshots" --scale 2   # before embedding
+     node "$T/gen-bug-report.js"   "<runFolder>"
+     node "$T/embed-screenshots.js" "<runFolder>/bug-report.html"
      ```
 
-     The tool replaces every placeholder with the encoded PNG, enforces the ≥1280px HD floor, and **exits non-zero** if a placeholder has no matching file, if any placeholder survives, or if an `<img>` still points at a path. If it fails, FIX the cause (wrong filename, missing capture, low-resolution image) and re-run it — never publish a page with broken or unembedded evidence, and never hand-patch base64 yourself. Add `--min-width 0` only when the user has explicitly accepted sub-HD evidence.
+     **Crop first.** A frame can clear the 1280px floor and still be unreadable: when the browser reports a CSS viewport of twice its resize width (device pixel ratio 0.5) the app renders at half scale and the capture is mostly empty, with the content marooned in a corner. `crop-screenshots.js` trims each PNG to its real content bounds and doubles what remains; it leaves already-tight frames untouched and reports what it did.
+
+     `embed-screenshots.js` then replaces every `{{IMG:<filename>}}` placeholder with the encoded PNG, enforces the HD floor, and **exits non-zero** if a placeholder has no matching file, if any placeholder survives, or if an `<img>` still points at a path. If it fails, FIX the cause (wrong filename, missing capture, low-resolution image) and re-run — never publish a page with broken or unembedded evidence, and never hand-patch base64 yourself. Add `--min-width 0` only when the user has explicitly accepted sub-HD evidence.
+
+     If the user asks for a **step-by-step process log**, write the narrative to `process-steps.json` in the run folder (`{ "steps": [ { "phase", "actor", "title", "said", "html" } ] }`, where `actor` is `req` | `stage` | `gate` | `check`) and render it with `node "$T/gen-process-report.js" "<runFolder>"`. The tool renders the narrative; it will not invent one, and exits non-zero if the file is absent.
+
+     The structure described above is what these tools already produce. Read the generated page before publishing and fix the **data** if something reads wrong — do not patch the HTML, or the next run regenerates the same error.
 
    - Also include, after the bug cards: a clearly-labeled **"not filed as a bug" section** for any `blocked` case (what could not be verified and why, with its screenshot) and a short **table of passed cases** for completeness. These make the report honest about what the run did and did not establish — a blocked case must never be presentable as a pass.
 
