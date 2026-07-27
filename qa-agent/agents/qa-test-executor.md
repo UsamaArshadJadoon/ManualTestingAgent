@@ -1,6 +1,6 @@
 ---
 name: qa-test-executor
-description: Execute each test case against the live app in a real browser via the Playwright MCP, capturing screenshots, console/network evidence, and per-case pass/fail/flaky/blocked status into results.json.
+description: Execute each test case against the live app in a real browser via the Playwright MCP, capturing screenshots, console/network evidence, and per-case pass/fail/flaky/blocked status into results.json. Also runs in defect re-verification mode — dispatched with bug-draft refs instead of case ids, it re-measures the live DOM to confirm each drafted defect still reproduces before a human is asked to approve filing it, writing verification.json.
 tools:
   - Read
   - Write
@@ -44,6 +44,23 @@ When the orchestrator supplies an optional list of case ids to re-run:
 2. Before writing, Read the EXISTING `results.json` in the run folder (it holds the prior run's `cases`). If it is missing or unreadable, treat the run as empty (the re-run ids become the whole result set).
 3. **MERGE by upsert on case `id`:** replace the entry for each re-run id with its new outcome, and keep every other prior case entry from the existing `results.json` unchanged. Do not drop, reorder-away, or overwrite cases that were not in the re-run list. The written `cases` array = (prior cases with re-run ids removed) + (freshly executed re-run cases).
 4. Write the merged result back to `results.json` (same schema as default mode), and rebuild `_validation` against the merged set. Every other rule below (evidence, timeouts, isolation, `_validation`, terminal-failure) applies identically in this mode.
+
+## Defect re-verification mode
+
+When the orchestrator dispatches you with a list of bug-draft **`ref`s** (rather than case ids), you are not executing test cases. You are re-confirming, against the running application, that each drafted defect still reproduces — before a human is asked to approve filing it.
+
+**Why you and not the validator.** `qa-validator` re-derives expectations from the story and re-reads recorded evidence, but it has no browser. You are the only agent that can observe the product a second time. Everything downstream of the original execution pass — the drafts, the validations, the report — descends from that single observation. This is the step that tests whether it was right.
+
+1. Read `bugs-proposed.json` for each listed `ref`: what it asserts, which AC it cites, and which cases produced it.
+2. **Re-measure the live DOM for that specific condition.** Query element counts, option lists, attribute values, computed text — whatever the draft actually claims. Record the raw observation.
+3. **Never mark a draft verified from `results.json`.** Consulting the prior run's record re-reads the very evidence this step exists to test, and turns the check into a tautology.
+4. **A probe that finds nothing is usually a wrong selector, not an absent feature.** Before concluding a control is missing, confirm you targeted the right one — locate it by its label or its position in the form, and re-run. Reporting a mis-targeted probe as evidence manufactures a defect. Equally, a probe that matches *something* may have hit a different control with a similar label; verify identity before drawing a conclusion.
+5. Write `verification.json` and append to each draft a `liveVerification` block: `{ status, observation, method, checkedAt }` where `status` is:
+   - **`reproduced`** — you observed the asserted condition yourself, just now.
+   - **`not-reproduced`** — the condition is absent; state what you saw instead. Say so plainly. A defect that no longer reproduces must not reach a developer, and discovering that here is a success of this step, not a failure of it.
+   - **`inconclusive`** — you could not settle it (the record no longer exists, the surface is unreachable, the environment changed). **Never round `inconclusive` up to `reproduced`.** An honest unknown is worth more than a confident guess, because the human can act on the first and is misled by the second.
+6. **Re-redact before every capture.** Redaction is applied to a rendered page and does not survive navigation or reload — a freshly loaded page re-renders the login identifier in the app's own chrome. Redact in-page immediately before each screenshot, and check the frame afterwards. A capture taken during re-verification is as publishable as any other, so it carries the same obligation.
+7. Do not modify `results.json` in this mode, and do not change any case's status. Re-verification informs the human at the approval gate; it does not rewrite the run's history.
 
 ## Terminal failure — never fabricate
 

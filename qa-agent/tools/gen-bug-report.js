@@ -72,7 +72,10 @@ const card = d => {
 </article>`;
 };
 
-const html = `<title>${e(ctx.key)} — Defect Report</title>
+// charset first: these pages carry Arabic UI strings, and a file:// open with no
+// declared encoding is guessed as windows-1252, which mangles every one of them.
+const html = `<meta charset="utf-8">
+<title>${e(ctx.key)} — Defect Report</title>
 <style>
 :root{
   --ink:#13202D; --ink-2:#3B4E62; --muted:#6B7C8E; --line:#E1E8EE; --line-2:#F0F4F7;
