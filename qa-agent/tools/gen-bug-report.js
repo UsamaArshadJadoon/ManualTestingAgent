@@ -76,7 +76,7 @@ const card = d => {
 
     <h3>Evidence</h3>
     <p class="hint">Click any screenshot to enlarge.</p>
-    <div class="shots">${shots.map(f => `<figure><img src="{{IMG:${path.basename(f)}}}" alt="${e(path.basename(f))}" loading="lazy">
+    <div class="shots">${shots.map(f => `<figure><img src="{{IMG:${e(path.basename(f))}}}" alt="${e(path.basename(f))}" loading="lazy">
       <figcaption>${capFor(f, d)}</figcaption></figure>`).join('')}</div>
 
     <h3>How to fix it</h3>

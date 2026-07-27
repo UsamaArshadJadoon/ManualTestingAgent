@@ -96,6 +96,19 @@ let payloadBytes = 0;
 const tooSmall = [];
 
 for (const name of names) {
+  // A placeholder name is a FILENAME inside the screenshots directory, never a path.
+  // Without this, `{{IMG:../../../.qa-secrets}}` resolves outside shotDir and this tool
+  // would base64-embed that file into a page that then gets published — turning an
+  // evidence embedder into an exfiltration primitive. gen-bug-report.js already emits
+  // path.basename(), so nothing legitimate is rejected here; the guard exists because
+  // this is also a standalone CLI that will run against any HTML it is pointed at.
+  if (name !== path.basename(name) || name.includes("..") || path.isAbsolute(name)) {
+    fail(
+      "unsafe screenshot name: " + JSON.stringify(name) +
+        "\n  a {{IMG:<name>}} placeholder must be a bare filename inside the screenshots" +
+        "\n  directory — no path separators, no '..', no absolute path."
+    );
+  }
   const file = path.join(shotDir, name);
   if (!fs.existsSync(file)) {
     fail(
