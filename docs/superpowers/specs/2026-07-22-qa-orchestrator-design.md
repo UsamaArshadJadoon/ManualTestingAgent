@@ -2,7 +2,7 @@
 
 **Product:** QA AZM Digital Agent (multi-agent QA orchestrator)
 **Date:** 2026-07-22
-**Developed by:** Usama Arshad Jadoon · QC Lead · AZM Digital (the author)
+**Developed by:** Usama Arshad Jadoon · QC Lead · AZM Digital
 **Status:** Approved for planning
 
 ## 1. Overview

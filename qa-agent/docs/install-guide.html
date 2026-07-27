@@ -592,7 +592,7 @@ qa-setup.md</pre>
 
   <div class="note">
     <span class="boxtitle">Passwordless logins are first-class — say so explicitly</span>
-    <p>Plenty of UAT environments authenticate on an <b>identifier alone</b>: a identifier, national ID or employee number, with the password step bypassed. Set <code>passwordEnv: null</code> and <code>passwordless: true</code>, and name <code>usernameEnv</code> for what it really holds. <b>Do not invent a placeholder password name</b> — that makes the executor hunt for a credential nothing will ever set, and it will block your cases over it.</p>
+    <p>Plenty of UAT environments authenticate on an <b>identifier alone</b>: an employee number, national ID or membership number, with the password step bypassed. Set <code>passwordEnv: null</code> and <code>passwordless: true</code>, and name <code>usernameEnv</code> for what it really holds. <b>Do not invent a placeholder password name</b> — that makes the executor hunt for a credential nothing will ever set, and it will block your cases over it.</p>
   </div>
 
   <button class="markbtn" data-mark="s5"><span class="bx" style="width:18px;height:18px;border:2px solid currentColor;border-radius:5px;display:inline-grid;place-items:center">✓</span> Mark step 5 complete</button>
@@ -629,7 +629,7 @@ AIO_TOKEN=</pre>
     <div class="code">
       <div class="code-top"><span class="dots"><i></i><i></i><i></i></span><span class="code-title">PowerShell</span><button class="copy">Copy</button></div>
 <pre><span class="cm"># passwordless — identifier only</span>
-<span class="pr">PS&gt; </span>$env:QA_USER_ID = "your-user-id"
+<span class="pr">PS&gt; </span>$env:QA_USER_ID = "your-identifier"
 
 <span class="cm"># or a classic username + password login</span>
 <span class="pr">PS&gt; </span>$env:QA_USER = "your-username"
