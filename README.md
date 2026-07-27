@@ -92,7 +92,7 @@ Every subagent runs isolated with no shared memory — all data flows through JS
 ```text
 qa-agent/
 ├── commands/            /qa-run and /qa-setup
-├── agents/              the 7 core qa-* subagents + optional qa-test-sync (AIO)
+├── agents/              8 subagents: 6 pipeline stages + qa-validator + qa-test-sync (AIO)
 ├── references/          run-folder JSON contract
 ├── tools/               aio-sync.js          AIO Tests writes
 │                        crop-screenshots.js  trims dead space from half-scale captures
@@ -216,7 +216,10 @@ See [`qa-agent/README.md`](qa-agent/README.md) for the complete documentation.
 
 ## Known limitation
 
-The Atlassian MCP has no attachment-upload tool, so bugs reference screenshots by their run-folder path rather than uploading them. The generated `bug-report.html` embeds those screenshots inline for easy sharing.
+**Attachments are one-way, in both directions.**
+
+- **No upload.** The Atlassian MCP cannot attach files to an issue, so a filed bug references screenshots by run-folder path. The generated `bug-report.html` embeds them inline as base64, which is what you share.
+- **No download.** It cannot fetch attachment *content* either. That matters when a story says *"must be as the attached wireframe"* — the design is then the acceptance criterion, and the agents cannot see it. Supply the image in chat and the orchestrator transcribes it to `wireframe-spec.md`, a checkable contract the test-writer, executor and bug-logger all read. Without it those criteria can only be checked structurally, and the run will say so rather than implying the design was verified.
 
 ---
 
