@@ -26,7 +26,7 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
     "baseUrl": "https://tcms.aiojiraapps.com/aio-tcms/api/v1",
     "tokenEnv": "AIO_TOKEN",
     "projectKey": "",
-    "scriptTypeId": 3,
+    "scriptTypeId": null,
     "linkToStory": true
   },
   "app": {
@@ -87,6 +87,7 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
    - `app.login.required`, `app.login.loginUrl`, `app.login.usernameEnv`, `app.login.passwordEnv`, `app.login.passwordless`, and `app.login.notes` from the answers given (keep `app.login.sessionReuse: true` from the template). For a passwordless login write `"passwordEnv": null` and `"passwordless": true` — the executor treats that as "identifier only" and will not block cases looking for a password.
    - `safety.allowProduction` from the answer given.
    - Keep the `safety` (other than `allowProduction`), `severityMap`, and `execution` blocks exactly as they appear in the embedded default config above — do not change `prodUrlPatterns`, `destructiveActions`, `cleanupCreatedData`, `maskPatterns`, `severityMap`, `execution`, or `outputDir` from the embedded defaults.
+   - **`aio.scriptTypeId` MUST be written as `null`. Never pin an integer here, and never "helpfully" fill it in.** The id of the "Classic" script type is *per-project configuration, not a constant* — it is `3` in one project and `21` in another. `aio-sync.js` only discovers the correct id at runtime when this is `null`; an integer makes it skip discovery and send whatever was pinned. Because **AIO exposes no DELETE endpoint for test cases**, a wrong value either fails every case with `Invalid or missing value for Test Script Type` or writes permanently wrong cases that cannot be removed through the API. A previous version of this template hardcoded `3`, which happened to be right in one project and would have been silently destructive in another.
    - Use the `Write` tool to create **`.qa-config.json`** in the project root with this filled-in structure.
 
 5. **Scaffold the git-ignored credential store (`.qa-secrets`).** If `login.required` is `true`, create a **`.qa-secrets`** file (a `.env`-style `KEY=VALUE` file) in the project root, so the executor has a local place to read credentials from when OS env vars aren't set. For a **passwordless** login include only the identifier key — do not emit a password line for a password that does not exist. **Never ask the user to type their actual password into this conversation, and never write a real secret value yourself** — write only a commented template with empty placeholders for the chosen env-var names, which the user fills in privately in the git-ignored file. If `.qa-secrets` already exists, do NOT overwrite it (leave the user's values intact). Template to write:

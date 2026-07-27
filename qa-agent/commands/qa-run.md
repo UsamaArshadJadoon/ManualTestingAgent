@@ -98,17 +98,22 @@ Dispatch each stage via the **Task** tool, passing the run-folder path. Run them
 
 After stage 9 (and its validation), produce the report. **Branding:** every report file (`report.md`, `report.html`, and `bug-report.html`) MUST carry the product name **"QA AZM Digital Agent"** in its title/header and, in a footer, the attribution line **"Developed by Usama Arshad Jadoon · QC Lead · AZM Digital"**. **Redaction first:** before writing ANY report file, scan all content you are about to emit and redact every substring matching any pattern in `safety.maskPatterns` (replace matches with `***`) — this applies to titles, descriptions, repro steps, reasons, screenshot paths/names, and any pasted values. Never emit an unmasked secret into `report.md`, `report.html`, or `bug-report.html`.
 
-1. Write **`report.md`** into the run folder — human-readable summary containing:
-   - A one-paragraph **summary** of the run (story key, app URL, run timestamp, mode).
-   - The **GO / NO-GO** verdict (from `review.json`) and its rationale.
-   - A **traceability matrix**: a table linking **AC ↔ test case(s) ↔ result(s) ↔ bug(s)** — one row per AC (from `story.json`), listing the `linkedAC` test case ids (from `test-cases.json`), their `status` (from `results.json`), and any bug `key` filed for them (from `bugs-created.json`). Mark uncovered AC explicitly.
-   - **Tallies**: `totalTests`, `passed`, `failed`, `flaky`, `blocked` (from `review.json`).
-   - **Coverage %**: `acCoveragePct`, and the list of any remaining uncovered AC.
-   - **Bugs**: proposed count (from `bugs-proposed.json` drafts) vs. created count (from `bugs-created.json`), with the created keys/URLs.
-   - **Screenshot links**: the per-case screenshot paths from `results.json`.
-   - A **validation summary**: per stage, whether it passed clean, how many fix-retries it took, and whether it was escalated to the user (from the `validation/<stage>.json` files and the outcomes you recorded in section 4).
-2. Write **`report.html`** into the run folder — the same content as a self-contained HTML page — and **publish it as an Artifact** (call the Artifact tool on the `report.html` file). Include the same sections: summary, GO/NO-GO, traceability matrix, tallies, coverage %, proposed-vs-created bugs, screenshot links, and the validation summary.
-3. **Write a detailed `bug-report.html` — MANDATORY at the end of every run that found anything.** If `bugs-proposed.json` has ≥1 draft, you MUST produce and publish this file. It is not optional, not conditional on the user asking, and not something to skip because the main `report.html` already lists the bugs — the two files serve different readers. Skip it ONLY when there were zero drafts (a genuinely clean run), and say so explicitly.
+1. **Generate `report.md` and `report.html` with the shipped tool — do NOT hand-author them.** Resolve it installed-copy-first, exactly as for the other generators:
+
+   ```bash
+   T="$HOME/.claude/qa-agent/tools"; [ -d "$T" ] || T="qa-agent/tools"
+   node "$T/gen-run-report.js" "<runFolder>"
+   ```
+
+   One invocation writes both files. Every figure is recomputed from the run's JSON, so the report cannot disagree with the data: the one-paragraph summary, the GO/NO-GO verdict and rationale, the **traceability matrix** (one row per AC — its linked cases, each case's status, any defect raised against it, and whether the AC is *satisfied*), the tallies, coverage %, proposed-vs-created bug counts with Jira links, the per-case screenshot inventory, the AIO sync record, and the per-stage validation summary.
+
+   Two things the tool computes that a hand-written version repeatedly got wrong, and which you must not "correct" in prose afterwards:
+
+   - **Coverage is not satisfaction.** An AC whose linked case *failed* is covered but **unsatisfied** — it counts toward the percentage yet cannot clear a GO. The matrix reports both independently, so a 100% figure can never read as "the story works".
+   - **Validation history survives.** `validation/<stage>.json` is overwritten per iteration, so a stage rejected and then fixed leaves only its passing record. The Outcome column reconstructs the retries from each file's `iteration`, rather than reporting every stage as clean.
+
+   Then **publish `report.html` as an Artifact** (call the Artifact tool on the file). Read the generated page before publishing; if something reads wrong, fix the **data** and re-run the tool — never hand-patch the HTML, or the next run regenerates the same error.
+2. **Write a detailed `bug-report.html` — MANDATORY at the end of every run that found anything.** If `bugs-proposed.json` has ≥1 draft, you MUST produce and publish this file. It is not optional, not conditional on the user asking, and not something to skip because the main `report.html` already lists the bugs — the two files serve different readers. Skip it ONLY when there were zero drafts (a genuinely clean run), and say so explicitly.
 
    It is a self-contained HTML page whose job is to explain **every bug in full detail, with HD visual evidence**, so a developer can act on it without opening the run folder or re-reading the story.
 
@@ -149,7 +154,7 @@ After stage 9 (and its validation), produce the report. **Branding:** every repo
    - Apply the same `safety.maskPatterns` redaction to all text before writing.
    - **Check the screenshots for a visible credential before you publish — `maskPatterns` redacts text, not pixels.** This page embeds full-page captures and is published as an Artifact, so anything rendered in those frames is published too. Applications routinely display the login identifier in their own chrome (a user chip, profile header, "signed in as" banner), which appears in *every* capture of the authenticated app. Before publishing: read the executor's `reason` fields for any note that a capture shows the credential, and open at least one authenticated screenshot yourself to look. If the credential is visible, **crop it out before embedding** — truncating scanlines from the bottom of a PNG is safe and lossless because PNG filters only reference *previous* rows, so a bottom strip can be removed without re-filtering. Re-run the embed tool afterwards. If you have already published, fix the file and **republish to the same URL**. Do not publish a frame you know shows a credential, and do not rely on the Artifact being private by default.
    - **Publish `bug-report.html` as an Artifact** (Artifact tool) and give the user its URL.
-4. Tell the user the run folder path, the verdict, the report Artifact URL, and (when produced) the bug-report Artifact URL.
+3. Tell the user the run folder path, the verdict, the report Artifact URL, and (when produced) the bug-report Artifact URL.
 
 ## 7. Fresh-run wrap-up
 
@@ -199,7 +204,7 @@ When invoked with **`--rerun`**:
 - The two human approval gates (**Test-plan approval gate** before execution, **Bug approval gate** before Jira writes) are hard gates: never execute the browser without plan approval, and never create a Jira bug or apply a Jira transition without explicit approval.
 - The validation loop is a soft gate capped at **max 2** fix-retries per stage before escalating to the user.
 - Redact `safety.maskPatterns` matches before writing any report file.
-- **Every run that produced ≥1 bug draft ends with a published `bug-report.html`** — each bug explained in full detail with its HD PNG evidence embedded as base64 (section 6.3). A run is not complete without it; the only exception is a run with zero drafts, which must be stated explicitly.
+- **Every run that produced ≥1 bug draft ends with a published `bug-report.html`** — each bug explained in full detail with its HD PNG evidence embedded as base64 (section 6.2). A run is not complete without it; the only exception is a run with zero drafts, which must be stated explicitly.
 - Screenshot embedding always goes through `qa-agent/tools/embed-screenshots.js`, which hard-fails on a missing image, a surviving placeholder, a non-`data:` `<img>` src, or an image below the 1280px HD floor. Never hand-roll base64 substitution, and never publish evidence the tool rejected.
 
 ---

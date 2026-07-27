@@ -9,6 +9,8 @@
 **Developed by:** Usama Arshad Jadoon &nbsp;·&nbsp; **Role:** QC Lead &nbsp;·&nbsp; **Company:** AZM Digital
 
 > 📖 **New here? Start with the interactive user guide** — [open it in your browser](https://claude.ai/code/artifact/d10855cc-35e8-4581-a41d-89232fe6f843) (step-by-step walkthrough, live pipeline explorer, real screenshots). It's also in the repo at [`qa-agent/docs/complete-guide.html`](qa-agent/docs/complete-guide.html) and attached to the [latest release](https://github.com/UsamaArshadJadoon/ManualTestingAgent/releases/latest) — download and open it if the hosted link isn't shared with you.
+>
+> 🛠 **Installing it?** [`qa-agent/docs/install-guide.html`](qa-agent/docs/install-guide.html) walks the eight steps from `git clone` to a finished project setup — a self-contained page with a progress tracker, copy buttons and per-step troubleshooting. Download it and open it in any browser.
 
 ---
 
@@ -22,7 +24,7 @@ You type one command:
 
 …and the agent reads the Jira story, designs the tests, drives your live app in a **real browser**, and hands you a signed-off report — pausing only at two human approval gates. Behind that one command, an **orchestrator** dispatches the specialist subagents (seven core + an optional **`qa-test-sync`** that mirrors the approved cases into **AIO Tests**) and re-checks every stage with an independent validator.
 
-**On our live run (Jira `PROJ-123` — “a worked example story”):** 12 acceptance criteria → 26 test cases → **22 passed · 2 failed · 2 blocked**, 7 findings surfaced — with real screenshots captured for every case.
+**On a representative run:** 12 acceptance criteria → 26 test cases → **22 passed · 2 failed · 2 blocked**, 7 findings surfaced — with real screenshots captured for every case.
 
 > That run was signed off `GO ⚠` under the original verdict rule. **The rule has since been tightened and the same results would now return `NO-GO`:** a `GO` requires every acceptance criterion to have at least one *passing* linked case, so failed cases — and criteria covered only by `blocked` ones, which are *unverified* rather than working — now prevent sign-off. See [the verdict rule](qa-agent/README.md) for the current conditions.
 
@@ -44,7 +46,8 @@ flowchart TD
     G1 -. "if AIO enabled" .-> SYNC["+ qa-test-sync (optional): push approved cases to AIO Tests"]:::agent
     SYNC == aio-sync.json ==> AIOF[["AIO Tests folder named &lt;STORY-KEY&gt; (you create it once in the UI)"]]:::report
     S4 == "results.json + screenshots" ==> S5A["5 - qa-bug-logger - Phase A (draft only)"]:::agent
-    S5A == bugs-proposed.json ==> G2{"Gate 2: you approve which bugs to file"}:::gate
+    S5A == bugs-proposed.json ==> RV["+ re-verify: qa-test-executor re-measures every draft against the live app"]:::agent
+    RV == verification.json ==> G2{"Gate 2: you approve which bugs to file"}:::gate
     G2 == approved refs ==> S5B["6 - qa-bug-logger - Phase B (create in Jira)"]:::agent
     S5B == bugs-created.json ==> S6["7 - qa-reviewer"]:::agent
     S6 == "review.json (GO / NO-GO)" ==> R[["report.html + bug-report.html"]]:::report
@@ -64,7 +67,7 @@ flowchart TD
     classDef report fill:#1f9d57,stroke:#167243,color:#fff;
 ```
 
-**How to read it:** the flow runs **top → bottom**, 1 through 7. Each **bold arrow is the file** one agent writes for the next. Diamonds are the **two human gates** (nothing runs against the app before Gate 1; nothing reaches Jira before Gate 2). The amber **qa-validator** independently re-checks every stage and dashed-loops a stage back to the orchestrator if it finds a gap. The dashed **qa-test-sync** branch runs only when `config.aio.enabled` is `true`; it does **not** gate execution and runs once per story.
+**How to read it:** the flow runs **top → bottom**, 1 through 7. Each **bold arrow is the file** one agent writes for the next. Diamonds are the **two human gates** (nothing runs against the app before Gate 1; nothing reaches Jira before Gate 2). The amber **qa-validator** independently re-checks every stage and dashed-loops a stage back to the orchestrator if it finds a gap. The dashed **qa-test-sync** branch runs only when `config.aio.enabled` is `true`; it does **not** gate execution and runs once per story. Before Gate 2 the executor is dispatched a second time in **re-verification mode**, re-measuring each drafted defect against the running app so nobody is asked to approve a bug that no longer reproduces.
 
 > 📁 **Prerequisite for AIO sync:** AIO's API can't create folders, so **before the run you create one folder in the AIO *Cases* module named with the story key** (e.g. `PROJ-123`). `qa-test-sync` finds that folder by name and fills it with the approved cases, each linked to the Jira story. If the folder is missing, the agent stops and tells you the exact name to create, then you re-run it.
 
@@ -81,7 +84,8 @@ flowchart TD
 | + | `qa-test-sync` *(optional)* | `test-cases.json` → `aio-sync.json` | If AIO is enabled: create the approved cases in the story's **AIO Tests** folder (by story key) and link each to the Jira story. Runs once per story; does not gate execution |
 | 4 | `qa-test-executor` | live app → `results.json` + screenshots | Drive the app via Playwright; capture evidence & console errors |
 | 5 | `qa-bug-logger` | `results.json` → `bugs-proposed.json` / `bugs-created.json` | Draft detailed bugs (Phase A); create only approved ones in Jira (Phase B) |
-| — | **Gate #2** | — | You approve which bugs get filed to Jira |
+| ⟳ | `qa-test-executor` *(re-verify)* | drafts + live app → `verification.json` | **Re-measure every drafted defect against the running app** before anyone is asked to approve it. Marks each `reproduced` / `not-reproduced` / `inconclusive`; a defect that no longer reproduces never reaches the gate as a bug |
+| — | **Gate #2** | — | You approve which bugs get filed to Jira — each shown with its live re-verification status |
 | 6 | `qa-reviewer` | all → `review.json` | Compute coverage + a GO / NO-GO verdict |
 | ★ | `qa-validator` | after every stage | Independently re-check each stage from the source; loop back on gaps (max 2) |
 
@@ -97,12 +101,13 @@ qa-agent/
 ├── tools/               aio-sync.js          AIO Tests writes
 │                        crop-screenshots.js  trims dead space from half-scale captures
 │                        embed-screenshots.js inlines HD evidence as base64
+│                        gen-run-report.js    renders report.md + report.html (traceability matrix)
 │                        gen-bug-report.js    renders the defect report from the drafts
 │                        gen-process-report.js renders the step-by-step run log
-│                        report-ui.js         shared design system for both reports
+│                        report-ui.js         shared design system for the reports
 │                        report-flow.js       SVG pipeline diagram
-│                        check-artifacts.ps1  structural lint
-├── docs/                complete-guide.html + workflow-diagram.html
+│                        check-artifacts.ps1  structural lint (run by hand; not part of the pipeline)
+├── docs/                install-guide.html + complete-guide.html + workflow-diagram.html
 ├── install.ps1          deploys agents/commands to ~/.claude
 ├── qa-config.example.json
 └── README.md            full documentation
@@ -210,8 +215,9 @@ See [`qa-agent/README.md`](qa-agent/README.md) for the complete documentation.
 - **Production guard** — a production-looking URL stops the run until explicitly allowed.
 - **Credentials never committed** — `.qa-config.json` stores only env-var *names*; real values live in a **git-ignored `.qa-secrets`** file (or OS env vars), are masked in every report/bug, and the executor **auto-deletes the browser snapshot scratch** after each run.
 - **Self-correcting** — the validator re-checks every stage from the source and loops back on gaps.
+- **No defect is filed on stale evidence** — every draft is re-measured against the running application before the approval gate. `qa-validator` re-derives expectations and re-reads recorded evidence, but it has no browser; re-verification is the only step that observes the product a second time. A finding that cannot be reproduced on demand is not presented as a bug, and `inconclusive` is never rounded up to `reproduced`.
 - **Every defect cites the criterion it breaks** — `qa-bug-logger` runs an **AC-conformance gate**: a failed test is not automatically a bug. A finding must quote the acceptance criterion it violates, and its expectation is checked against that criterion rather than against the test case. Findings that cannot be tied to one are declined *and recorded with the reason*, so they surface as test-case defects instead of being filed against the product.
-- **Reports are generated, never hand-written** — the defect report and process log are rendered from the run's JSON by `gen-bug-report.js` / `gen-process-report.js`, so a report cannot disagree with the data it describes.
+- **Reports are generated, never hand-written** — the run report, the defect report and the process log are all rendered from the run's JSON by `gen-run-report.js` / `gen-bug-report.js` / `gen-process-report.js`, so a report cannot disagree with the data it describes. That includes the traceability matrix, which distinguishes an AC that is *covered* from one that is *satisfied* — a criterion whose linked case failed counts toward coverage but can never clear a GO.
 - **Non-destructive** — prefers read/create, reverts edits; retries flaky cases before calling them real bugs.
 
 ## Known limitation

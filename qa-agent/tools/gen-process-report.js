@@ -7,7 +7,18 @@ const path = require('path');
 const UI = require('./report-ui.js');
 const FLOW = require('./report-flow.js');
 const RUN = process.argv[2];
-const rd = f => JSON.parse(fs.readFileSync(path.join(RUN, f), 'utf8'));
+
+// Fail with a sentence, not a stack trace — see the note in gen-bug-report.js.
+const die = (m) => { console.error(m); process.exit(1); };
+if (!RUN) die('usage: node gen-process-report.js <runFolder>');
+if (!fs.existsSync(RUN)) die(`gen-process-report: run folder not found: ${path.resolve(RUN)}`);
+
+const rd = (f) => {
+  const p = path.join(RUN, f);
+  if (!fs.existsSync(p)) die(`gen-process-report: ${f} not found in run folder ${path.resolve(RUN)}`);
+  try { return JSON.parse(fs.readFileSync(p, 'utf8')); }
+  catch (e) { die(`gen-process-report: ${f} is not valid JSON (${e.message})`); }
+};
 const ctx = rd('run-context.json'), review = rd('review.json'), drafts = rd('bugs-proposed.json').drafts;
 const story = rd('story.json');
 const created = (() => { try { return rd('bugs-created.json').created || []; } catch { return []; } })();

@@ -34,7 +34,13 @@ through the `Task` tool.
   - `qa-gap-analyzer` — checks acceptance-criteria coverage and reports gaps.
   - `qa-test-executor` — runs the test cases against the live app with the
     Playwright MCP tools and records pass/fail/flaky/blocked results,
-    screenshots, and console/JS errors.
+    screenshots, and console/JS errors. It is also dispatched a **second
+    time, in defect re-verification mode**, before the bug approval gate: it
+    re-measures each drafted defect against the running application and
+    writes `verification.json`. This is the only stage that observes the
+    product twice — `qa-validator` re-derives expectations and re-reads
+    recorded evidence, but it has no browser, so without this step a
+    mis-measured or already-fixed defect would reach a developer as fact.
 
   - `qa-bug-logger` — proposes bug drafts for failed cases, then (only after
     approval) creates them in Jira and links them to the story; it also
@@ -198,6 +204,25 @@ input, not an approval gate: it doesn't change which story you asked about
 still links back to it — it only controls which project/board the bug
 *issues themselves* land in.
 
+### Live defect re-verification (before the bug gate)
+
+Between the bug-logger's drafting phase and the bug approval gate, the
+orchestrator dispatches `qa-test-executor` again in **re-verification mode**.
+Each draft is re-measured against the running application and marked
+`reproduced`, `not-reproduced` or `inconclusive` in `verification.json`, with
+the status shown against every draft at the gate.
+
+Three rules make this worth the extra stage:
+
+- **Re-measure, never re-read.** Verifying a draft from `results.json` re-reads
+  the very evidence the step exists to test, which proves nothing.
+- **A draft that does not reproduce is never presented as an approvable bug.**
+  It is listed separately with what was seen instead. Filing a defect that
+  cannot be reproduced costs a developer a day and the team its trust in the
+  pipeline.
+- **`inconclusive` is never rounded up to `reproduced`.** An honest unknown is
+  worth more than a confident guess, because a human can act on the first.
+
 ### The three approval gates
 
 `/qa-run` stops and waits for you at these points — it never proceeds past
@@ -234,6 +259,7 @@ qa-runs/PROJ-123_20260722-143001/
   review.json
   validation/
   aio-sync.json          # only when AIO sync is enabled (testId → AIO key/ID)
+  verification.json      # live re-verification of every bug draft, before the gate
   report.md
   report.html
   bug-report.html        # mandatory whenever >= 1 bug draft was proposed

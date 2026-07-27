@@ -5,7 +5,20 @@
 // then run embed-screenshots.js over the output to inline the evidence.
 const fs = require('fs'), path = require('path');
 const RUN = process.argv[2];
-const rd = f => JSON.parse(fs.readFileSync(path.join(RUN, f), 'utf8'));
+
+// Fail with a sentence, not a stack trace. A raw ERR_INVALID_ARG_TYPE — or an
+// ENOENT naming a path the caller never typed — reads like a broken tool rather
+// than a missing argument, and sends people debugging the wrong thing.
+const die = (m) => { console.error(m); process.exit(1); };
+if (!RUN) die('usage: node gen-bug-report.js <runFolder>');
+if (!fs.existsSync(RUN)) die(`gen-bug-report: run folder not found: ${path.resolve(RUN)}`);
+
+const rd = (f) => {
+  const p = path.join(RUN, f);
+  if (!fs.existsSync(p)) die(`gen-bug-report: ${f} not found in run folder ${path.resolve(RUN)}`);
+  try { return JSON.parse(fs.readFileSync(p, 'utf8')); }
+  catch (e) { die(`gen-bug-report: ${f} is not valid JSON (${e.message})`); }
+};
 const ctx = rd('run-context.json'), story = rd('story.json'), review = rd('review.json');
 const drafts = rd('bugs-proposed.json').drafts;
 const results = rd('results.json').cases, cases = rd('test-cases.json').cases;
