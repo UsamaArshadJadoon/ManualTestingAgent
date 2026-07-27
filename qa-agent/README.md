@@ -94,8 +94,8 @@ files inside the run folder.
    run artifact, and never persisted anywhere.
 
    **Apps with no password.** Plenty of apps — UAT environments especially —
-   authenticate on an **identifier alone**: a identifier, national ID, or
-   employee number, with the password step bypassed. Set
+   authenticate on an **identifier alone**: an employee number, national ID
+   or membership number, with the password step bypassed. Set
    `app.login.passwordless: true` and `app.login.passwordEnv: null`, and name
    `usernameEnv` for what it actually holds (e.g. `QA_USER_ID`). The
    executor then resolves only that identifier, never looks for a password, and
