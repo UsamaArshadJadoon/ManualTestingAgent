@@ -94,9 +94,14 @@ qa-agent/
 ├── commands/            /qa-run and /qa-setup
 ├── agents/              the 7 core qa-* subagents + optional qa-test-sync (AIO)
 ├── references/          run-folder JSON contract
-├── tools/               aio-sync.js (AIO Tests writes), embed-screenshots.js
-│                        (inlines HD evidence into bug-report.html),
-│                        check-artifacts.ps1 (structural lint)
+├── tools/               aio-sync.js          AIO Tests writes
+│                        crop-screenshots.js  trims dead space from half-scale captures
+│                        embed-screenshots.js inlines HD evidence as base64
+│                        gen-bug-report.js    renders the defect report from the drafts
+│                        gen-process-report.js renders the step-by-step run log
+│                        report-ui.js         shared design system for both reports
+│                        report-flow.js       SVG pipeline diagram
+│                        check-artifacts.ps1  structural lint
 ├── docs/                complete-guide.html + workflow-diagram.html
 ├── install.ps1          deploys agents/commands to ~/.claude
 ├── qa-config.example.json
@@ -193,7 +198,7 @@ You should see the 8 `qa-*` agents (`qa-story`, `qa-test-writer`, `qa-gap-analyz
 1. In the project you want to test, run `/qa-setup` (writes `.qa-config.json`, scaffolds a git-ignored `.qa-secrets`, hardens `.gitignore`).
 2. **Provide credentials** — fill the git-ignored `.qa-secrets`, or set `$env:QA_USER` / `$env:QA_PASS`.
 3. *(Optional — AIO Tests)* set `aio.enabled: true` in `.qa-config.json`, add `AIO_TOKEN` to `.qa-secrets`, and **create a folder named with the story key** (e.g. `PROJ-123`) in the AIO **Cases** module — `qa-test-sync` fills that folder with the approved cases.
-4. **Run** — `/qa-run <STORY-KEY>` (add `--rerun` to re-test prior failures, `--resume` to continue an interrupted run).
+4. **Run** — `/qa-run <STORY-KEY>` (add `--rerun` to re-test anything unresolved — failed, flaky **or blocked** — and `--resume` to continue an interrupted run).
 
 > **Updating later:** to get a newer version, download/clone again and re-run `powershell -File qa-agent\install.ps1` — it overwrites the deployed copies with the latest.
 
@@ -204,7 +209,9 @@ See [`qa-agent/README.md`](qa-agent/README.md) for the complete documentation.
 - **Two human gates** — nothing runs against your app, and nothing is written to Jira, without your approval.
 - **Production guard** — a production-looking URL stops the run until explicitly allowed.
 - **Credentials never committed** — `.qa-config.json` stores only env-var *names*; real values live in a **git-ignored `.qa-secrets`** file (or OS env vars), are masked in every report/bug, and the executor **auto-deletes the browser snapshot scratch** after each run.
-- **Self-correcting** — the validator re-checks every stage and loops back on gaps.
+- **Self-correcting** — the validator re-checks every stage from the source and loops back on gaps.
+- **Every defect cites the criterion it breaks** — `qa-bug-logger` runs an **AC-conformance gate**: a failed test is not automatically a bug. A finding must quote the acceptance criterion it violates, and its expectation is checked against that criterion rather than against the test case. Findings that cannot be tied to one are declined *and recorded with the reason*, so they surface as test-case defects instead of being filed against the product.
+- **Reports are generated, never hand-written** — the defect report and process log are rendered from the run's JSON by `gen-bug-report.js` / `gen-process-report.js`, so a report cannot disagree with the data it describes.
 - **Non-destructive** — prefers read/create, reverts edits; retries flaky cases before calling them real bugs.
 
 ## Known limitation

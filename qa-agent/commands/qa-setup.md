@@ -21,8 +21,17 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
     "siteUrl": "https://your-site.atlassian.net",
     "cloudId": ""
   },
+  "aio": {
+    "enabled": false,
+    "baseUrl": "https://tcms.aiojiraapps.com/aio-tcms/api/v1",
+    "tokenEnv": "AIO_TOKEN",
+    "projectKey": "",
+    "scriptTypeId": 3,
+    "linkToStory": true
+  },
   "app": {
     "baseUrl": "https://staging.example.com",
+    "urlEnv": "QA_URL",
     "login": {
       "required": true,
       "loginUrl": "https://staging.example.com/login",
@@ -41,7 +50,7 @@ Use this exact JSON as the base shape. Fill in the user's answers over these def
     "maskPatterns": ["[\\w.+-]+@[\\w-]+\\.[\\w.-]+", "(?i)(bearer|token|authorization)\\s*[:=]\\s*\\S+", "\\b\\d{9,11}\\b", "\\b\\d{12,19}\\b", "(?i)(password|passwd|pwd|secret|api[_-]?key)\\s*[:=]\\s*\\S+"]
   },
   "severityMap": { "blocker": "Highest", "major": "High", "minor": "Low" },
-  "execution": { "flakyRetry": 1, "stepTimeoutMs": 15000, "maxRunMinutes": 30 },
+  "execution": { "flakyRetry": 1, "stepTimeoutMs": 15000, "maxRunMinutes": 90 },
   "outputDir": "qa-runs"
 }
 ```
