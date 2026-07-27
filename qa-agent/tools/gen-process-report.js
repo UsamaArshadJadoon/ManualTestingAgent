@@ -38,11 +38,14 @@ const S = JSON.parse(fs.readFileSync(stepsFile, 'utf8')).steps
   .map(x => [x.phase, x.actor, x.title, x.said, x.html]);
 
 const PHASES = [...new Set(S.map(s => s[0]))];
-const nav = [['p-flow', 'Pipeline'], ...PHASES.map(p => [`p-${p.toLowerCase()}`, p])];
+// slugify: an id with a space is not a valid HTML fragment, and the jump-nav
+// href that points at it is then unreliable across browsers.
+const slug = (p) => 'p-' + p.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const nav = [['p-flow', 'Pipeline'], ...PHASES.map(p => [slug(p), p])];
 
 let html = '', n = 0, seen = new Set();
 for (const [phase, actor, title, said, body] of S) {
-  if (!seen.has(phase)) { seen.add(phase); html += `\n<h2 id="p-${phase.toLowerCase()}">${e(phase)}</h2>\n`; }
+  if (!seen.has(phase)) { seen.add(phase); html += `\n<h2 id="${slug(phase)}">${e(phase)}</h2>\n`; }
   n++;
   html += `<div class="step" id="step-${n}">
   <div class="n">${String(n).padStart(2, '0')}</div>
@@ -255,7 +258,10 @@ const ANIM_JS = `
 })();
 `;
 
-fs.writeFileSync(path.join(RUN, 'process-report.html'), `<title>${e(ctx.key)} — QA Process Log</title>
+// charset first: these pages carry Arabic UI strings, and a file:// open with no
+// declared encoding is guessed as windows-1252, which mangles every one of them.
+fs.writeFileSync(path.join(RUN, 'process-report.html'), `<meta charset="utf-8">
+<title>${e(ctx.key)} — QA Process Log</title>
 <style>${UI.CSS}${FLOW.CSS}${ANIM_CSS}</style>
 <div class="bar"><div class="bar-in">
   <span class="brand">QA AZM Digital Agent <span>· ${e(ctx.key)} process log</span></span>

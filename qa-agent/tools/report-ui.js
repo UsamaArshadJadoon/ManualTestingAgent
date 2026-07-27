@@ -217,10 +217,124 @@ ul.tight li{margin-bottom:.3rem}
 footer{margin-top:4.5rem;padding-top:1.35rem;border-top:1px solid var(--hair);font-size:.79rem;color:var(--muted);
   display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;justify-content:space-between}
 @media print{.bar,.toolbar,.caret{display:none}.bug{break-inside:avoid;box-shadow:none}.bug-body{display:block!important}}
+
+/* ── motion layer ───────────────────────────────────────────────────────────
+   Every hidden-then-revealed rule is scoped to html.js-anim, which is set by
+   script at runtime. With JS off, or under prefers-reduced-motion (where the
+   global rule above kills transitions), nothing is ever left invisible.      */
+#readbar{position:fixed;top:0;left:0;height:3px;width:0;z-index:60;
+  background:linear-gradient(90deg,var(--accent),var(--pass));transition:width .12s linear}
+
+/* NOTE: step reveal itself is owned by gen-process-report.js's timeline-spine
+   system (.anim .step > div:last-child). Do not fade .step here as well — two
+   opacity layers on the same element double the fade and fight each other.
+   Only additive polish belongs below. */
+.step{transition:background .15s}
+.step:hover{background:linear-gradient(90deg,var(--sunk),transparent 55%)}
+.step:hover .n{color:var(--accent);border-color:var(--accent)}
+
+html.js-anim h2{opacity:0;transform:translateY(10px);
+  transition:opacity .5s ease,transform .5s ease}
+html.js-anim h2.in{opacity:1;transform:none}
+h2{position:relative}
+h2::after{content:"";position:absolute;left:0;bottom:-.35rem;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),transparent);transition:width .7s ease .1s}
+h2.in::after{width:5.5rem}
+
+html.js-anim .stat{opacity:0;transform:translateY(10px) scale(.985);
+  transition:opacity .5s ease,transform .5s ease,border-color .15s}
+html.js-anim .stat.in{opacity:1;transform:none}
+.stat dd{transition:color .3s}
+
+.callout{transition:border-color .25s,transform .25s}
+.callout:hover{transform:translateX(2px)}
+table.kv tr,tbody tr{transition:background .15s}
+tbody tr:hover{background:var(--sunk)}
+
+@media (prefers-reduced-motion:reduce){
+  html.js-anim h2,html.js-anim .stat{opacity:1!important;transform:none!important}
+  h2.in::after{width:5.5rem}
+  #readbar{display:none}
+}
 `;
 
 exports.JS = `
 (function(){
+  // ── motion layer ────────────────────────────────────────────────────────
+  // Opt in from script so a no-JS reader never meets an invisible page, and
+  // bail entirely under prefers-reduced-motion rather than animating quietly.
+  var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root = document.documentElement;
+  if(!REDUCED && 'IntersectionObserver' in window) root.classList.add('js-anim');
+
+  // reading-progress bar
+  if(!REDUCED){
+    var pb=document.createElement('div'); pb.id='readbar'; document.body.appendChild(pb);
+    var tick=function(){
+      var h=document.documentElement.scrollHeight-window.innerHeight;
+      pb.style.width=(h>0?(window.scrollY/h)*100:0)+'%';
+    };
+    window.addEventListener('scroll',tick,{passive:true}); tick();
+  }
+
+  // reveal steps, headings and stat tiles as they enter view
+  if(root.classList.contains('js-anim')){
+    var pending=[].slice.call(document.querySelectorAll('.step,h2,.stat'));
+    var show=function(el){ el.classList.add('in'); var i=pending.indexOf(el); if(i>-1) pending.splice(i,1); };
+
+    var rv=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ show(e.target); rv.unobserve(e.target); } });
+    },{threshold:.06,rootMargin:'0px 0px -50px 0px'});
+    pending.slice().forEach(function(el){rv.observe(el)});
+
+    // Safety sweep. The observer alone is not enough: an anchor jump from the
+    // jump-nav, a fast flick-scroll, or a restored scroll position can carry the
+    // reader past a section without ever firing an intersection — leaving real
+    // content permanently at opacity 0. Anything at or above the viewport
+    // bottom has been reached, so reveal it regardless of what the observer saw.
+    var ticking=false;
+    var sweep=function(){
+      ticking=false;
+      for(var i=pending.length-1;i>=0;i--){
+        if(pending[i].getBoundingClientRect().top < window.innerHeight) show(pending[i]);
+      }
+    };
+    var onScroll=function(){ if(!ticking){ ticking=true; requestAnimationFrame(sweep); } };
+    window.addEventListener('scroll',onScroll,{passive:true});
+    window.addEventListener('resize',onScroll,{passive:true});
+    window.addEventListener('hashchange',function(){setTimeout(sweep,80)});
+    window.addEventListener('load',function(){setTimeout(sweep,80)});
+    setTimeout(sweep,60);
+  }
+
+  // count-up on the stat tiles — integers and "a/b" only; text is left alone
+  (function(){
+    var tiles=[].slice.call(document.querySelectorAll('.stat dd'));
+    if(!tiles.length) return;
+    var run=function(el){
+      var raw=el.textContent.trim();
+      var m=raw.match(/^(\\d+)(\\s*\\/\\s*\\d+)?$/);
+      if(!m) return;                       // e.g. "NO-GO" — never animate a verdict
+      if(REDUCED) return;
+      var target=parseInt(m[1],10), tail=m[2]||'', t0=null, DUR=850;
+      var step=function(ts){
+        if(!t0) t0=ts;
+        var p=Math.min((ts-t0)/DUR,1);
+        var eased=1-Math.pow(1-p,3);
+        el.textContent=Math.round(target*eased)+tail;
+        if(p<1) requestAnimationFrame(step);
+      };
+      el.textContent='0'+tail;
+      requestAnimationFrame(step);
+    };
+    if('IntersectionObserver' in window){
+      var so=new IntersectionObserver(function(es){
+        es.forEach(function(e){ if(e.isIntersecting){ run(e.target); so.unobserve(e.target); } });
+      },{threshold:.5});
+      tiles.forEach(function(el){so.observe(el)});
+    }
+  })();
+
   // scroll-spy on the jump nav
   var links=[].slice.call(document.querySelectorAll('nav.jump a'));
   var targets=links.map(function(a){return document.querySelector(a.getAttribute('href'))}).filter(Boolean);

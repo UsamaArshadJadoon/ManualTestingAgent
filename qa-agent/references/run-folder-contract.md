@@ -53,6 +53,17 @@ Many stories define an acceptance criterion by reference to an attached wirefram
 - **Where the wireframe and the story's written rules disagree, the written criteria win** — but say so and escalate, because that is a specification conflict, not a code defect.
 - **A wireframe may show a before/after comparison.** The "before" panel is what the story exists to remove; asserting the product should match it inverts the ticket.
 
+### `verification.json` (written by `qa-test-executor` in defect re-verification mode)
+
+Before the bug approval gate, every draft in `bugs-proposed.json` is re-confirmed against the **running application** — not against `results.json`. `qa-test-executor` re-measures the live DOM for the condition each draft asserts and records `{ ref, status, observation, method, checkedAt }`, mirroring the same block into each draft as `liveVerification`.
+
+`status` is `reproduced`, `not-reproduced`, or `inconclusive`. The distinction is load-bearing:
+
+- **This is the only stage that re-observes the product.** `qa-validator` re-derives expectations and re-reads recorded evidence, but it has no browser — so a mis-measured or since-fixed defect survives every other check and reaches a developer as fact.
+- **A `not-reproduced` draft must never be presented as an approvable bug**, only as a no-longer-reproducing finding with what was seen instead.
+- **`inconclusive` must never be rounded up to `reproduced`.** State what blocked the check and let a human weigh it.
+- **Re-redact credentials before any capture taken here.** Redaction applies to a rendered page and does not survive navigation; a fresh load re-renders the login identifier in the app's chrome.
+
 ### `process-steps.json` (optional — per-run narrative for the process log)
 
 `{ "steps": [ { "phase", "actor", "title", "said", "html" } ] }` — `actor` is one of `req` | `stage` | `gate` | `check`; `said` is a verbatim request or `null`. `gen-process-report.js` renders these and exits non-zero if the file is absent: a process log invented by the renderer would be fiction.
