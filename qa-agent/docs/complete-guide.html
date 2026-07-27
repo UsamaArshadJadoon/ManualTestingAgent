@@ -621,8 +621,11 @@ AIO_TOKEN=<span class="you">•••••••••••••••••�
 ├─ bugs-created.json    <span class="c">only what you approved (empty here)</span>
 ├─ validation/          <span class="c">independent per-stage checks</span>
 ├─ <span class="aioline">aio-sync.json          testId → AIO key/ID · folder ABYR-2167 (AIO enabled only)</span>
+├─ wireframe-spec.md    <span class="c">transcribed design contract, when the story has one</span>
 ├─ report.md / report.html      <span class="c">run report</span>
-└─ bug-report.html      <span class="c">detailed bugs w/ embedded screenshots</span></div>
+├─ bug-report.html      <span class="c">detailed bugs w/ embedded screenshots</span>
+└─ process-report.html  <span class="c">optional step-by-step log of the run</span></div>
+    <div class="call"><span class="lbl">Reports are generated, not written by hand</span><p>The defect report and the process log are rendered from the run's own JSON by <code>gen-bug-report.js</code> and <code>gen-process-report.js</code>, so a report cannot contradict the data it describes. Evidence goes through <code>crop-screenshots.js</code> (trims dead space from half-scale captures) and then <code>embed-screenshots.js</code>, which inlines each PNG as base64 and <b>fails the build</b> rather than publishing a broken or sub-HD image.</p></div>
   <div class="call aio"><span class="lbl">In AIO Tests</span><p>Alongside the run folder, the <b>ABYR-2167</b> folder in the AIO <b>Cases</b> module now holds <b>26 detailed cases</b> (<code>ABYR-TC-…</code>), each linked to the Jira story for end-to-end traceability.</p></div>
 </section>
 
@@ -636,9 +639,10 @@ AIO_TOKEN=<span class="you">•••••••••••••••••�
     <li><b>Production guard.</b> A production-looking URL stops the run until you explicitly allow it. Keep <code>allowProduction:false</code> for safety.</li>
     <li><b>Credential hygiene.</b> Values (and the AIO token) live only in <code>.qa-secrets</code>/env, are masked everywhere, and browser snapshot scratch (<code>.playwright-mcp/</code>) is auto-deleted each run.</li>
     <li><b>Self-correcting.</b> The <b>validator</b> re-checks every stage from the source and loops back on gaps (max 2 retries) — how the 2 dropped AC were recovered in Step 4.</li>
+    <li><b>Every defect cites the criterion it breaks.</b> <code>qa-bug-logger</code> runs an <b>AC-conformance gate</b>: a failed test is not automatically a bug. A finding must quote the acceptance criterion it violates, and its expectation is checked against that criterion rather than against the test case — because the commonest way a QA tool files a <i>wrong</i> bug is reporting a test case's wrong expectation as a product defect, which sends a developer to "fix" correct code. Findings that cannot be tied to a criterion are declined <b>and recorded with the reason</b>, so they surface as test-case defects instead of being filed against the product.</li>
     <li><b>AIO sync is safe &amp; optional.</b> It runs only when enabled, needs a pre-created story folder, runs once per story (AIO can't delete), and never gates the browser run.</li>
     <li><b>Non-destructive &amp; flaky-aware.</b> Prefers read/create over update/delete, reverts edits, retries a failing case before calling it a real bug; <span class="chip c-warn">blocked</span> ≠ failed.</li>
-    <li><b>Re-run &amp; resume.</b> <code>--rerun</code> re-tests only prior failures after a fix; <code>--resume</code> continues an interrupted run.</li>
+    <li><b>Re-run &amp; resume.</b> <code>--rerun</code> re-tests everything still unresolved — <span class="chip c-warn">failed</span>, <span class="chip c-warn">flaky</span> <b>and</b> <span class="chip c-warn">blocked</span>. Blocked cases are included deliberately: a blocked case proves nothing in either direction, so leaving it out would make its acceptance criterion permanently untested while the tally still looked complete. <code>--resume</code> continues an interrupted run.</li>
   </ul>
 </section>
 
