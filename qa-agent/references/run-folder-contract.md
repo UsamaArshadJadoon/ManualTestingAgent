@@ -20,9 +20,13 @@ qa-runs/<PROJ-KEY>_<runId>/
 ├── validation/
 │   └── <stage>.json
 ├── aio-sync.json         # optional: written by qa-test-sync when config.aio.enabled
+├── wireframe-spec.md     # optional: transcribed design contract, when the story has one
+├── process-steps.json    # optional: narrative for the process log, if one is produced
+├── fixtures/             # optional: files the executor manufactures for upload fields
 ├── report.md
 ├── report.html
-└── bug-report.html       # mandatory whenever bugs-proposed.json has >= 1 draft
+├── bug-report.html       # mandatory whenever bugs-proposed.json has >= 1 draft
+└── process-report.html   # optional: step-by-step run log
 ```
 
 ### Report files (written by the `/qa-run` orchestrator, not by a subagent)
@@ -33,7 +37,25 @@ qa-runs/<PROJ-KEY>_<runId>/
 | `report.html` | every run | Same content as a self-contained HTML page; published as an Artifact. |
 | `bug-report.html` | **whenever `bugs-proposed.json` has ≥1 draft** | One detail card per bug (all standard fields: description, numbered repro steps, expected vs actual, console/network errors, duplicates, recommendation, discovered date) plus a summary table, a "not filed" section for `blocked` cases, and a passed-case table. Every screenshot is embedded as a base64 `data:image/png;base64,...` URI at full HD size via `qa-agent/tools/embed-screenshots.js` — never by file path, which the Artifact CSP blocks. Published as an Artifact. |
 
+| `process-report.html` | optional | Step-by-step log of the run — each request, each stage, each gate — led by the pipeline diagram. Rendered by `gen-process-report.js` from `process-steps.json`. |
+
 Screenshots under `screenshots/` are captured by `qa-test-executor` at a 1920×1080 viewport as full-page PNGs (≥1280px wide). `embed-screenshots.js` enforces that floor and hard-fails rather than publishing degraded or unembedded evidence.
+
+**A frame can clear the 1280px floor and still be unreadable.** When the browser reports a CSS viewport of twice its resize width (device pixel ratio 0.5), the app lays out at double width and renders at half scale, so a full-page capture is mostly empty with the content marooned in one corner. Run `qa-agent/tools/crop-screenshots.js <screenshots-dir> --scale 2` before embedding: it crops each PNG to its real content bounds and doubles what remains, leaving already-tight frames untouched.
+
+### `wireframe-spec.md` (optional — written by the orchestrator when the story references a design)
+
+Many stories define an acceptance criterion by reference to an attached wireframe (*"must be as the attached wireframe"*), which makes the design itself the criterion. The MCP cannot download attachment content, so when a human supplies the image the orchestrator transcribes it here as a **checkable contract**: each item marked `[CONFIRMED]` (legible beyond doubt) or `[UNCERTAIN]` (a low-confidence glyph or layout read).
+
+`qa-test-writer`, `qa-test-executor` and `qa-bug-logger` all read it when present. Three rules govern its use, and each exists because the alternative produces a wrong defect:
+
+- **Never found a defect on an `[UNCERTAIN]` item** — escalate it for a human to settle.
+- **Where the wireframe and the story's written rules disagree, the written criteria win** — but say so and escalate, because that is a specification conflict, not a code defect.
+- **A wireframe may show a before/after comparison.** The "before" panel is what the story exists to remove; asserting the product should match it inverts the ticket.
+
+### `process-steps.json` (optional — per-run narrative for the process log)
+
+`{ "steps": [ { "phase", "actor", "title", "said", "html" } ] }` — `actor` is one of `req` | `stage` | `gate` | `check`; `said` is a verbatim request or `null`. `gen-process-report.js` renders these and exits non-zero if the file is absent: a process log invented by the renderer would be fiction.
 
 ## File schemas
 
