@@ -73,7 +73,7 @@ flowchart TD
 
 **Legend:** 🟣 you · ⬛ orchestrator · 🟢 agent · 🟠 validator · 🔵 human gate · 🟩 published reports.
 
-## The pipeline — seven core agents + a validator (+ optional AIO sync)
+## The pipeline — six pipeline agents + a validator (+ optional AIO sync)
 
 | # | Agent | Reads → Writes | Job |
 |---|-------|----------------|-----|

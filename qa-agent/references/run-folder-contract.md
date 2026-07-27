@@ -64,6 +64,14 @@ Before the bug approval gate, every draft in `bugs-proposed.json` is re-confirme
 - **`inconclusive` must never be rounded up to `reproduced`.** State what blocked the check and let a human weigh it.
 - **Re-redact credentials before any capture taken here.** Redaction applies to a rendered page and does not survive navigation; a fresh load re-renders the login identifier in the app's chrome.
 
+### `rerun-status.json` (optional — written by the orchestrator on `--rerun`)
+
+`{ "prior": { "<caseId>": "<status>" } }` — each re-run case's status **before** the re-run, captured from the prior `results.json` *before* it is merged. When present, `gen-run-report.js` renders a before/after column in `report.md` and `report.html`.
+
+It exists as a file rather than as prose in the report because those two reports are regenerated from data; a comparison table hand-patched into the HTML would be silently dropped by the next regeneration.
+
+The renderer distinguishes two outcomes that must never be conflated: a previously `failed` case that now passes is **fixed**, while a previously `blocked` case that now passes is **newly covered** — the criterion behind it was untested rather than broken, so reporting it as "fixed" would imply a repair that never happened.
+
 ### `process-steps.json` (optional — per-run narrative for the process log)
 
 `{ "steps": [ { "phase", "actor", "title", "said", "html" } ] }` — `actor` is one of `req` | `stage` | `gate` | `check`; `said` is a verbatim request or `null`. `gen-process-report.js` renders these and exits non-zero if the file is absent: a process log invented by the renderer would be fiction.

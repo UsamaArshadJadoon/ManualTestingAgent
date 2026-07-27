@@ -52,6 +52,10 @@ const proposed = rdOpt('bugs-proposed.json');
 const created = rdOpt('bugs-created.json');
 const verif = rdOpt('verification.json');
 const aio = rdOpt('aio-sync.json');
+// Optional, written by the orchestrator on a --rerun: { prior: { "<caseId>": "<status>" } }.
+// It exists so the before/after comparison survives regeneration — a table hand-patched
+// into the HTML would be silently dropped the next time this tool runs.
+const rerun = rdOpt('rerun-status.json');
 
 const cases = tcDoc.testCases || tcDoc.cases || [];
 const res = results.results || results.cases || [];
@@ -185,6 +189,27 @@ notRun.forEach((s) => MD.push(`| ${s} | _not run_ | — | ${s === 'bug-logger-cr
 MD.push('');
 MD.push('> Validation files are overwritten per iteration, so a stage rejected then fixed leaves only its passing record. The **Outcome** column above restores that history from each file\'s `iteration` value.');
 MD.push('');
+if (rerun && rerun.prior) {
+  const ids = Object.keys(rerun.prior).filter((id) => statusOf[id] !== undefined);
+  MD.push('## Re-run comparison');
+  MD.push('');
+  MD.push('| Case | Before | After | Change |');
+  MD.push('|---|---|---|---|');
+  ids.forEach((id) => {
+    const was = rerun.prior[id], now = statusOf[id];
+    // A previously-blocked case that now passes is NEWLY COVERED, not fixed — it was
+    // never evidence of a defect, so calling it "fixed" would imply a repair that
+    // never happened.
+    const change = was === now ? 'unchanged'
+      : now === 'passed' && was === 'blocked' ? '**newly covered**'
+      : now === 'passed' ? '**fixed**'
+      : was === 'passed' ? '**regressed**' : 'changed';
+    MD.push(`| ${id} | ${was} | ${now} | ${change} |`);
+  });
+  MD.push('');
+  MD.push('> A previously `blocked` case that now passes is **newly covered** — the criterion behind it was untested, not broken. That is a different claim from a previously `failed` case that now passes, which is **fixed**.');
+  MD.push('');
+}
 MD.push('## Evidence');
 MD.push('');
 MD.push(`${res.reduce((n, c) => n + (c.screenshots || []).length, 0)} screenshots captured under \`screenshots/\`, full-page PNG at 1920×1080.`);
@@ -248,6 +273,27 @@ const valRows = vRows.map((r) => `<tr><td class="mono">${e(r.stage)}</td>
   <td>${r.gaps}</td><td>${e(r.outcome)}</td></tr>`).join('') +
   notRun.map((s) => `<tr><td class="mono">${e(s)}</td><td><span class="pill mut">not run</span></td><td>—</td>
   <td>${s === 'bug-logger-create' ? 'no bugs approved for creation, so no subject to validate' : 'stage did not run'}</td></tr>`).join('');
+
+const rerunHtml = (() => {
+  if (!rerun || !rerun.prior) return '';
+  const ids = Object.keys(rerun.prior).filter((id) => statusOf[id] !== undefined);
+  if (!ids.length) return '';
+  const rows = ids.map((id) => {
+    const was = rerun.prior[id], now = statusOf[id];
+    const change = was === now ? '<span class="mut-t">unchanged</span>'
+      : now === 'passed' && was === 'blocked' ? '<b class="ok">newly covered</b>'
+      : now === 'passed' ? '<b class="ok">fixed</b>'
+      : was === 'passed' ? '<b class="bad">regressed</b>' : 'changed';
+    return `<tr><td class="mono">${e(id)}</td><td>${chip(was)}</td><td>${chip(now)}</td><td>${change}</td></tr>`;
+  }).join('');
+  return `<h2>Re-run comparison</h2>
+<div class="scroll"><table>
+<thead><tr><th>Case</th><th>Before</th><th>After</th><th>Change</th></tr></thead>
+<tbody>${rows}</tbody></table></div>
+<div class="note">A previously <b>blocked</b> case that now passes is <b>newly covered</b> — the criterion behind it was
+untested, not broken. That is a different claim from a previously <b>failed</b> case that now passes, which is <b>fixed</b>.
+Letting the first read as the second implies a repair that never happened.</div>`;
+})();
 
 const evidenceRows = res.map((c) => `<tr><td class="mono">${e(c.id)}</td><td>${chip(c.status)}</td>
   <td class="mono sm">${(c.screenshots || []).map(e).join('<br>') || '—'}</td></tr>`).join('');
@@ -317,6 +363,7 @@ ${!madeBugs.length && drafts.length ? `<div class="note"><b>${madeBugs.length} o
 <tbody>${valRows}</tbody></table></div>
 <div class="note">Validation files are overwritten per iteration, so a stage rejected and then fixed leaves behind only its passing record. The <b>Outcome</b> column restores that history from each file's <span class="mono">iteration</span> value.</div>
 
+${rerunHtml}
 <h2>Evidence</h2>
 <p>${res.reduce((n, c) => n + (c.screenshots || []).length, 0)} screenshots under <span class="mono">screenshots/</span>, full-page PNG at 1920&times;1080.</p>
 <div class="scroll"><table>
