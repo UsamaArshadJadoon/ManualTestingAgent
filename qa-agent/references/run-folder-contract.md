@@ -19,7 +19,9 @@ qa-runs/<PROJ-KEY>_<runId>/
 ├── review.json
 ├── validation/
 │   └── <stage>.json
+├── verification.json     # live re-verification of every bug draft, written before the bug gate
 ├── aio-sync.json         # optional: written by qa-test-sync when config.aio.enabled
+├── rerun-status.json     # optional: prior per-case status, written by the orchestrator on --rerun
 ├── wireframe-spec.md     # optional: transcribed design contract, when the story has one
 ├── process-steps.json    # optional: narrative for the process log, if one is produced
 ├── fixtures/             # optional: files the executor manufactures for upload fields
@@ -125,6 +127,7 @@ The renderer distinguishes two outcomes that must never be conflated: a previous
 
 ```text
 { drafts: [{ ref, title, description, severity, priority, status, linkedAC: [acId], testId, testIds: [caseId],
+            liveVerification: { status, observation, method, checkedAt },   // added by the re-verification stage; preserved verbatim on any rewrite
              environment, reproSteps: [str], expectedResult, actualResult, consoleErrors: [str],
              screenshots: [path], possibleDuplicate: [key], recommendation, discoveredDate }],
   _validation: {...} }
