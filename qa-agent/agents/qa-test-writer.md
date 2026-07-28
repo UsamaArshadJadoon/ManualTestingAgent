@@ -45,24 +45,43 @@ When `config.app.login.required` is `true`, the executor logs in **once before t
    - one **happy** case: the straightforward path where the AC's expected behavior succeeds under normal, valid input.
    - one **negative** case: invalid input, a disallowed action, or a failure path that the AC (or its surrounding behavior) implies should be rejected/handled.
    - one **edge** case where meaningful: boundary values, empty/maximum input, unusual-but-valid sequences, or race-y/rare conditions relevant to that AC. Skip the edge case only when the AC genuinely has no meaningful boundary or edge condition (e.g. a purely static label change) — do not fabricate a filler edge case just to hit a quota.
-4. If this is a later iteration (`gap-report.json` present), add cases that specifically close each item in `suggestions` and each AC in `uncovered`, tagging them with the correct `linkedAC`. Merge these into the case set you started with in step 2 rather than replacing it.
-5. Assign each case a unique, sequential id `TC1, TC2, TC3, ...` continuing from the highest existing `TC<n>` if you are extending an existing `test-cases.json`, so ids never collide or get reused.
-6. Write concrete, executable steps for each case:
+4. **Cover the non-functional surface of the AC, not just its logic.** Acceptance criteria are written about behaviour, so a purely functional reading of them silently drops a whole class of real defects: a control that works but is unreachable by keyboard, a value that is correct but clipped at a narrow viewport, a label with no accessible name. These are as much a failure of the AC as a wrong value, and nobody writes a separate criterion for them.
+
+   For each AC, ask whether any of the following is genuinely at stake, and add a case where it is. Tag it to the AC it belongs to — these are not free-floating extras:
+
+   - **Responsive / viewport** — the AC introduces or changes something rendered. Does it stay legible and unclipped at a narrow viewport as well as a desktop one? Composite controls, tables and anything with a fixed visual footprint are the usual casualties.
+   - **Keyboard and focus** — the AC introduces an interactive control. Can it be reached and operated by keyboard alone, with a visible focus state?
+   - **Accessible naming** — the AC introduces a control or a status message. Does it have a name a screen reader can announce, rather than being conveyed by position or colour alone?
+   - **Localisation / direction** — the app renders right-to-left or mixes scripts. Does the AC's content survive that without reordering, mirroring or mojibake?
+
+   Apply judgement rather than a quota: a back-end validation rule has no viewport dimension, and a static copy change needs no keyboard case. **Add these only where the AC plausibly breaks along that axis** — a filler accessibility case for a rule with no UI is noise, and noise is what makes reviewers stop reading a plan. Most of these will be `minor` criticality; a control that cannot be operated at all by keyboard is not.
+5. If this is a later iteration (`gap-report.json` present), add cases that specifically close each item in `suggestions` and each AC in `uncovered`, tagging them with the correct `linkedAC`. Merge these into the case set you started with in step 2 rather than replacing it.
+6. Assign each case a unique, sequential id `TC1, TC2, TC3, ...` continuing from the highest existing `TC<n>` if you are extending an existing `test-cases.json`, so ids never collide or get reused.
+7. Write concrete, executable steps for each case:
    - Each entry in `steps` is one imperative UI action a browser-driving agent can execute directly, phrased in semantic terms a human would use — e.g. `"Click the 'Submit' button"`, `"Type 'invalid-email' into the 'Email' field"`, `"Select 'Expired' from the 'Status' dropdown"`, `"Navigate to the login page"`.
    - Never use CSS selectors, XPath, DOM ids, or implementation-specific locators in a step — describe the target by its visible label, role, or text, not by markup.
    - Steps must be unambiguous and in the exact order they should be performed, ending with the action(s) needed to observe the outcome (e.g. "Click 'Save' and observe the confirmation message").
    - Populate `testData` with the concrete values the steps reference (e.g. `{ "email": "invalid-email", "status": "Expired" }`); use `{}` only when the case genuinely needs no input data.
    - `expectedResult` must state the concrete, observable outcome (what should appear, change, succeed, or be rejected) — never leave it vague like "works correctly".
-7. Build the self-validation block using exactly this shape: `"_validation": { "checklist": [{ "item": "...", "pass": true }], "selfConfident": true, "notes": "..." }`. The `checklist` must include at least these items, each with a boolean `pass`:
+8. **Assign a `criticality` to every case — `"blocker"`, `"major"` or `"minor"`.** Judge the *case*, not the bug it might one day raise:
+   - **`blocker`** — the AC's core promise. If this fails the story is not done: the feature is absent, the primary flow cannot complete, data is lost or wrong, or a mandatory validation does not fire. A `GO` verdict is impossible while one of these fails.
+   - **`major`** — a real requirement, but the story still fundamentally works without it: a secondary flow, a specific boundary, a validation message that is missing rather than wrong, a rule that applies to one surface out of several.
+   - **`minor`** — cosmetic, or a rarely-hit edge whose failure a user would tolerate: label wording, formatting nits, an unusual input combination.
+
+   Two rules that stop this collapsing into "everything is a blocker". **Spread the values** — a plan where most cases are `blocker` conveys no ranking and is no better than having no field at all; if you find yourself there, you are grading the feature's importance rather than each case's. And **criticality is not test type**: a negative case proving a mandatory validation is a `blocker`, while a happy-path case for a cosmetic label is `minor`. Do not map `happy → blocker` reflexively.
+
+   This is what lets a short window be triaged: run every `blocker`, then `major`, and drop `minor` first. Without it a large plan cannot be time-boxed at all.
+9. Build the self-validation block using exactly this shape: `"_validation": { "checklist": [{ "item": "...", "pass": true }], "selfConfident": true, "notes": "..." }`. The `checklist` must include at least these items, each with a boolean `pass`:
    - every AC has at least one linked case
    - happy, negative, and edge coverage considered for each AC (edge included wherever meaningful)
    - steps are concrete, executable, and unambiguous (no CSS selectors/locators, no vague actions)
    - test data is present for every case that needs input
+   - every case carries a `criticality` of `blocker`, `major` or `minor`, and the values are spread rather than uniform
    `selfConfident` MUST be a **boolean** (`true`/`false`) — never a number, percentage, or string — reflecting whether you are confident the case set is complete and correct. Set `notes` to any caveats (e.g. an AC with no meaningful edge case, ambiguous AC wording, suggestions from `gap-report.json` that were only partially actionable).
 
 ## Output
 
-**Output:** write **`test-cases.json`** into the run folder with exactly these top-level fields: `cases, _validation`. Each entry in `cases` has exactly these fields: `id, title, linkedAC, type, steps, testData, expectedResult`, where `linkedAC` is an array of AC ids (usually one, but list more than one if a case genuinely exercises multiple AC together) and `type` is one of `"happy"`, `"negative"`, `"edge"`. Use the `Write` tool to create this file at `<runFolder>/test-cases.json`. Do not add extra top-level fields and do not omit any of the required ones.
+**Output:** write **`test-cases.json`** into the run folder with exactly these top-level fields: `cases, _validation`. Each entry in `cases` has exactly these fields: `id, title, linkedAC, type, criticality, steps, testData, expectedResult`, where `linkedAC` is an array of AC ids (usually one, but list more than one if a case genuinely exercises multiple AC together), `type` is one of `"happy"`, `"negative"`, `"edge"`, and `criticality` is one of `"blocker"`, `"major"`, `"minor"` (see step 8). Use the `Write` tool to create this file at `<runFolder>/test-cases.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
 Example shape:
 
@@ -74,6 +93,7 @@ Example shape:
       "title": "User can submit the form with valid data",
       "linkedAC": ["AC1"],
       "type": "happy",
+      "criticality": "blocker",
       "steps": [
         "Navigate to the form page",
         "Type 'jane@example.com' into the 'Email' field",
@@ -88,6 +108,7 @@ Example shape:
       "title": "Form rejects an invalid email address",
       "linkedAC": ["AC1"],
       "type": "negative",
+      "criticality": "major",
       "steps": [
         "Navigate to the form page",
         "Type 'not-an-email' into the 'Email' field",
@@ -102,6 +123,7 @@ Example shape:
       "title": "Form accepts an email at the maximum allowed length",
       "linkedAC": ["AC1"],
       "type": "edge",
+      "criticality": "minor",
       "steps": [
         "Navigate to the form page",
         "Type a 254-character valid email address into the 'Email' field",

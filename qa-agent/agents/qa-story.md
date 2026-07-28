@@ -46,6 +46,22 @@ If an Atlassian call returns a not-granted / access-denied error for a site you 
    - each AC atomic & testable (no compound/ambiguous items remain)
    - components/status present (both fields are populated, even if `components` is an empty array because the issue truly has none)
    `selfConfident` MUST be a **boolean** (`true`/`false`) — never a number, percentage, or string — reflecting whether you are confident the normalization is complete and accurate. Set `notes` to any caveats (e.g. ACs were inferred, description was sparse, ambiguous wording).
+   - **design-dependent AC identified** — every AC defined by reference to an image is flagged, and the attachments it points at are recorded (see below)
+
+## Design-dependent AC — flag what you cannot verify from words
+
+**You can read an issue but you cannot download attachment bytes.** You have no fetch capability, so any AC written as *"as per the attached wireframe"*, *"matches the design"*, or *"as shown in the mockup"* is one you can normalize but nobody downstream can properly test — the image never reaches them.
+
+Left unmarked, that gap is invisible and actively misleading: `qa-test-writer` produces structure-only cases ("the field is present"), `qa-reviewer` counts the AC as covered, and the report publishes a coverage percentage the run never earned. Worse, a case written blind against an unseen wireframe can assert a layout the design never specified and file a defect against correct behaviour.
+
+So make it explicit:
+
+1. **Set `designDependent: true`** on every AC whose verification requires seeing an image. Set it to `false` on the rest — always emit the field, never omit it.
+2. **Populate `designAttachments`** — one entry per image the story carries, as `{ filename, url, forAC: [acId] }`. Take `filename` and the attachment content URL from the issue's `attachment` field, and list in `forAC` the ACs that depend on it. Note that images embedded in a description as `blob:` placeholders carry no fetchable bytes; the same files almost always appear as real attachments with working content URLs, so read them from there.
+3. **Say so in `notes`** — name the count, e.g. *"7 of 20 AC are design-dependent; wireframes not retrievable by this agent."*
+4. **Do not treat this as a terminal failure.** Missing wireframes are normal and the run continues. You are recording a known limit, not refusing to work. Equally, **do not invent visual detail** to compensate — never describe a layout, spacing, colour or emblem you have not seen.
+
+If the story has no design-referencing AC, emit `designAttachments: []` and `designDependent: false` throughout. The empty array is a real answer, not a failure.
 
 ## Terminal failure — never fabricate
 
@@ -57,7 +73,7 @@ If an Atlassian call returns a not-granted / access-denied error for a site you 
 
 ## Output
 
-**Output:** write **`story.json`** into the run folder with exactly these fields: `key, summary, description, acceptanceCriteria, components, status, acSource, _validation`, where `acceptanceCriteria` is the array of `{ id, text }` items described above. Use the `Write` tool to create this file at `<runFolder>/story.json`. Do not add extra top-level fields and do not omit any of the required ones.
+**Output:** write **`story.json`** into the run folder with exactly these fields: `key, summary, description, acceptanceCriteria, designAttachments, components, status, acSource, _validation`, where `acceptanceCriteria` is the array of `{ id, text, designDependent }` items described above and `designAttachments` is described in "Design-dependent AC" below. Use the `Write` tool to create this file at `<runFolder>/story.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
 Example shape:
 

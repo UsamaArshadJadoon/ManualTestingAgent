@@ -98,6 +98,31 @@ const tally = res.reduce((t, c) => { t[c.status] = (t[c.status] || 0) + 1; retur
 const passed = tally.passed || 0, failed = tally.failed || 0,
       flaky = tally.flaky || 0, blocked = tally.blocked || 0;
 
+/* Criticality is assigned per case at design time by qa-test-writer. Report the mix, and — the part
+   that actually matters at sign-off — how many of the blocker-grade cases did not pass. A run can show
+   a healthy pass rate while every failure sits on a blocker, so the headline tally alone can mislead. */
+const CRIT = ['blocker', 'major', 'minor'];
+const critOf = {};
+cases.forEach((c) => { critOf[c.id] = CRIT.includes(c.criticality) ? c.criticality : null; });
+const critMix = CRIT.map((k) => ({ k, n: cases.filter((c) => critOf[c.id] === k).length }));
+const ungraded = cases.filter((c) => !critOf[c.id]).length;
+const blockersNotPassed = cases
+  .filter((c) => critOf[c.id] === 'blocker' && statusOf[c.id] && statusOf[c.id] !== 'passed')
+  .map((c) => c.id);
+
+function critText() {
+  if (!critMix.some((m) => m.n) && ungraded === cases.length) return null; // pre-criticality run folder
+  const mix = critMix.map((m) => `${m.n} ${m.k}`).join(' / ') + (ungraded ? ` / ${ungraded} ungraded` : '');
+  const bad = blockersNotPassed.length
+    ? ` — **${blockersNotPassed.length} blocker-grade case(s) did not pass: ${blockersNotPassed.join(', ')}**`
+    : '';
+  return mix + bad;
+}
+function critRow() {
+  const t = critText();
+  return t === null ? '' : `| Criticality mix | ${t} |`;
+}
+
 const satisfied = (acId) => (casesForAC[acId] || []).some((id) => statusOf[id] === 'passed');
 const unsatisfied = acs.filter((a) => (casesForAC[a.id] || []).length && !satisfied(a.id)).map((a) => a.id);
 const uncovered = acs.filter((a) => !(casesForAC[a.id] || []).length).map((a) => a.id);
@@ -148,6 +173,7 @@ MD.push(`| AC coverage | ${review.acCoveragePct}% (${acs.length - uncovered.leng
 MD.push(`| AC covered but **unsatisfied** | ${unsatisfied.length ? unsatisfied.join(', ') : 'none'} |`);
 MD.push(`| AC uncovered | ${uncovered.length ? uncovered.join(', ') : 'none'} |`);
 MD.push(`| Bugs proposed / created | ${drafts.length} / ${madeBugs.length} |`);
+MD.push(critRow());
 MD.push('');
 MD.push('> **Coverage is not satisfaction.** A criterion with a linked case that *failed* is covered but unsatisfied — it counts toward the coverage percentage yet cannot clear a GO.');
 MD.push('');
@@ -342,6 +368,7 @@ th{font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;color:#61748a}
 <tr><th>Covered but unsatisfied</th><td>${unsatisfied.length ? `<b class="bad">${unsatisfied.map(e).join(', ')}</b>` : 'none'}</td></tr>
 <tr><th>Uncovered</th><td>${uncovered.length ? `<b class="bad">${uncovered.map(e).join(', ')}</b>` : 'none'}</td></tr>
 <tr><th>Bugs proposed / created</th><td>${drafts.length} / ${madeBugs.length}</td></tr>
+${critText() === null ? '' : `<tr><th>Criticality mix</th><td>${e(critText().replace(/\*\*/g, ''))}</td></tr>`}
 </tbody></table></div>
 <div class="note"><b>Coverage is not satisfaction.</b> A criterion whose linked case <i>failed</i> is covered but unsatisfied — it counts toward the percentage yet cannot clear a GO. That distinction is the whole basis of this verdict.</div>
 

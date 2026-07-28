@@ -102,14 +102,36 @@ The renderer distinguishes two outcomes that must never be conflated: a previous
 ### `story.json`
 
 ```text
-{ key, summary, description, acceptanceCriteria: [{ id, text }], components: [..], status, acSource: "explicit|inferred", _validation: {...} }
+{ key, summary, description,
+  acceptanceCriteria: [{ id, text, designDependent: bool }],
+  designAttachments: [{ filename, url, forAC: [acId] }],
+  components: [..], status, acSource: "explicit|inferred", _validation: {...} }
 ```
+
+**`designDependent`** marks an AC that cannot be fully judged from words — one defined by reference to
+an image ("as per the attached wireframe", "matches the design"). **`designAttachments`** lists the
+images those ACs point at, with the URL each can be retrieved from.
+
+Both exist because `qa-story` can read an issue but **cannot download attachment bytes** — it has no
+fetch capability. Without these two fields that limitation is invisible: the writer produces
+structure-only cases, the reviewer counts the AC as covered, and the report claims a coverage
+percentage the run never earned. With them, the gap is explicit and the orchestrator can gate on it
+(see `/qa-run` section 5.1a). Supplying `wireframe-spec.md` is what closes it.
 
 ### `test-cases.json`
 
 ```text
-{ cases: [{ id, title, linkedAC: [acId], type: "happy|negative|edge", steps: [str], testData: {}, expectedResult }], _validation: {...} }
+{ cases: [{ id, title, linkedAC: [acId], type: "happy|negative|edge",
+            criticality: "blocker|major|minor", steps: [str], testData: {}, expectedResult }],
+  _validation: {...} }
 ```
+
+`criticality` is the **test case's** own importance — how much the AC it proves matters — and is
+assigned at design time by `qa-test-writer`. It is not the same thing as a bug's severity: that is
+derived later from `config.severityMap`, and only once a case has actually failed. Both exist because
+they answer different questions. Severity asks "how bad is this defect?"; criticality asks "which of
+these cases must run first if the window is short?" A large plan without it cannot be triaged or
+time-boxed, and a run that is cut short has no principled way to choose what to drop.
 
 ### `gap-report.json`
 
