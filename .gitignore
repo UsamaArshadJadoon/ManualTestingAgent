@@ -1,18 +1,49 @@
 # Subagent-driven-development scratch (briefs, reports, review packages, ledger)
 .superpowers/
-# Local QA run outputs
-qa-runs/
+
+# Local QA run outputs (individual runs — not the main validation reports)
+qa-agent/runs/
+
 # Playwright MCP page snapshots (may contain credentials/PII — never commit)
 .playwright-mcp/
+
 # Local project config that references credential env-var names
 .qa-config.json
+
 # QA credential store (.env-style secrets — NEVER commit)
 .qa-secrets
 .env
 .env.*
+
 # Run walkthroughs / write-ups generated from a real run. These narrate what the
 # agent actually did, so they quote live app data and — as happened once — can
 # quote a resolved credential verbatim. Keep them local; publish a scrubbed copy
 # deliberately rather than letting one reach a public repo via a stray commit.
 QA-Agent-Walkthrough-*.html
 *-walkthrough*.html
+
+# Coverage reports (local — not needed in repo)
+coverage/
+*.lcov
+.nyc_output/
+
+# Node dependencies (can be reinstalled)
+node_modules/
+package-lock.json
+
+# IDE/Editor files
+.vscode/settings.json
+.vscode/launch.json
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# Keep these files in repo (validation reports, documentation)
+!validation/
+!docs/
+!README.md

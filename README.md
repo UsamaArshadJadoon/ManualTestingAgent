@@ -91,7 +91,47 @@ flowchart TD
 
 Every subagent runs isolated with no shared memory — all data flows through JSON files in a per-run folder, giving a full audit trail.
 
-## Repository layout
+---
+
+## Documentation Index
+
+Complete documentation is available in the `docs/` folder. Start here based on your role:
+
+### Quick Start
+- **[QUICK_START.md](docs/QUICK_START.md)** — Get up and running in 5 minutes
+- **[FAQ.md](docs/FAQ.md)** — Common questions answered
+- **[TEAM_TRAINING_GUIDE.md](docs/TEAM_TRAINING_GUIDE.md)** — Team onboarding
+
+### For Users & QA Engineers
+- **[NEW_FEATURES_SUMMARY.md](docs/NEW_FEATURES_SUMMARY.md)** — What's new in this release
+- **[MIGRATION_CHECKLIST.md](docs/MIGRATION_CHECKLIST.md)** — Version upgrade guide
+- **[PERFORMANCE_BENEFITS.md](docs/PERFORMANCE_BENEFITS.md)** — ROI and metrics
+
+### For Operations & DevOps
+- **[OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md)** — Daily operations procedures
+- **[TROUBLESHOOTING_FOR_OPS.md](docs/TROUBLESHOOTING_FOR_OPS.md)** — Debugging & issue resolution
+- **[INCIDENT_RESPONSE.md](docs/INCIDENT_RESPONSE.md)** — Incident management
+- **[ESCALATION_PROCEDURES.md](docs/ESCALATION_PROCEDURES.md)** — When & how to escalate
+
+### For Infrastructure & DevOps
+- **[CI_CD_SETUP.md](docs/CI_CD_SETUP.md)** — GitHub Actions, GitLab CI, Jenkins, Azure DevOps
+- **[INFRASTRUCTURE_SIZING.md](docs/INFRASTRUCTURE_SIZING.md)** — Resource requirements & scaling
+- **[MONITORING_GUIDE.md](docs/MONITORING_GUIDE.md)** — Metrics & alerting setup
+- **[INTEGRATION_GUIDE.md](docs/INTEGRATION_GUIDE.md)** — External system integrations
+
+### For Management & Stakeholders
+- **[COST_ANALYSIS.md](docs/COST_ANALYSIS.md)** — Budget planning & ROI analysis
+
+### Full Documentation Index
+- **[docs/INDEX.md](docs/INDEX.md)** — Complete documentation guide with reading recommendations
+
+### Validation Reports
+- **[validation/ORCHESTRATOR_VALIDATION_SUMMARY.md](validation/ORCHESTRATOR_VALIDATION_SUMMARY.md)** — Latest validation results
+- **[validation/](validation/)** — All validation reports and test results
+
+---
+
+## Repository Layout
 
 ```text
 qa-agent/
@@ -111,6 +151,35 @@ qa-agent/
 ├── install.ps1          deploys agents/commands to ~/.claude
 ├── qa-config.example.json
 └── README.md            full documentation
+
+docs/                    Comprehensive documentation (start here!)
+├── INDEX.md             Complete documentation index & reading guide
+├── QUICK_START.md       Get started in 5 minutes
+├── FAQ.md               Common questions & answers
+├── TEAM_TRAINING_GUIDE.md   New member training materials
+├── CI_CD_SETUP.md       CI/CD pipeline configuration
+├── INFRASTRUCTURE_SIZING.md Resource planning & scaling
+├── MONITORING_GUIDE.md  Metrics & alerting setup
+├── INTEGRATION_GUIDE.md External system integrations
+├── OPERATIONS_RUNBOOK.md    Daily operations procedures
+├── TROUBLESHOOTING_FOR_OPS.md  Issue diagnosis & resolution
+├── INCIDENT_RESPONSE.md Incident management procedures
+├── ESCALATION_PROCEDURES.md   Support & escalation guidelines
+├── COST_ANALYSIS.md     Budget planning & ROI
+├── PERFORMANCE_BENEFITS.md    Metrics & business value
+├── NEW_FEATURES_SUMMARY.md    Release updates
+└── MIGRATION_CHECKLIST.md     Version upgrade guide
+
+validation/             Test results & validation reports
+├── ORCHESTRATOR_VALIDATION_SUMMARY.md
+├── ORCHESTRATOR_VALIDATION_TECHNICAL_DETAILS.md
+├── ORCHESTRATOR_VALIDATION_REPORT.json
+├── DEPLOYMENT_VALIDATION_REPORT.json
+├── TEST_RESULTS.json
+├── METRICS_SETUP_REPORT.json
+├── canary-deployment-report.json
+└── staging-deployment-report.json
+
 docs/superpowers/        design spec + implementation plan
 ```
 
