@@ -25,9 +25,25 @@ const results = rd('results.json').cases, cases = rd('test-cases.json').cases;
 const RS = Object.fromEntries(results.map(c => [c.id, c]));
 const TC = Object.fromEntries(cases.map(c => [c.id, c]));
 
-const masks = (ctx.config.safety.maskPatterns || []).map(p => {
+// Load bugs-created.json if it exists to check which drafts were actually filed
+let created = {};
+const createdPath = path.join(RUN, 'bugs-created.json');
+if (fs.existsSync(createdPath)) {
+  try {
+    const createdData = JSON.parse(fs.readFileSync(createdPath, 'utf8'));
+    created = Object.fromEntries((createdData.created || []).map(b => [b.ref, b]));
+  } catch (e) {
+    // bugs-created.json exists but is invalid; treat as empty
+    console.warn(`warning: bugs-created.json exists but is not valid JSON (${e.message}); drafts will show as not filed`);
+  }
+}
+
+const masks = ((ctx.config && ctx.config.safety && ctx.config.safety.maskPatterns) || []).map(p => {
   let f = 'g'; if (p.startsWith('(?i)')) { f += 'i'; p = p.slice(4); }
-  try { return new RegExp(p, f) } catch { return null }
+  try { return new RegExp(p, f) } catch (e) {
+    console.warn(`warn: invalid mask pattern ${JSON.stringify(p)}: ${e.message}`);
+    return null;
+  }
 }).filter(Boolean);
 const mask = s => { let o = String(s ?? ''); for (const r of masks) o = o.replace(r, '***'); return o };
 const e = s => mask(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -41,19 +57,35 @@ const sev = s => SEV[s] || [s, 'low'];
 const MAX_SHOTS = 3;
 const shotsFor = d => {
   const out = [];
-  const primary = ((RS[d.testId] || {}).screenshots) || [];
-  for (const s of primary) if (!out.includes(s)) out.push(s);
-  for (const s of (d.screenshots || [])) if (!out.includes(s)) out.push(s);
-  for (const t of (d.testIds || [])) for (const s of ((RS[t] || {}).screenshots || [])) if (!out.includes(s)) out.push(s);
+  if (d.testId && RS[d.testId] && Array.isArray(RS[d.testId].screenshots)) {
+    for (const s of RS[d.testId].screenshots) if (s && !out.includes(s)) out.push(s);
+  }
+  if (Array.isArray(d.screenshots)) {
+    for (const s of d.screenshots) if (s && !out.includes(s)) out.push(s);
+  }
+  if (Array.isArray(d.testIds)) {
+    for (const t of d.testIds) {
+      if (RS[t] && Array.isArray(RS[t].screenshots)) {
+        for (const s of RS[t].screenshots) if (s && !out.includes(s)) out.push(s);
+      }
+    }
+  }
   return out.slice(0, MAX_SHOTS);
 };
 const capFor = (f, d) => {
-  const owner = (d.testIds || []).find(t => ((RS[t] || {}).screenshots || []).includes(f)) || (d.testIds || [])[0];
-  return `${e(owner)} — ${e((TC[owner] || {}).title || '')}`;
+  const testIds = Array.isArray(d.testIds) ? d.testIds : (d.testId ? [d.testId] : []);
+  const owner = testIds.find(t => ((RS[t] || {}).screenshots || []).includes(f)) || testIds[0];
+  const testCase = TC[owner];
+  const caseTitle = (testCase && testCase.title) || owner || '(unknown)';
+  return `${e(owner)} — ${e(caseTitle)}`;
 };
 
 const card = d => {
   const [label, cls] = sev(d.severity); const shots = shotsFor(d);
+  const filed = created[d.ref];
+  const statusText = filed
+    ? `Filed as <a href="${e(filed.url)}" target="_blank">${e(filed.key)}</a>`
+    : 'Not filed in Jira';
   return `
 <article class="d ${cls}" id="${e(d.ref)}">
   <div class="d-head">
@@ -61,7 +93,7 @@ const card = d => {
     <h2>${e(d.ref)} · ${e(d.title)}</h2>
     <p class="d-meta">Acceptance criteria ${e((d.linkedAC || []).join(', ') || '—')}
       &nbsp;·&nbsp; Found by ${e((d.testIds || []).join(', '))}
-      &nbsp;·&nbsp; Not filed in Jira</p>
+      &nbsp;·&nbsp; ${statusText}</p>
   </div>
 
   <div class="d-body">

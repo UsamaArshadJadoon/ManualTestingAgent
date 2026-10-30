@@ -86,15 +86,19 @@ const token = resolveToken();
 if (!token) die(`Cannot sync to AIO: ${tokenEnv} not set (no env var and no .qa-secrets entry)`);
 
 /* ---------- HTTP ---------- */
+const REQUEST_TIMEOUT_MS = 30000;  // 30 second timeout for AIO API calls
 function request(method, urlPath, body) {
   return new Promise((resolve) => {
     const u = new URL(baseUrl + urlPath);
     const payload = body === undefined ? null : JSON.stringify(body);
+    let resolved = false;
+
     const req = https.request(
       {
         hostname: u.hostname,
         path: u.pathname + u.search,
         method,
+        timeout: REQUEST_TIMEOUT_MS,
         headers: Object.assign(
           { Authorization: `AioAuth ${token}`, Accept: 'application/json' },
           payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {}
@@ -104,6 +108,8 @@ function request(method, urlPath, body) {
         let data = '';
         res.on('data', (c) => (data += c));
         res.on('end', () => {
+          if (resolved) return;  // Guard against double-resolve from timeout
+          resolved = true;
           let json = null;
           try {
             json = JSON.parse(data);
@@ -114,10 +120,38 @@ function request(method, urlPath, body) {
         });
       }
     );
-    req.on('error', (e) => resolve({ status: 0, json: null, text: String(e.message) }));
+
+    req.on('error', (e) => {
+      if (resolved) return;
+      resolved = true;
+      const msg = e.code === 'ECONNREFUSED'
+        ? 'connection refused (AIO API unreachable)'
+        : e.code === 'ETIMEDOUT'
+        ? 'connection timeout (AIO API took too long to respond)'
+        : String(e.message);
+      resolve({ status: 0, json: null, text: msg });
+    });
+
+    req.on('timeout', () => {
+      if (resolved) return;
+      resolved = true;
+      req.destroy();
+      resolve({ status: 0, json: null, text: `timeout after ${REQUEST_TIMEOUT_MS}ms (AIO API did not respond)` });
+    });
+
     if (payload) req.write(payload);
     req.end();
   });
+}
+
+/** Helper to interpret AIO HTTP errors and provide context-specific guidance */
+function httpErrorContext(status, text) {
+  if (status === 0) return `network error: ${text}`;
+  if (status === 401) return `authentication failed: ${text || 'check your AIO_TOKEN in .qa-secrets or env var'}`;
+  if (status === 403) return `access denied: your account may lack permissions for this project`;
+  if (status === 404) return `not found: the project or resource does not exist`;
+  if (status === 500) return `AIO server error: ${text || 'temporary issue, retry in a moment'}`;
+  return `HTTP ${status}: ${text || 'unknown error'}`;
 }
 
 /* ---------- resolve the project's Classic scriptType ID at runtime ----------
@@ -133,8 +167,9 @@ async function resolveScriptTypeId() {
   const res = await request('POST', `/project/${projectKey}/testcase/search?startAt=0&maxResults=50`, {});
   if (res.status !== 200 || !res.json || !Array.isArray(res.json.items)) {
     die(
-      `Cannot resolve the AIO scriptType for project ${projectKey} ` +
-        `(search returned HTTP ${res.status}). Pin it with "scriptTypeId" in .qa-config.json > aio.`
+      `Cannot resolve the AIO scriptType for project ${projectKey}\n` +
+        `  ${httpErrorContext(res.status, res.text)}\n` +
+        `  Pin the scriptType ID with "scriptTypeId" in .qa-config.json > aio to skip this lookup.`
     );
   }
   const types = res.json.items.map((i) => i.scriptType).filter(Boolean);
@@ -152,7 +187,7 @@ async function resolveScriptTypeId() {
 /* ---------- resolve the story's folder (never created via API — creation returns 500) ---------- */
 async function resolveFolder() {
   const res = await request('GET', `/project/${projectKey}/testcase/folder`);
-  if (res.status !== 200) die(`AIO folder lookup failed (HTTP ${res.status})`);
+  if (res.status !== 200) die(`AIO folder lookup failed\n  ${httpErrorContext(res.status, res.text)}`);
   const flat = [];
   (function walk(nodes) {
     for (const n of nodes || []) {

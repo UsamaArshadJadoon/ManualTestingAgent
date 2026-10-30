@@ -8,11 +8,25 @@ New-Item -ItemType Directory -Force -Path (Join-Path $dest "commands") | Out-Nul
 # not just from a checkout of this repo.
 New-Item -ItemType Directory -Force -Path (Join-Path $dest "qa-agent\tools") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $dest "qa-agent\references") | Out-Null
-Copy-Item -Force (Join-Path $src "agents\*.md") (Join-Path $dest "agents")
-Copy-Item -Force (Join-Path $src "commands\*.md") (Join-Path $dest "commands")
-Copy-Item -Force (Join-Path $src "tools\*") (Join-Path $dest "qa-agent\tools")
-if (Test-Path (Join-Path $src "references\*")) {
-  Copy-Item -Force (Join-Path $src "references\*") (Join-Path $dest "qa-agent\references")
+try {
+  Copy-Item -Force (Join-Path $src "agents\*.md") (Join-Path $dest "agents") -ErrorAction Stop
+  Copy-Item -Force (Join-Path $src "commands\*.md") (Join-Path $dest "commands") -ErrorAction Stop
+  Copy-Item -Force (Join-Path $src "tools\*") (Join-Path $dest "qa-agent\tools") -ErrorAction Stop
+  if (Test-Path (Join-Path $src "references\*")) {
+    Copy-Item -Force (Join-Path $src "references\*") (Join-Path $dest "qa-agent\references") -ErrorAction Stop
+  }
+} catch {
+  Write-Host ""
+  Write-Host "ERROR: Installation failed during file copy:" -ForegroundColor Red
+  Write-Host "$($_.Exception.Message)" -ForegroundColor Red
+  Write-Host ""
+  Write-Host "This usually happens if:" -ForegroundColor Yellow
+  Write-Host "  - Your .claude directory does not have write permissions" -ForegroundColor Yellow
+  Write-Host "  - Antivirus is blocking file operations" -ForegroundColor Yellow
+  Write-Host "  - A running process has locked files in ~/.claude" -ForegroundColor Yellow
+  Write-Host ""
+  Write-Host "Fix these issues and re-run the install script." -ForegroundColor Yellow
+  exit 1
 }
 Write-Host "Installed QA AZM Digital Agent to $dest"
 Write-Host "  by Usama Arshad Jadoon (QC Lead, AZM Digital)"

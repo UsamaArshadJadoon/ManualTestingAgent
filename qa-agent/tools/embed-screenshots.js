@@ -80,7 +80,19 @@ function pngSize(buf, name) {
 
 let html = fs.readFileSync(htmlPath, "utf8");
 
-const placeholders = [...html.matchAll(/\{\{IMG:([^}]+)\}\}/g)].map((m) => m[1].trim());
+// Extract placeholders using a more robust pattern: {{IMG:...}} where ... is non-empty and doesn't contain }}
+// This handles edge cases better than [^}]+ which can fail with certain filename patterns
+const placeholderRegex = /\{\{IMG:([^}][^}]*?)\}\}/g;
+const placeholders = [];
+let match;
+while ((match = placeholderRegex.exec(html)) !== null) {
+  const name = (match[1] || '').trim();
+  if (name && !name.includes('}}')) {  // Extra validation: ensure no escaped braces
+    placeholders.push(name);
+  } else if (!name) {
+    fail(`found empty {{IMG:}} placeholder at position ${match.index} — provide a filename`);
+  }
+}
 const names = [...new Set(placeholders)];
 
 if (!names.length) {
@@ -143,9 +155,17 @@ if (tooSmall.length) {
 
 // ---- verify nothing was left behind ---------------------------------------
 
-if (/\{\{IMG:/.test(html)) {
-  const left = [...html.matchAll(/\{\{IMG:([^}]*)\}\}/g)].map((m) => m[1]);
-  fail("unreplaced placeholders remain: " + left.join(", "));
+const leftoverRegex = /\{\{IMG:([^}][^}]*?)\}\}/;
+if (leftoverRegex.test(html)) {
+  const leftMatches = [];
+  const checkRegex = /\{\{IMG:([^}][^}]*?)\}\}/g;
+  let leftMatch;
+  while ((leftMatch = checkRegex.exec(html)) !== null) {
+    leftMatches.push(leftMatch[1].trim());
+  }
+  fail("unreplaced placeholders remain: " + (leftMatches.length ? leftMatches.join(", ") : "(empty names found)") +
+       "\n  every {{IMG:name}} placeholder should have been replaced with a data: URI. " +
+       "Check that all screenshot names in the HTML exactly match the embedded set.");
 }
 
 const pathRefs = (html.match(/<img[^>]+src="(?!data:)/g) || []).length;
