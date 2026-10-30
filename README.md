@@ -95,39 +95,40 @@ Every subagent runs isolated with no shared memory — all data flows through JS
 
 ## Documentation Index
 
-Complete documentation is available in the `docs/` folder. Start here based on your role:
+**📖 Complete documentation is organized in the `docs/` folder.** Start here based on your role:
 
-### Quick Start
-- **[QUICK_START.md](docs/QUICK_START.md)** — Get up and running in 5 minutes
-- **[FAQ.md](docs/FAQ.md)** — Common questions answered
-- **[TEAM_TRAINING_GUIDE.md](docs/TEAM_TRAINING_GUIDE.md)** — Team onboarding
+### Quick Start (Everyone)
+1. **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)** ⚡ 5-min quick start — Install and run your first test
+2. **[docs/QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md)** 📄 1-page cheat sheet — Commands and key concepts
+3. **[docs/FAQ.md](docs/FAQ.md)** ❓ 40+ common questions answered
 
-### For Users & QA Engineers
-- **[NEW_FEATURES_SUMMARY.md](docs/NEW_FEATURES_SUMMARY.md)** — What's new in this release
-- **[MIGRATION_CHECKLIST.md](docs/MIGRATION_CHECKLIST.md)** — Version upgrade guide
-- **[PERFORMANCE_BENEFITS.md](docs/PERFORMANCE_BENEFITS.md)** — ROI and metrics
+### For QA Engineers & Test Automation Leads
+- **[docs/COMPLETE_GUIDE.md](docs/COMPLETE_GUIDE.md)** — Full system architecture and pipeline (30-45 min)
+- **[docs/TEAM/TEAM_TRAINING_GUIDE.md](docs/TEAM/TEAM_TRAINING_GUIDE.md)** — Detailed team training materials
+- **[docs/TEAM/NEW_FEATURES_SUMMARY.md](docs/TEAM/NEW_FEATURES_SUMMARY.md)** — What's new in this release
+- **[docs/TEAM/MIGRATION_CHECKLIST.md](docs/TEAM/MIGRATION_CHECKLIST.md)** — Version upgrade guide
 
-### For Operations & DevOps
-- **[OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md)** — Daily operations procedures
-- **[TROUBLESHOOTING_FOR_OPS.md](docs/TROUBLESHOOTING_FOR_OPS.md)** — Debugging & issue resolution
-- **[INCIDENT_RESPONSE.md](docs/INCIDENT_RESPONSE.md)** — Incident management
-- **[ESCALATION_PROCEDURES.md](docs/ESCALATION_PROCEDURES.md)** — When & how to escalate
+### For Operations & DevOps Engineers
+- **[docs/OPERATIONS/OPERATIONS_RUNBOOK.md](docs/OPERATIONS/OPERATIONS_RUNBOOK.md)** — Daily operations & procedures
+- **[docs/OPERATIONS/TROUBLESHOOTING_FOR_OPS.md](docs/OPERATIONS/TROUBLESHOOTING_FOR_OPS.md)** — Diagnosing issues
+- **[docs/OPERATIONS/MONITORING_GUIDE.md](docs/OPERATIONS/MONITORING_GUIDE.md)** — Metrics, dashboards, alerting
+- **[docs/OPERATIONS/INCIDENT_RESPONSE.md](docs/OPERATIONS/INCIDENT_RESPONSE.md)** — Incident management
+- **[docs/OPERATIONS/ESCALATION_PROCEDURES.md](docs/OPERATIONS/ESCALATION_PROCEDURES.md)** — Support & escalation
 
-### For Infrastructure & DevOps
-- **[CI_CD_SETUP.md](docs/CI_CD_SETUP.md)** — GitHub Actions, GitLab CI, Jenkins, Azure DevOps
-- **[INFRASTRUCTURE_SIZING.md](docs/INFRASTRUCTURE_SIZING.md)** — Resource requirements & scaling
-- **[MONITORING_GUIDE.md](docs/MONITORING_GUIDE.md)** — Metrics & alerting setup
-- **[INTEGRATION_GUIDE.md](docs/INTEGRATION_GUIDE.md)** — External system integrations
+### For Infrastructure & DevOps Engineers
+- **[docs/DEPLOYMENT/CI_CD_SETUP.md](docs/DEPLOYMENT/CI_CD_SETUP.md)** — GitHub Actions, GitLab CI, Jenkins, Azure DevOps
+- **[docs/DEPLOYMENT/INFRASTRUCTURE_SIZING.md](docs/DEPLOYMENT/INFRASTRUCTURE_SIZING.md)** — Capacity planning & scaling
 
-### For Management & Stakeholders
-- **[COST_ANALYSIS.md](docs/COST_ANALYSIS.md)** — Budget planning & ROI analysis
+### For Team Leads, Managers & Stakeholders
+- **[docs/TEAM/PERFORMANCE_BENEFITS.md](docs/TEAM/PERFORMANCE_BENEFITS.md)** — ROI, time savings, business value
+- **[docs/COST_ANALYSIS.md](docs/COST_ANALYSIS.md)** — Budget planning & financial analysis
+- **[docs/INTEGRATION_GUIDE.md](docs/INTEGRATION_GUIDE.md)** — External system integrations
 
-### Full Documentation Index
-- **[docs/INDEX.md](docs/INDEX.md)** — Complete documentation guide with reading recommendations
+### Complete Documentation Navigation
+- **[docs/INDEX.md](docs/INDEX.md)** — Master index with role-based paths, cross-references, and reading times
 
-### Validation Reports
-- **[validation/ORCHESTRATOR_VALIDATION_SUMMARY.md](validation/ORCHESTRATOR_VALIDATION_SUMMARY.md)** — Latest validation results
-- **[validation/](validation/)** — All validation reports and test results
+### Test Results & Validation
+- **[docs/VALIDATION/](docs/VALIDATION/)** — Validation reports, test results, and system metrics
 
 ---
 

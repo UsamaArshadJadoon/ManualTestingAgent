@@ -1,207 +1,274 @@
-# Documentation Index
+# Complete Documentation Index
 
-**QA AZM Digital Agent — Complete Documentation Guide**
-
-> 📖 Navigate the framework with this comprehensive index. Last updated: 2026-10-30
+> Master navigation guide for all QA AZM Digital Agent documentation.
 
 ---
 
-## Quick Navigation
+## Start Here (Pick Your Path)
 
-### First Time Here?
+### New to the system?
+**→ [GETTING_STARTED.md](GETTING_STARTED.md)** (5 min)
 
-1. **[QUICK_START.md](QUICK_START.md)** — Get up and running in 5 minutes
-2. **[TEAM_TRAINING_GUIDE.md](TEAM_TRAINING_GUIDE.md)** — Essential training for new team members
-3. **[FAQ.md](FAQ.md)** — Answers to common questions
+Install the agents and run your first test. The fastest path to seeing it work.
 
-### For Users
+### Want the full story?
+**→ [COMPLETE_GUIDE.md](COMPLETE_GUIDE.md)** (30-45 min)
 
-- **[QUICK_START.md](QUICK_START.md)** — Running `/qa-run` and understanding the pipeline
-- **[NEW_FEATURES_SUMMARY.md](NEW_FEATURES_SUMMARY.md)** — Latest updates and improvements
-- **[MIGRATION_CHECKLIST.md](MIGRATION_CHECKLIST.md)** — Guide for upgrading versions
+Comprehensive walkthrough of the entire system architecture, pipeline, and advanced features.
 
-### For Operations & DevOps
+### Questions answered?
+**→ [FAQ.md](FAQ.md)** (10 min)
 
-- **[OPERATIONS_RUNBOOK.md](OPERATIONS_RUNBOOK.md)** — Daily operations procedures
-- **[TROUBLESHOOTING_FOR_OPS.md](TROUBLESHOOTING_FOR_OPS.md)** — Debugging and resolving issues
-- **[INCIDENT_RESPONSE.md](INCIDENT_RESPONSE.md)** — Incident management procedures
-- **[ESCALATION_PROCEDURES.md](ESCALATION_PROCEDURES.md)** — When and how to escalate issues
+Common questions and quick answers.
 
-### For Infrastructure & Deployment
+### Quick reference?
+**→ [QUICK_REFERENCE.md](QUICK_REFERENCE.md)** (3 min)
 
-- **[CI_CD_SETUP.md](CI_CD_SETUP.md)** — Configure CI/CD pipelines
-- **[INFRASTRUCTURE_SIZING.md](INFRASTRUCTURE_SIZING.md)** — Resource requirements and scaling
-- **[MONITORING_GUIDE.md](MONITORING_GUIDE.md)** — Setting up monitoring and alerting
-- **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** — Integrating with external systems
-
-### For Management & Analytics
-
-- **[PERFORMANCE_BENEFITS.md](PERFORMANCE_BENEFITS.md)** — ROI and performance metrics
-- **[COST_ANALYSIS.md](COST_ANALYSIS.md)** — Budget planning and cost optimization
+One-page cheat sheet of commands and key concepts.
 
 ---
 
-## Documentation Structure
+## By Role
 
-### Core Documentation
+### For QA Engineers & Test Automation Leads
 
-| Document | Purpose | Audience | Read Time |
-|----------|---------|----------|-----------|
-| [QUICK_START.md](QUICK_START.md) | Get started with the framework | Everyone | 5 min |
-| [FAQ.md](FAQ.md) | Common questions and answers | Everyone | 10 min |
-| [TEAM_TRAINING_GUIDE.md](TEAM_TRAINING_GUIDE.md) | Training materials for new members | Team members | 30 min |
-| [NEW_FEATURES_SUMMARY.md](NEW_FEATURES_SUMMARY.md) | What's new in this release | Users | 10 min |
+**Learning Path:**
+1. [GETTING_STARTED.md](GETTING_STARTED.md) — Install and first run (5 min)
+2. [COMPLETE_GUIDE.md](COMPLETE_GUIDE.md) — Understand the full pipeline (30 min)
+3. [docs/TEAM/TEAM_TRAINING_GUIDE.md](TEAM/TEAM_TRAINING_GUIDE.md) — Deep dive training (30 min)
 
-### Operations & Runbooks
+**Running Tests:**
+- [docs/TEAM/NEW_FEATURES_SUMMARY.md](TEAM/NEW_FEATURES_SUMMARY.md) — What's new in this release
 
-| Document | Purpose | Audience | Read Time |
-|----------|---------|----------|-----------|
-| [OPERATIONS_RUNBOOK.md](OPERATIONS_RUNBOOK.md) | Standard operating procedures | Ops team | 20 min |
-| [TROUBLESHOOTING_FOR_OPS.md](TROUBLESHOOTING_FOR_OPS.md) | Common issues and solutions | Ops team | 25 min |
-| [INCIDENT_RESPONSE.md](INCIDENT_RESPONSE.md) | Incident management process | Ops & management | 15 min |
-| [ESCALATION_PROCEDURES.md](ESCALATION_PROCEDURES.md) | Escalation guidelines | All staff | 10 min |
+**Troubleshooting:**
+- [docs/OPERATIONS/TROUBLESHOOTING_FOR_OPS.md](OPERATIONS/TROUBLESHOOTING_FOR_OPS.md) — Diagnose issues
 
-### Infrastructure & Deployment
-
-| Document | Purpose | Audience | Read Time |
-|----------|---------|----------|-----------|
-| [CI_CD_SETUP.md](CI_CD_SETUP.md) | CI/CD pipeline configuration | DevOps engineers | 30 min |
-| [INFRASTRUCTURE_SIZING.md](INFRASTRUCTURE_SIZING.md) | Resource planning | Infrastructure team | 20 min |
-| [MONITORING_GUIDE.md](MONITORING_GUIDE.md) | Setup and configuration | DevOps/SRE | 25 min |
-| [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) | External system integration | Architects | 20 min |
-
-### Business & Analytics
-
-| Document | Purpose | Audience | Read Time |
-|----------|---------|----------|-----------|
-| [PERFORMANCE_BENEFITS.md](PERFORMANCE_BENEFITS.md) | Metrics and benefits | Management/Stakeholders | 15 min |
-| [COST_ANALYSIS.md](COST_ANALYSIS.md) | Budget and ROI | Finance/Management | 15 min |
-
-### Migration & Updates
-
-| Document | Purpose | Audience | Read Time |
-|----------|---------|----------|-----------|
-| [MIGRATION_CHECKLIST.md](MIGRATION_CHECKLIST.md) | Version upgrade guide | Users/Ops | 20 min |
+**Upgrading:**
+- [docs/TEAM/MIGRATION_CHECKLIST.md](TEAM/MIGRATION_CHECKLIST.md) — Version upgrade guide
 
 ---
 
-## Reading Recommendations
+### For Operations & DevOps Engineers
 
-### By Role
+**Daily Operations:**
+- [docs/OPERATIONS/OPERATIONS_RUNBOOK.md](OPERATIONS/OPERATIONS_RUNBOOK.md) — Daily tasks & procedures
 
-#### Quality Assurance Engineers
-Start here:
-1. QUICK_START.md
-2. TEAM_TRAINING_GUIDE.md
-3. NEW_FEATURES_SUMMARY.md
-4. FAQ.md
+**System Health:**
+- [docs/OPERATIONS/MONITORING_GUIDE.md](OPERATIONS/MONITORING_GUIDE.md) — Metrics, dashboards, alerts
 
-#### Operations & DevOps Engineers
-Start here:
-1. OPERATIONS_RUNBOOK.md
-2. TROUBLESHOOTING_FOR_OPS.md
-3. CI_CD_SETUP.md
-4. MONITORING_GUIDE.md
-5. INFRASTRUCTURE_SIZING.md
-
-#### System Architects
-Start here:
-1. INTEGRATION_GUIDE.md
-2. INFRASTRUCTURE_SIZING.md
-3. PERFORMANCE_BENEFITS.md
-4. CI_CD_SETUP.md
-
-#### Project Managers & Stakeholders
-Start here:
-1. QUICK_START.md (Overview section)
-2. PERFORMANCE_BENEFITS.md
-3. COST_ANALYSIS.md
-4. NEW_FEATURES_SUMMARY.md
+**When Something Breaks:**
+- [docs/OPERATIONS/TROUBLESHOOTING_FOR_OPS.md](OPERATIONS/TROUBLESHOOTING_FOR_OPS.md) — Diagnostic steps
+- [docs/OPERATIONS/INCIDENT_RESPONSE.md](OPERATIONS/INCIDENT_RESPONSE.md) — Incident handling
+- [docs/OPERATIONS/ESCALATION_PROCEDURES.md](OPERATIONS/ESCALATION_PROCEDURES.md) — When to escalate
 
 ---
 
-## Validation & Reports
+### For DevOps & Infrastructure Engineers
 
-### Latest Reports
+**Deployment Setup:**
+- [docs/DEPLOYMENT/CI_CD_SETUP.md](DEPLOYMENT/CI_CD_SETUP.md) — GitHub Actions, GitLab CI, Jenkins, Azure DevOps
 
-- **Orchestrator Validation:** [`validation/ORCHESTRATOR_VALIDATION_SUMMARY.md`](../validation/ORCHESTRATOR_VALIDATION_SUMMARY.md)
-- **Technical Details:** [`validation/ORCHESTRATOR_VALIDATION_TECHNICAL_DETAILS.md`](../validation/ORCHESTRATOR_VALIDATION_TECHNICAL_DETAILS.md)
-- **Deployment Reports:** [`validation/`](../validation/)
-- **Test Results:** [`validation/TEST_RESULTS.json`](../validation/TEST_RESULTS.json)
-
----
-
-## Quick Reference
-
-### Most Common Tasks
-
-#### Running Your First QA Test
-1. See [QUICK_START.md](QUICK_START.md) - "Running /qa-run"
-2. Return to [FAQ.md](FAQ.md) - "How do I..." section if questions arise
-
-#### Troubleshooting Issues
-1. Check [TROUBLESHOOTING_FOR_OPS.md](TROUBLESHOOTING_FOR_OPS.md)
-2. Review [INCIDENT_RESPONSE.md](INCIDENT_RESPONSE.md) if escalation needed
-
-#### Upgrading the Framework
-1. Read [MIGRATION_CHECKLIST.md](MIGRATION_CHECKLIST.md)
-2. Review [NEW_FEATURES_SUMMARY.md](NEW_FEATURES_SUMMARY.md)
-
-#### Optimizing Costs
-1. Check [COST_ANALYSIS.md](COST_ANALYSIS.md)
-2. Review [INFRASTRUCTURE_SIZING.md](INFRASTRUCTURE_SIZING.md)
-
-#### Monitoring & Alerts
-1. Read [MONITORING_GUIDE.md](MONITORING_GUIDE.md)
-2. Configure alerts in [OPERATIONS_RUNBOOK.md](OPERATIONS_RUNBOOK.md)
+**Capacity Planning:**
+- [docs/DEPLOYMENT/INFRASTRUCTURE_SIZING.md](DEPLOYMENT/INFRASTRUCTURE_SIZING.md) — CPU, memory, storage, scaling
 
 ---
 
-## Support Resources
+### For Team Leads & Managers
 
-### Getting Help
+**Introducing to the Team:**
+- [docs/TEAM/TEAM_TRAINING_GUIDE.md](TEAM/TEAM_TRAINING_GUIDE.md) — Training materials for your team
 
-- **Team Questions?** Start with [FAQ.md](FAQ.md)
-- **Operations Issue?** See [TROUBLESHOOTING_FOR_OPS.md](TROUBLESHOOTING_FOR_OPS.md)
-- **Need to Escalate?** Follow [ESCALATION_PROCEDURES.md](ESCALATION_PROCEDURES.md)
-- **Infrastructure Help?** Check [INFRASTRUCTURE_SIZING.md](INFRASTRUCTURE_SIZING.md)
+**Business Case & ROI:**
+- [docs/TEAM/PERFORMANCE_BENEFITS.md](TEAM/PERFORMANCE_BENEFITS.md) — Time savings, cost reduction, ROI
 
-### Documentation Maintenance
+**Budget Justification:**
+- [COST_ANALYSIS.md](COST_ANALYSIS.md) — License costs, infrastructure, staffing
 
-This documentation is maintained by the QC team. For updates or corrections:
-
-1. Check that the latest version applies to your use case
-2. Report issues to the QC Lead: Usama Arshad Jadoon
-3. Company: AZM Digital
+**Release Communications:**
+- [docs/TEAM/NEW_FEATURES_SUMMARY.md](TEAM/NEW_FEATURES_SUMMARY.md) — What changed and why
 
 ---
 
-## Related Resources
+### For Product Managers & Executives
 
-- **Main README:** [`../README.md`](../README.md)
-- **GitHub Repository:** [AZM Digital QA Agent](https://github.com/UsamaArshadJadoon/ManualTestingAgent)
-- **Interactive Guide:** Open [`qa-agent/docs/complete-guide.html`](../qa-agent/docs/complete-guide.html) in browser
-- **Installation Guide:** Open [`qa-agent/docs/install-guide.html`](../qa-agent/docs/install-guide.html) in browser
+**Business Value:**
+- [docs/TEAM/PERFORMANCE_BENEFITS.md](TEAM/PERFORMANCE_BENEFITS.md) — ROI metrics, time savings
+- [COST_ANALYSIS.md](COST_ANALYSIS.md) — Budget and financial analysis
+
+**System Overview:**
+- [COMPLETE_GUIDE.md](COMPLETE_GUIDE.md) → "Overview" section (2 min read)
+
+---
+
+## Documentation Roadmap
+
+```
+docs/
+├── README.md (root repo README - comprehensive entry point)
+├── INDEX.md (this file - navigation guide)
+│
+├── GETTING_STARTED.md (5-min quick start)
+├── COMPLETE_GUIDE.md (comprehensive manual - 30-45 min)
+├── QUICK_REFERENCE.md (1-page cheat sheet)
+├── FAQ.md (40+ common questions)
+│
+├── COST_ANALYSIS.md (financial planning)
+├── INTEGRATION_GUIDE.md (external system integrations)
+│
+├── OPERATIONS/ (for ops engineers)
+│   ├── README.md (navigation guide)
+│   ├── OPERATIONS_RUNBOOK.md (daily procedures)
+│   ├── TROUBLESHOOTING_FOR_OPS.md (issue diagnosis)
+│   ├── MONITORING_GUIDE.md (metrics & alerting)
+│   ├── INCIDENT_RESPONSE.md (incident handling)
+│   └── ESCALATION_PROCEDURES.md (when to escalate)
+│
+├── DEPLOYMENT/ (for devops engineers)
+│   ├── README.md (navigation guide)
+│   ├── CI_CD_SETUP.md (GitHub Actions, GitLab CI, etc.)
+│   └── INFRASTRUCTURE_SIZING.md (capacity planning)
+│
+├── TEAM/ (for qa engineers, team leads, stakeholders)
+│   ├── README.md (navigation guide)
+│   ├── TEAM_TRAINING_GUIDE.md (team onboarding)
+│   ├── NEW_FEATURES_SUMMARY.md (release notes)
+│   ├── MIGRATION_CHECKLIST.md (version upgrade)
+│   └── PERFORMANCE_BENEFITS.md (ROI & metrics)
+│
+└── VALIDATION/ (test results & validation reports)
+    ├── README.md (navigation guide)
+    ├── ORCHESTRATOR_VALIDATION_SUMMARY.md (readable summary)
+    ├── ORCHESTRATOR_VALIDATION_TECHNICAL_DETAILS.md (detailed logs)
+    └── TEST_RESULTS.json (raw metrics)
+```
+
+---
+
+## Quick Lookup by Topic
+
+### Installation & Setup
+- [GETTING_STARTED.md](GETTING_STARTED.md) — Install & first run
+- [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) — External integrations
+
+### Understanding the System
+- [COMPLETE_GUIDE.md](COMPLETE_GUIDE.md) — Full pipeline explanation
+- [QUICK_REFERENCE.md](QUICK_REFERENCE.md) — One-page summary
+
+### Running Tests
+- [GETTING_STARTED.md](GETTING_STARTED.md) → "Run Your First Test"
+- [COMPLETE_GUIDE.md](COMPLETE_GUIDE.md) → "Running Tests"
+- [FAQ.md](FAQ.md) → Search by question
+
+### Troubleshooting
+- [docs/OPERATIONS/TROUBLESHOOTING_FOR_OPS.md](OPERATIONS/TROUBLESHOOTING_FOR_OPS.md) — Diagnostic guide
+- [FAQ.md](FAQ.md) → "Common Issues"
+
+### CI/CD & Automation
+- [docs/DEPLOYMENT/CI_CD_SETUP.md](DEPLOYMENT/CI_CD_SETUP.md) — Pipeline configuration
+
+### Scaling & Capacity
+- [docs/DEPLOYMENT/INFRASTRUCTURE_SIZING.md](DEPLOYMENT/INFRASTRUCTURE_SIZING.md) — Resource planning
+
+### Operations & Monitoring
+- [docs/OPERATIONS/OPERATIONS_RUNBOOK.md](OPERATIONS/OPERATIONS_RUNBOOK.md) — Daily tasks
+- [docs/OPERATIONS/MONITORING_GUIDE.md](OPERATIONS/MONITORING_GUIDE.md) — Health checks
+
+### Team Training
+- [docs/TEAM/TEAM_TRAINING_GUIDE.md](TEAM/TEAM_TRAINING_GUIDE.md) — Onboarding & training
+
+### Business Case
+- [docs/TEAM/PERFORMANCE_BENEFITS.md](TEAM/PERFORMANCE_BENEFITS.md) — ROI & metrics
+- [COST_ANALYSIS.md](COST_ANALYSIS.md) — Financial analysis
+
+### Version Upgrades
+- [docs/TEAM/MIGRATION_CHECKLIST.md](TEAM/MIGRATION_CHECKLIST.md) — Upgrade guide
+- [docs/TEAM/NEW_FEATURES_SUMMARY.md](TEAM/NEW_FEATURES_SUMMARY.md) — What changed
+
+### Incidents & Escalation
+- [docs/OPERATIONS/INCIDENT_RESPONSE.md](OPERATIONS/INCIDENT_RESPONSE.md) — Incident procedures
+- [docs/OPERATIONS/ESCALATION_PROCEDURES.md](OPERATIONS/ESCALATION_PROCEDURES.md) — Escalation path
+
+---
+
+## Reading Times
+
+| Document | Time | Audience |
+|----------|------|----------|
+| GETTING_STARTED.md | 5 min | Everyone |
+| QUICK_REFERENCE.md | 3 min | Everyone |
+| COMPLETE_GUIDE.md | 30-45 min | Technical leads, architects |
+| FAQ.md | 10 min | Everyone |
+| OPERATIONS_RUNBOOK.md | 15 min | Ops engineers |
+| TROUBLESHOOTING_FOR_OPS.md | 20 min | Ops engineers |
+| MONITORING_GUIDE.md | 15 min | Ops engineers |
+| CI_CD_SETUP.md | 25 min | DevOps engineers |
+| INFRASTRUCTURE_SIZING.md | 20 min | DevOps engineers |
+| TEAM_TRAINING_GUIDE.md | 30 min | QA engineers, team leads |
+| PERFORMANCE_BENEFITS.md | 20 min | Managers, stakeholders |
+| MIGRATION_CHECKLIST.md | 15 min | Upgrading teams |
+| COST_ANALYSIS.md | 20 min | Budget planners |
+
+---
+
+## Prerequisites by Document
+
+| Document | Needs | Assumes You Know |
+|----------|-------|-----------------|
+| GETTING_STARTED.md | Windows, PowerShell, VS Code | Jira basics |
+| COMPLETE_GUIDE.md | GETTING_STARTED.md first | QA terminology |
+| OPERATIONS_RUNBOOK.md | System already running | Jira, app URLs |
+| TROUBLESHOOTING_FOR_OPS.md | Basic system understanding | JSON format |
+| CI_CD_SETUP.md | GitHub/GitLab/Jenkins knowledge | CI/CD basics |
+| INFRASTRUCTURE_SIZING.md | Capacity planning experience | Performance concepts |
+| TEAM_TRAINING_GUIDE.md | None (start-to-finish training) | Basic QA knowledge |
+
+---
+
+## Cross-References & Links
+
+### From GETTING_STARTED.md
+- Troubleshooting issues? → [docs/OPERATIONS/TROUBLESHOOTING_FOR_OPS.md](OPERATIONS/TROUBLESHOOTING_FOR_OPS.md)
+- Full explanation? → [COMPLETE_GUIDE.md](COMPLETE_GUIDE.md)
+- Team onboarding? → [docs/TEAM/TEAM_TRAINING_GUIDE.md](TEAM/TEAM_TRAINING_GUIDE.md)
+
+### From COMPLETE_GUIDE.md
+- Still confused? → [FAQ.md](FAQ.md)
+- Operations procedures? → [docs/OPERATIONS/OPERATIONS_RUNBOOK.md](OPERATIONS/OPERATIONS_RUNBOOK.md)
+- CI/CD setup? → [docs/DEPLOYMENT/CI_CD_SETUP.md](DEPLOYMENT/CI_CD_SETUP.md)
+- Capacity planning? → [docs/DEPLOYMENT/INFRASTRUCTURE_SIZING.md](DEPLOYMENT/INFRASTRUCTURE_SIZING.md)
+
+### From OPERATIONS_RUNBOOK.md
+- Can't diagnose? → [docs/OPERATIONS/TROUBLESHOOTING_FOR_OPS.md](OPERATIONS/TROUBLESHOOTING_FOR_OPS.md)
+- Getting alerts? → [docs/OPERATIONS/MONITORING_GUIDE.md](OPERATIONS/MONITORING_GUIDE.md)
+- Need to escalate? → [docs/OPERATIONS/ESCALATION_PROCEDURES.md](OPERATIONS/ESCALATION_PROCEDURES.md)
+
+---
+
+## How to Use This Index
+
+1. **Don't know where to start?** → See "Start Here" (top of this page)
+2. **Know your role?** → Jump to "By Role" section
+3. **Know your topic?** → Use "Quick Lookup by Topic"
+4. **Picking a document?** → Check "Reading Times" and "Prerequisites"
+5. **Lost in a document?** → Follow cross-references
 
 ---
 
 ## Version Info
 
-- **Framework:** QA AZM Digital Agent
-- **Documentation Version:** 1.0
-- **Last Updated:** 2026-10-30
-- **QC Lead:** Usama Arshad Jadoon
-- **Company:** AZM Digital
+- **System:** QA AZM Digital Agent
+- **Documentation Version:** October 2026
+- **Developed by:** Usama Arshad Jadoon, QC Lead, AZM Digital
 
 ---
 
-## Document Status
+## Quick Links
 
-All documentation files are:
-- ✅ Properly formatted Markdown
-- ✅ Cross-referenced for consistency
-- ✅ Ready for GitHub rendering
-- ✅ Validated for broken links
-- ✅ Organized by audience and use case
+| Link | Purpose |
+|------|---------|
+| [../README.md](../README.md) | Repo README — overview, installation, credits |
+| [GETTING_STARTED.md](GETTING_STARTED.md) | 5-min quick start |
+| [COMPLETE_GUIDE.md](COMPLETE_GUIDE.md) | Full technical documentation |
+| [FAQ.md](FAQ.md) | 40+ common questions answered |
 
-**Last validation:** 2026-10-30
+**Questions?** Check [FAQ.md](FAQ.md) first, then [docs/OPERATIONS/ESCALATION_PROCEDURES.md](OPERATIONS/ESCALATION_PROCEDURES.md) for support contacts.
