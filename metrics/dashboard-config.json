@@ -1,0 +1,515 @@
+{
+  "dashboard": {
+    "id": "ai-qc-framework-metrics",
+    "title": "AI QC Framework - Metrics Dashboard",
+    "description": "Comprehensive monitoring of AI QC Framework metrics across all phases",
+    "version": "1.0.0",
+    "createdAt": "2024-10-30T00:00:00Z",
+    "refresh": "30s",
+    "rows": [
+      {
+        "id": "summary",
+        "title": "Health Summary",
+        "height": 250,
+        "panels": [
+          {
+            "id": 1,
+            "title": "Overall Health Status",
+            "type": "gauge",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_health_status",
+                "legendFormat": "Status"
+              }
+            ],
+            "options": {
+              "min": 0,
+              "max": 1,
+              "thresholds": [0, 1],
+              "colorMode": "gradient",
+              "colors": ["red", "yellow", "green"]
+            }
+          },
+          {
+            "id": 2,
+            "title": "Metrics Passing Rate",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "rate(ai_qc_framework_metric_status[5m])",
+                "legendFormat": "Pass Rate"
+              }
+            ],
+            "options": {
+              "unit": "percentunit"
+            }
+          },
+          {
+            "id": 3,
+            "title": "Active Alerts",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "sum(ai_qc_framework_alerts)",
+                "legendFormat": "Total Alerts"
+              }
+            ],
+            "colorMode": "background"
+          }
+        ]
+      },
+      {
+        "id": "phase2",
+        "title": "Phase 2: Resilience Metrics",
+        "height": 400,
+        "panels": [
+          {
+            "id": 4,
+            "title": "Retry Success Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase2\",metric=\"retrySuccessRate\"}",
+                "legendFormat": "Mean"
+              },
+              {
+                "expr": "ai_qc_framework_metric_p95{phase=\"phase2\",metric=\"retrySuccessRate\"}",
+                "legendFormat": "P95"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Success Rate (%)",
+                "min": 80,
+                "max": 100
+              },
+              "alert": {
+                "threshold": 90,
+                "severity": "warning"
+              }
+            }
+          },
+          {
+            "id": 5,
+            "title": "Resource Cleanup Success",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase2\",metric=\"resourceCleanupSuccess\"}",
+                "legendFormat": "Mean"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Success Rate (%)",
+                "min": 95,
+                "max": 100
+              }
+            }
+          },
+          {
+            "id": 6,
+            "title": "Health Check Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase2\",metric=\"healthCheckTime\"}",
+                "legendFormat": "Mean"
+              },
+              {
+                "expr": "ai_qc_framework_metric_p99{phase=\"phase2\",metric=\"healthCheckTime\"}",
+                "legendFormat": "P99"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Time (seconds)",
+                "max": 15
+              },
+              "alert": {
+                "threshold": 10,
+                "severity": "warning"
+              }
+            }
+          },
+          {
+            "id": 7,
+            "title": "Error Classification Accuracy",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase2\",metric=\"errorClassificationAccuracy\"}",
+                "legendFormat": "Mean"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Accuracy (%)",
+                "min": 90,
+                "max": 100
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "phase3",
+        "title": "Phase 3: Observability Metrics",
+        "height": 400,
+        "panels": [
+          {
+            "id": 8,
+            "title": "Diagnostics Collection Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase3\",metric=\"diagnosticsCollectionTime\"}",
+                "legendFormat": "Mean"
+              },
+              {
+                "expr": "ai_qc_framework_metric_p95{phase=\"phase3\",metric=\"diagnosticsCollectionTime\"}",
+                "legendFormat": "P95"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Time (seconds)",
+                "max": 15
+              },
+              "alert": {
+                "threshold": 10,
+                "severity": "warning"
+              }
+            }
+          },
+          {
+            "id": 9,
+            "title": "Progress Tracking Accuracy",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase3\",metric=\"progressTrackingAccuracy\"}",
+                "legendFormat": "Mean"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Accuracy (%)",
+                "min": 95,
+                "max": 100
+              }
+            }
+          },
+          {
+            "id": 10,
+            "title": "Log Query Response Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase3\",metric=\"logQueryResponseTime\"}",
+                "legendFormat": "Mean"
+              },
+              {
+                "expr": "ai_qc_framework_metric_p99{phase=\"phase3\",metric=\"logQueryResponseTime\"}",
+                "legendFormat": "P99"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Time (seconds)",
+                "max": 2
+              },
+              "alert": {
+                "threshold": 1,
+                "severity": "warning"
+              }
+            }
+          },
+          {
+            "id": 11,
+            "title": "Troubleshooting Guide Generation Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase3\",metric=\"troubleshootingGuideGenerationTime\"}",
+                "legendFormat": "Mean"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Time (seconds)",
+                "max": 8
+              },
+              "alert": {
+                "threshold": 5,
+                "severity": "warning"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "phase4",
+        "title": "Phase 4: Advanced Metrics",
+        "height": 400,
+        "panels": [
+          {
+            "id": 12,
+            "title": "Flaky Test Detection Accuracy",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase4\",metric=\"flakyTestDetectionAccuracy\"}",
+                "legendFormat": "Mean"
+              },
+              {
+                "expr": "ai_qc_framework_metric_p95{phase=\"phase4\",metric=\"flakyTestDetectionAccuracy\"}",
+                "legendFormat": "P95"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Accuracy (%)",
+                "min": 80,
+                "max": 100
+              }
+            }
+          },
+          {
+            "id": 13,
+            "title": "Memory Usage Per Agent",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase4\",metric=\"memoryUsagePerAgent\"}",
+                "legendFormat": "Mean"
+              },
+              {
+                "expr": "ai_qc_framework_metric_p99{phase=\"phase4\",metric=\"memoryUsagePerAgent\"}",
+                "legendFormat": "P99"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Memory (MB)",
+                "max": 700
+              },
+              "alert": {
+                "threshold": 500,
+                "severity": "warning"
+              }
+            }
+          },
+          {
+            "id": 14,
+            "title": "Disk Cleanup Effectiveness",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase4\",metric=\"diskCleanupEffectiveness\"}",
+                "legendFormat": "Mean"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Effectiveness (%)",
+                "min": 95,
+                "max": 100
+              }
+            }
+          },
+          {
+            "id": 15,
+            "title": "Performance Improvement",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_metric_mean{phase=\"phase4\",metric=\"performanceImprovement\"}",
+                "legendFormat": "Mean"
+              },
+              {
+                "expr": "ai_qc_framework_metric_p95{phase=\"phase4\",metric=\"performanceImprovement\"}",
+                "legendFormat": "P95"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Improvement (%)",
+                "min": 0,
+                "max": 50
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "alerts",
+        "title": "Alerts & Anomalies",
+        "height": 300,
+        "panels": [
+          {
+            "id": 16,
+            "title": "Critical Alerts",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_alerts{severity=\"CRITICAL\"}",
+                "legendFormat": "Critical"
+              }
+            ],
+            "colorMode": "background",
+            "colors": ["green", "red"]
+          },
+          {
+            "id": 17,
+            "title": "Warning Alerts",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "ai_qc_framework_alerts{severity=\"WARNING\"}",
+                "legendFormat": "Warning"
+              }
+            ],
+            "colorMode": "background",
+            "colors": ["green", "yellow"]
+          },
+          {
+            "id": 18,
+            "title": "Alert Timeline",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(ai_qc_framework_alerts[5m])",
+                "legendFormat": "{{severity}}"
+              }
+            ],
+            "options": {
+              "yaxis": {
+                "label": "Alerts/min"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "ALERTS{alertstate=\"firing\"}",
+          "name": "Firing Alerts"
+        }
+      ]
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "phase",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(ai_qc_framework_metric_mean, phase)",
+          "multi": true,
+          "includeAll": true
+        },
+        {
+          "name": "metric",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(ai_qc_framework_metric_mean{phase=~\"$phase\"}, metric)",
+          "multi": true,
+          "includeAll": true
+        }
+      ]
+    }
+  },
+  "alerts": [
+    {
+      "name": "HighRetryFailureRate",
+      "expr": "ai_qc_framework_metric_mean{phase=\"phase2\",metric=\"retrySuccessRate\"} < 90",
+      "for": "5m",
+      "severity": "warning",
+      "annotations": {
+        "summary": "Retry success rate below 90%",
+        "description": "Retry success rate has dropped below the target threshold of 90%"
+      }
+    },
+    {
+      "name": "SlowHealthChecks",
+      "expr": "ai_qc_framework_metric_mean{phase=\"phase2\",metric=\"healthCheckTime\"} > 10",
+      "for": "5m",
+      "severity": "warning",
+      "annotations": {
+        "summary": "Health check time exceeds target",
+        "description": "Health check completion time has exceeded the 10 second target"
+      }
+    },
+    {
+      "name": "SlowDiagnosticsCollection",
+      "expr": "ai_qc_framework_metric_mean{phase=\"phase3\",metric=\"diagnosticsCollectionTime\"} > 10",
+      "for": "5m",
+      "severity": "warning",
+      "annotations": {
+        "summary": "Diagnostics collection time exceeds target",
+        "description": "Diagnostics collection time has exceeded the 10 second target"
+      }
+    },
+    {
+      "name": "HighMemoryUsage",
+      "expr": "ai_qc_framework_metric_mean{phase=\"phase4\",metric=\"memoryUsagePerAgent\"} > 500",
+      "for": "5m",
+      "severity": "warning",
+      "annotations": {
+        "summary": "High memory usage per agent",
+        "description": "Memory usage per agent has exceeded the 500 MB target"
+      }
+    },
+    {
+      "name": "LowFlakyDetectionAccuracy",
+      "expr": "ai_qc_framework_metric_mean{phase=\"phase4\",metric=\"flakyTestDetectionAccuracy\"} < 90",
+      "for": "5m",
+      "severity": "warning",
+      "annotations": {
+        "summary": "Flaky test detection accuracy below target",
+        "description": "Flaky test detection accuracy has dropped below the 90% target"
+      }
+    }
+  ],
+  "datasources": [
+    {
+      "name": "Prometheus",
+      "type": "prometheus",
+      "url": "http://localhost:9090",
+      "access": "proxy",
+      "isDefault": true
+    }
+  ],
+  "exportFormats": {
+    "prometheus": "Use Prometheus remote write to send metrics",
+    "datadog": "Use Datadog Agent to scrape Prometheus metrics",
+    "grafana": "Import this JSON directly into Grafana as dashboard JSON",
+    "cloudwatch": "Convert metrics to CloudWatch custom metrics format"
+  },
+  "integrations": {
+    "prometheus": {
+      "scrapeConfig": {
+        "job_name": "ai-qc-framework",
+        "static_configs": [
+          {
+            "targets": ["localhost:9091"]
+          }
+        ]
+      }
+    },
+    "datadog": {
+      "prometheusUrl": "http://localhost:9091",
+      "tags": ["env:production", "app:ai-qc-framework"],
+      "customMetrics": true
+    },
+    "grafana": {
+      "datasource": "Prometheus",
+      "refreshInterval": "30s",
+      "timeRange": "last 6h"
+    }
+  }
+}

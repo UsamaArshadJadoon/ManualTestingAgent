@@ -1,0 +1,37 @@
+{
+  "name": "qa-azm-digital-agent",
+  "version": "1.0.0",
+  "description": "QA AZM Digital Agent - Integration test suite for Phases 2, 3, 4",
+  "main": "tests/run.js",
+  "scripts": {
+    "test": "jest --coverage",
+    "test:phase2": "jest tests/integration/phase-2/ --coverage",
+    "test:phase3": "jest tests/integration/phase-3/ --coverage",
+    "test:phase4": "jest tests/integration/phase-4/ --coverage",
+    "test:watch": "jest --watch",
+    "test:ci": "jest --ci --coverage --json --outputFile=test-results.json",
+    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
+    "generate-report": "node tests/run.js",
+    "metrics:baseline": "node metrics/baseline-collector.js 10",
+    "metrics:baseline:custom": "node metrics/baseline-collector.js",
+    "metrics:monitor": "node metrics/monitor.js metrics-data/baseline.json 60000",
+    "metrics:monitor:custom": "node metrics/monitor.js",
+    "metrics:view-report": "cat metrics-data/baseline-REPORT.md",
+    "metrics:export": "node -e \"const Collector = require('./metrics/collector'); const c = new Collector({metricsDir: './metrics-data'}); console.log('Exported files:', c.exportAll('metrics'));\""
+  },
+  "keywords": [
+    "qa",
+    "testing",
+    "integration-tests",
+    "resilience",
+    "observability",
+    "azm-digital"
+  ],
+  "author": "Usama Arshad Jadoon <usama.arshed@azm.dev>",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.0"
+  },
+  "dependencies": {}
+}

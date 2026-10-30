@@ -212,12 +212,12 @@ class MockProgressTracker {
   getProgress() {
     const totalSteps = this.stages.reduce((sum, s) => sum + s.totalSteps, 0);
     const completedSteps = this.stages.reduce((sum, s) => sum + s.completedSteps, 0);
-    const percentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+    const percentage = totalSteps > 0 ? Math.floor((completedSteps / totalSteps) * 100) : 0;
 
-    const timeElapsed = (Date.now() - this.startTime) / 1000; // seconds
+    const timeElapsed = Math.max((Date.now() - this.startTime) / 1000, 0.1); // seconds, minimum 0.1s
     const avgTimePerStep = completedSteps > 0 ? timeElapsed / completedSteps : 0;
     const remainingSteps = totalSteps - completedSteps;
-    const estimatedRemaining = remainingSteps * avgTimePerStep;
+    const estimatedRemaining = Math.max(remainingSteps * avgTimePerStep, 0);
 
     return {
       percentage,

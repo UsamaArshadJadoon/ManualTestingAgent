@@ -1,0 +1,71 @@
+{
+  "timestamp": "2026-10-30T08:04:29.859Z",
+  "summary": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0
+  },
+  "successRate": "100.00%",
+  "tests": {
+    "passed": [
+      "Health check initializes before agent dispatch",
+      "Transient error (50x) retries 3x with exponential backoff",
+      "Permanent error (401) fails immediately without retries",
+      "Success on retry attempt 2 (after transient failures)",
+      "Structured logging captures all events",
+      "Error classification distinguishes transient vs permanent",
+      "Resource cleanup runs on exit",
+      "Retry success rate > 90% (transient recoverable)",
+      "Exponential backoff timing increases correctly",
+      "Max retries exceeded produces proper error message"
+    ],
+    "failed": [],
+    "skipped": []
+  },
+  "scenarios": {
+    "transientErrorRetries": {
+      "tested": true,
+      "passed": true,
+      "details": "Transient errors (50x) retry 3x with exponential backoff"
+    },
+    "permanentErrorFailFast": {
+      "tested": true,
+      "passed": true,
+      "details": "Permanent errors (401/403) fail immediately without retries"
+    },
+    "maxRetriesExceeded": {
+      "tested": true,
+      "passed": true,
+      "details": "Max retries exceeded produces proper error message"
+    },
+    "retrySuccessRate": {
+      "tested": true,
+      "passed": true,
+      "details": "Retry success rate > 90%",
+      "rate": "100%"
+    },
+    "exponentialBackoff": {
+      "tested": true,
+      "passed": true,
+      "details": "Exponential backoff timing calculated correctly"
+    },
+    "healthCheck": {
+      "tested": true,
+      "passed": true,
+      "details": "Health check runs before any agent dispatch"
+    },
+    "structuredLogging": {
+      "tested": true,
+      "passed": true,
+      "details": "Structured logging captures all events with proper format"
+    },
+    "resourceCleanup": {
+      "tested": true,
+      "passed": true,
+      "details": "Resource cleanup executes on exit"
+    }
+  },
+  "verdict": "PASS",
+  "details": "All orchestrator validation scenarios passed. Orchestrator is production-ready."
+}

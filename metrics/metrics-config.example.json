@@ -1,0 +1,109 @@
+{
+  "collector": {
+    "metricsDir": "./metrics-data",
+    "exportFormats": ["json", "csv", "prometheus"],
+    "autoExport": true
+  },
+  "baseline": {
+    "testCount": 10,
+    "enabled": true,
+    "outputPath": "./metrics-data/baseline.json"
+  },
+  "monitor": {
+    "enabled": true,
+    "anomalyThreshold": 0.10,
+    "checkInterval": 5000,
+    "maxHistorySize": 1000,
+    "autoExport": true,
+    "exportInterval": 60000,
+    "alertThresholds": {
+      "phase2.retrySuccessRate": {
+        "min": 90,
+        "severity": "warning"
+      },
+      "phase2.resourceCleanupSuccess": {
+        "min": 99,
+        "severity": "warning"
+      },
+      "phase2.healthCheckTime": {
+        "max": 10,
+        "severity": "warning"
+      },
+      "phase2.errorClassificationAccuracy": {
+        "min": 95,
+        "severity": "warning"
+      },
+      "phase3.diagnosticsCollectionTime": {
+        "max": 10,
+        "severity": "warning"
+      },
+      "phase3.progressTrackingAccuracy": {
+        "min": 100,
+        "severity": "critical"
+      },
+      "phase3.logQueryResponseTime": {
+        "max": 1,
+        "severity": "warning"
+      },
+      "phase3.troubleshootingGuideGenerationTime": {
+        "max": 5,
+        "severity": "warning"
+      },
+      "phase4.flakyTestDetectionAccuracy": {
+        "min": 90,
+        "severity": "warning"
+      },
+      "phase4.memoryUsagePerAgent": {
+        "max": 500,
+        "severity": "warning"
+      },
+      "phase4.diskCleanupEffectiveness": {
+        "min": 100,
+        "severity": "critical"
+      },
+      "phase4.performanceImprovement": {
+        "min": 20,
+        "severity": "info"
+      }
+    }
+  },
+  "dashboard": {
+    "enabled": true,
+    "grafanaUrl": "http://localhost:3000",
+    "prometheusUrl": "http://localhost:9090",
+    "refreshInterval": "30s",
+    "timeRange": "last 6h"
+  },
+  "integration": {
+    "prometheus": {
+      "enabled": true,
+      "scrapeUrl": "http://localhost:9091/metrics",
+      "scrapeInterval": "30s",
+      "jobName": "ai-qc-framework"
+    },
+    "datadog": {
+      "enabled": false,
+      "apiKey": "${DATADOG_API_KEY}",
+      "appKey": "${DATADOG_APP_KEY}",
+      "site": "datadoghq.com",
+      "tags": ["env:staging", "app:ai-qc-framework"]
+    },
+    "slack": {
+      "enabled": false,
+      "webhookUrl": "${SLACK_WEBHOOK_URL}",
+      "channel": "#metrics-alerts",
+      "notifyOn": ["CRITICAL", "WARNING"]
+    }
+  },
+  "retention": {
+    "metricsRetentionDays": 90,
+    "alertRetentionDays": 30,
+    "autoArchive": true,
+    "archivePath": "./metrics-data/archive"
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "outputFile": "./metrics-data/metrics.log"
+  }
+}

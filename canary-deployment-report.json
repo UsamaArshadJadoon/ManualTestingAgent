@@ -1,0 +1,190 @@
+{
+    "stages":  {
+                   "user_selection":  {
+                                          "status":  "COMPLETED",
+                                          "details":  [
+                                                          {
+                                                              "detail":  "Selected 500 users for canary deployment",
+                                                              "timestamp":  "2026-10-30 13:07:46",
+                                                              "success":  true
+                                                          },
+                                                          {
+                                                              "detail":  "User mapping saved to canary-users-b8120e33-0428-4d2a-8e85-3f5e52d565b5.json",
+                                                              "timestamp":  "2026-10-30 13:07:46",
+                                                              "success":  true
+                                                          }
+                                                      ]
+                                      },
+                   "deployment":  {
+                                      "status":  "COMPLETED",
+                                      "details":  [
+                                                      {
+                                                          "detail":  "Canary deployment created at C:\\Users\\Lenovo\\AppData\\Local\\Temp\\claude\\c--AI-QC-Framework\\0f6f3b4f-b2ff-4f4e-a461-17e36efe0a52\\scratchpad\\MockProduction\\canary-b8120e33-0428-4d2a-8e85-3f5e52d565b5",
+                                                          "timestamp":  "2026-10-30 13:07:46",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Version v2.0.0 deployed to canary environment",
+                                                          "timestamp":  "2026-10-30 13:07:46",
+                                                          "success":  true
+                                                      }
+                                                  ]
+                                  },
+                   "monitoring":  {
+                                      "status":  "COMPLETED",
+                                      "details":  [
+                                                      {
+                                                          "detail":  "Monitoring completed - 12 checks performed",
+                                                          "timestamp":  "2026-10-30 13:09:46",
+                                                          "success":  true
+                                                      }
+                                                  ],
+                                      "metrics":  [
+                                                      {
+                                                          "cpu_usage":  43,
+                                                          "memory_usage":  37,
+                                                          "check_number":  1,
+                                                          "timestamp":  "2026-10-30 13:07:46",
+                                                          "error_rate":  2.0294618079110336,
+                                                          "latency_p95":  343
+                                                      },
+                                                      {
+                                                          "cpu_usage":  69,
+                                                          "memory_usage":  57,
+                                                          "check_number":  2,
+                                                          "timestamp":  "2026-10-30 13:07:56",
+                                                          "error_rate":  1.0426692084142331,
+                                                          "latency_p95":  350
+                                                      },
+                                                      {
+                                                          "cpu_usage":  62,
+                                                          "memory_usage":  79,
+                                                          "check_number":  3,
+                                                          "timestamp":  "2026-10-30 13:08:06",
+                                                          "error_rate":  1.690146271879853,
+                                                          "latency_p95":  253
+                                                      },
+                                                      {
+                                                          "cpu_usage":  31,
+                                                          "memory_usage":  71,
+                                                          "check_number":  4,
+                                                          "timestamp":  "2026-10-30 13:08:16",
+                                                          "error_rate":  1.6361949361563637,
+                                                          "latency_p95":  177
+                                                      },
+                                                      {
+                                                          "cpu_usage":  56,
+                                                          "memory_usage":  77,
+                                                          "check_number":  5,
+                                                          "timestamp":  "2026-10-30 13:08:26",
+                                                          "error_rate":  0.51244614814056377,
+                                                          "latency_p95":  358
+                                                      },
+                                                      {
+                                                          "cpu_usage":  32,
+                                                          "memory_usage":  45,
+                                                          "check_number":  6,
+                                                          "timestamp":  "2026-10-30 13:08:36",
+                                                          "error_rate":  1.5061653031996289,
+                                                          "latency_p95":  262
+                                                      },
+                                                      {
+                                                          "cpu_usage":  34,
+                                                          "memory_usage":  40,
+                                                          "check_number":  7,
+                                                          "timestamp":  "2026-10-30 13:08:46",
+                                                          "error_rate":  0.8495426714185359,
+                                                          "latency_p95":  166
+                                                      },
+                                                      {
+                                                          "cpu_usage":  59,
+                                                          "memory_usage":  54,
+                                                          "check_number":  8,
+                                                          "timestamp":  "2026-10-30 13:08:56",
+                                                          "error_rate":  2.38419974180134,
+                                                          "latency_p95":  204
+                                                      },
+                                                      {
+                                                          "cpu_usage":  67,
+                                                          "memory_usage":  67,
+                                                          "check_number":  9,
+                                                          "timestamp":  "2026-10-30 13:09:06",
+                                                          "error_rate":  1.6237072884681203,
+                                                          "latency_p95":  455
+                                                      },
+                                                      {
+                                                          "cpu_usage":  63,
+                                                          "memory_usage":  77,
+                                                          "check_number":  10,
+                                                          "timestamp":  "2026-10-30 13:09:16",
+                                                          "error_rate":  1.884369808893823,
+                                                          "latency_p95":  372
+                                                      },
+                                                      {
+                                                          "cpu_usage":  39,
+                                                          "memory_usage":  78,
+                                                          "check_number":  11,
+                                                          "timestamp":  "2026-10-30 13:09:26",
+                                                          "error_rate":  1.0050621726108073,
+                                                          "latency_p95":  378
+                                                      },
+                                                      {
+                                                          "cpu_usage":  39,
+                                                          "memory_usage":  36,
+                                                          "check_number":  12,
+                                                          "timestamp":  "2026-10-30 13:09:36",
+                                                          "error_rate":  1.8854918965070937,
+                                                          "latency_p95":  117
+                                                      }
+                                                  ]
+                                  },
+                   "analysis":  {
+                                    "status":  "COMPLETED",
+                                    "details":  [
+                                                    {
+                                                        "detail":  "Error Rate: 1.50412143795012% (threshold: 5%)",
+                                                        "timestamp":  "2026-10-30 13:09:46",
+                                                        "success":  true
+                                                    },
+                                                    {
+                                                        "detail":  "P95 Latency: 286.25ms (threshold: 1000 ms)",
+                                                        "timestamp":  "2026-10-30 13:09:46",
+                                                        "success":  true
+                                                    },
+                                                    {
+                                                        "detail":  "CPU Usage: 49.5% (threshold: 85%)",
+                                                        "timestamp":  "2026-10-30 13:09:46",
+                                                        "success":  true
+                                                    },
+                                                    {
+                                                        "detail":  "Memory Usage: 59.8333333333333% (threshold: 85%)",
+                                                        "timestamp":  "2026-10-30 13:09:46",
+                                                        "success":  true
+                                                    },
+                                                    {
+                                                        "detail":  "RECOMMENDATION: PROCEED - All metrics within acceptable range",
+                                                        "timestamp":  "2026-10-30 13:09:46",
+                                                        "success":  true
+                                                    }
+                                                ]
+                                }
+               },
+    "environment":  "production-canary",
+    "deployment_id":  "b8120e33-0428-4d2a-8e85-3f5e52d565b5",
+    "version":  "v2.0.0",
+    "recommendation":  "PROCEED",
+    "canary_percentage":  5,
+    "timestamp":  "2026-10-30 13:07:46",
+    "overall_status":  "COMPLETED",
+    "duration_minutes":  2.01,
+    "metrics":  {
+                    "cpu_usage":  49.5,
+                    "latency_p95":  286.25,
+                    "user_count":  500,
+                    "error_rate":  1.5041214379501164,
+                    "affected_operations":  [
+
+                                            ],
+                    "memory_usage":  59.833333333333336
+                }
+}

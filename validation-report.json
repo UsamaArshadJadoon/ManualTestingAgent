@@ -1,0 +1,362 @@
+{
+    "framework_version":  "",
+    "summary":  {
+                    "total_checks":  54,
+                    "failed_checks":  2,
+                    "passed_checks":  52,
+                    "warnings":  0
+                },
+    "sections":  {
+                     "tools":  {
+                                   "status":  "PASSED",
+                                   "details":  [
+                                                   {
+                                                       "message":  "Tools directory found at C:\\Users\\Lenovo\\AppData\\Local\\Temp\\claude\\c--AI-QC-Framework\\0f6f3b4f-b2ff-4f4e-a461-17e36efe0a52\\scratchpad\\MockFramework\\tools",
+                                                       "name":  "Tools directory exists",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: requirement-validator",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: requirement-validator",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: user-story-analyzer",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: user-story-analyzer",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: test-case-generator",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: test-case-generator",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: acceptance-criteria-checker",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: acceptance-criteria-checker",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: regression-test-suite",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: regression-test-suite",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: performance-test-runner",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: performance-test-runner",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: security-test-scanner",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: security-test-scanner",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: integration-test-executor",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: integration-test-executor",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: test-automation-framework",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: test-automation-framework",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: ci-cd-pipeline",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: ci-cd-pipeline",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: deployment-validator",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: deployment-validator",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: monitoring-dashboard",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: monitoring-dashboard",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: production-health-monitor",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: production-health-monitor",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: canary-deployment-manager",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: canary-deployment-manager",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: gradual-rollout-orchestrator",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: gradual-rollout-orchestrator",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: rollback-automation",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: rollback-automation",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: metrics-collector",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: metrics-collector",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: alerting-system",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: alerting-system",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Tool found",
+                                                       "name":  "Tool exists: documentation-generator",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   },
+                                                   {
+                                                       "message":  "Configuration is valid JSON",
+                                                       "name":  "Tool config valid: documentation-generator",
+                                                       "level":  "INFO",
+                                                       "passed":  true
+                                                   }
+                                               ]
+                               },
+                     "breaking_changes":  {
+                                              "status":  "PASSED",
+                                              "details":  [
+                                                              {
+                                                                  "message":  "Current version: 1.0.0",
+                                                                  "name":  "Version compatibility",
+                                                                  "level":  "INFO",
+                                                                  "passed":  true
+                                                              },
+                                                              {
+                                                                  "message":  "No deprecated items found",
+                                                                  "name":  "Deprecated tools check",
+                                                                  "level":  "INFO",
+                                                                  "passed":  true
+                                                              }
+                                                          ]
+                                          },
+                     "configurations":  {
+                                            "status":  "PASSED",
+                                            "details":  [
+                                                            {
+                                                                "message":  "Found",
+                                                                "name":  "Config file exists: config/deployment.json",
+                                                                "level":  "INFO",
+                                                                "passed":  true
+                                                            },
+                                                            {
+                                                                "message":  "JSON format is valid",
+                                                                "name":  "Config format valid: config/deployment.json",
+                                                                "level":  "INFO",
+                                                                "passed":  true
+                                                            },
+                                                            {
+                                                                "message":  "Found",
+                                                                "name":  "Config file exists: config/environments.json",
+                                                                "level":  "INFO",
+                                                                "passed":  true
+                                                            },
+                                                            {
+                                                                "message":  "JSON format is valid",
+                                                                "name":  "Config format valid: config/environments.json",
+                                                                "level":  "INFO",
+                                                                "passed":  true
+                                                            },
+                                                            {
+                                                                "message":  "Found",
+                                                                "name":  "Config file exists: config/metrics.json",
+                                                                "level":  "INFO",
+                                                                "passed":  true
+                                                            },
+                                                            {
+                                                                "message":  "JSON format is valid",
+                                                                "name":  "Config format valid: config/metrics.json",
+                                                                "level":  "INFO",
+                                                                "passed":  true
+                                                            },
+                                                            {
+                                                                "message":  "Found",
+                                                                "name":  "Config file exists: config/alerts.json",
+                                                                "level":  "INFO",
+                                                                "passed":  true
+                                                            },
+                                                            {
+                                                                "message":  "JSON format is valid",
+                                                                "name":  "Config format valid: config/alerts.json",
+                                                                "level":  "INFO",
+                                                                "passed":  true
+                                                            }
+                                                        ]
+                                        },
+                     "health_checks":  {
+                                           "status":  "FAILED",
+                                           "details":  [
+                                                           {
+                                                               "message":  "Check error: The term \u0027Test-Connection localhost -Count 1 -ErrorAction SilentlyContinue\u0027 is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+                                                               "name":  "Database connectivity",
+                                                               "level":  "INFO",
+                                                               "passed":  false
+                                                           },
+                                                           {
+                                                               "message":  "Passed",
+                                                               "name":  "Disk space (min 10GB)",
+                                                               "level":  "INFO",
+                                                               "passed":  true
+                                                           },
+                                                           {
+                                                               "message":  "Failed",
+                                                               "name":  "Memory available (min 2GB)",
+                                                               "level":  "INFO",
+                                                               "passed":  false
+                                                           }
+                                                       ]
+                                       },
+                     "dependencies":  {
+                                          "status":  "PASSED",
+                                          "details":  [
+                                                          {
+                                                              "message":  "Version: 5.1.26100.9711",
+                                                              "name":  "PowerShell installed",
+                                                              "level":  "INFO",
+                                                              "passed":  true
+                                                          },
+                                                          {
+                                                              "message":  "Found 19 dependencies",
+                                                              "name":  "Dependencies manifest valid",
+                                                              "level":  "INFO",
+                                                              "passed":  true
+                                                          }
+                                                      ]
+                                      }
+                 },
+    "timestamp":  "2026-10-30 13:07:14",
+    "validation_status":  "FAILED"
+}

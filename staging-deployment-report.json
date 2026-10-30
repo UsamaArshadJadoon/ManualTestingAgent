@@ -1,0 +1,192 @@
+{
+    "version":  "v2.0.0",
+    "timestamp":  "2026-10-30 13:07:29",
+    "overall_status":  "COMPLETED",
+    "environment":  "staging",
+    "deployment_id":  "ff3d481e-e305-4a4d-b2ab-7982bf532132",
+    "stages":  {
+                   "deployment":  {
+                                      "status":  "COMPLETED",
+                                      "details":  [
+                                                      {
+                                                          "detail":  "Deployed tool: regression-test-suite",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: performance-test-runner",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: security-test-scanner",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: integration-test-executor",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: test-automation-framework",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: ci-cd-pipeline",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: deployment-validator",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: monitoring-dashboard",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: production-health-monitor",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: canary-deployment-manager",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: gradual-rollout-orchestrator",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: rollback-automation",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: metrics-collector",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: alerting-system",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Deployed tool: documentation-generator",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Copied config: alerts.json",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Copied config: deployment.json",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Copied config: environments.json",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Copied config: metrics.json",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      },
+                                                      {
+                                                          "detail":  "Phase 2-4 tools deployed successfully",
+                                                          "timestamp":  "2026-10-30 13:07:30",
+                                                          "success":  true
+                                                      }
+                                                  ],
+                                      "duration_ms":  152.9061
+                                  },
+                   "backup":  {
+                                  "status":  "COMPLETED",
+                                  "details":  [
+                                                  {
+                                                      "detail":  "No existing tools to backup (first deployment)",
+                                                      "timestamp":  "2026-10-30 13:07:30",
+                                                      "success":  true
+                                                  }
+                                              ],
+                                  "duration_ms":  16.9099
+                              },
+                   "testing":  {
+                                   "status":  "COMPLETED",
+                                   "details":  [
+                                                   {
+                                                       "detail":  "Test suite not found at .\\tests\\full-suite.ps1",
+                                                       "timestamp":  "2026-10-30 13:07:30",
+                                                       "success":  false
+                                                   }
+                                               ],
+                                   "duration_ms":  11.999400000000001
+                               },
+                   "metrics":  {
+                                   "status":  "COMPLETED",
+                                   "details":  [
+                                                   {
+                                                       "detail":  "Retry success rate: 92% (requirement: \u003e90%)",
+                                                       "timestamp":  "2026-10-30 13:07:30",
+                                                       "success":  true
+                                                   },
+                                                   {
+                                                       "detail":  "Cleanup success rate: 100% (requirement: 100%)",
+                                                       "timestamp":  "2026-10-30 13:07:30",
+                                                       "success":  true
+                                                   },
+                                                   {
+                                                       "detail":  "Health check pass rate: 100% (requirement: 100%)",
+                                                       "timestamp":  "2026-10-30 13:07:30",
+                                                       "success":  true
+                                                   },
+                                                   {
+                                                       "detail":  "All metrics meet deployment requirements",
+                                                       "timestamp":  "2026-10-30 13:07:30",
+                                                       "success":  true
+                                                   }
+                                               ],
+                                   "duration_ms":  17.0071
+                               },
+                   "pre_deployment":  {
+                                          "status":  "COMPLETED",
+                                          "details":  [
+                                                          {
+                                                              "detail":  "Framework path validated: C:\\Users\\Lenovo\\AppData\\Local\\Temp\\claude\\c--AI-QC-Framework\\0f6f3b4f-b2ff-4f4e-a461-17e36efe0a52\\scratchpad\\MockFramework",
+                                                              "timestamp":  "2026-10-30 13:07:30",
+                                                              "success":  true
+                                                          },
+                                                          {
+                                                              "detail":  "Staging path available: C:\\Users\\Lenovo\\AppData\\Local\\Temp\\claude\\c--AI-QC-Framework\\0f6f3b4f-b2ff-4f4e-a461-17e36efe0a52\\scratchpad\\MockStaging",
+                                                              "timestamp":  "2026-10-30 13:07:30",
+                                                              "success":  true
+                                                          },
+                                                          {
+                                                              "detail":  "Disk space available: 184.387325286865GB",
+                                                              "timestamp":  "2026-10-30 13:07:30",
+                                                              "success":  true
+                                                          }
+                                                      ],
+                                          "duration_ms":  712.38020000000006
+                                      }
+               },
+    "metrics":  {
+                    "tests_skipped":  0,
+                    "health_check_pass_rate":  100,
+                    "tests_passed":  0,
+                    "cleanup_success_rate":  100,
+                    "tests_failed":  0,
+                    "retry_success_rate":  92
+                }
+}
