@@ -134,6 +134,8 @@ For every stage, first read that stage's output file plus the upstream input fil
 
 Use the `Write` tool to create this file at `<runFolder>/validation/<stage>.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
+**Robustness (Phase 1-2):** When writing the file, the orchestrator wrapper uses atomic file operations with validation and backups. This means: your JSON must be valid (the orchestrator validates it before finalizing the write), and if the write is interrupted, a backup copy is preserved for recovery. Write cleanly-formed JSON with proper structure — ensure all `pass` fields are booleans, `gaps` and `checklist` are arrays, and all gap details are concrete strings (not null/undefined). The orchestrator also applies error classification if validation itself fails — file I/O errors are generally transient and retried.
+
 Example shape:
 
 ```json

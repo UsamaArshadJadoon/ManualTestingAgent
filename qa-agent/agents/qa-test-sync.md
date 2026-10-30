@@ -97,6 +97,8 @@ To update an existing case, `PUT {baseUrl}/project/{projectKey}/testcase/{caseKe
 
 The script writes `aio-sync.json` into the run folder: `{ project, folderID, folderName, storyJiraId, scriptTypeID, scriptTypeSource, createdCount, total, cases: [{ testId, aioKey, aioID, title } | { testId, error, status }], _validation }`. Read it back and confirm `createdCount` before reporting. Do not hand-write or patch this file yourself.
 
+**Robustness (Phase 1-2):** The `aio-sync.js` script uses Phase 1-2 robustness patterns internally: atomic file writes with validation, structured logging (CLI output), and error classification for AIO API calls (transient like 429, 50x vs permanent like 401, 403). The orchestrator wrapper may retry the entire sync on transient API errors. Do not hand-write or patch the file yourself — the script's atomic writes ensure data integrity and backup recovery.
+
 Return a one-line summary, e.g. `aio-sync.json written: 7/7 cases created in AIO folder PROJ-123 (linked to PROJ-123)`. On failure, report the script's own error line rather than paraphrasing it.
 
 ---

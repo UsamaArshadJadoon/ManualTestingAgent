@@ -75,6 +75,8 @@ If the story has no design-referencing AC, emit `designAttachments: []` and `des
 
 **Output:** write **`story.json`** into the run folder with exactly these fields: `key, summary, description, acceptanceCriteria, designAttachments, components, status, acSource, _validation`, where `acceptanceCriteria` is the array of `{ id, text, designDependent }` items described above and `designAttachments` is described in "Design-dependent AC" below. Use the `Write` tool to create this file at `<runFolder>/story.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
+**Robustness (Phase 1-2):** When writing the file, the orchestrator wrapper uses atomic file operations with validation and backups. This means: your JSON must be valid (the orchestrator validates it before finalizing the write), and if the write is interrupted, a backup copy is preserved for recovery. Write cleanly-formed JSON with proper structure — ensure all required fields are populated and arrays are valid JSON (never omit required fields).
+
 Example shape:
 
 ```json

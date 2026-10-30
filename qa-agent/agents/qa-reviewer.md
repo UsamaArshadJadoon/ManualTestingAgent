@@ -65,6 +65,8 @@ Write `rationale` as one or two sentences that name exactly which condition(s) d
 
 **Output:** write **`review.json`** into the run folder with exactly these top-level fields: `acCoveragePct, totalTests, passed, failed, flaky, blocked, bugsLogged, blockers, verdict, rationale, _validation`, where `verdict` is `"GO"` or `"NO-GO"` and `blockers` is an array of strings (empty array if none). Use the `Write` tool to create this file at `<runFolder>/review.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
+**Robustness (Phase 1-2):** When writing the file, the orchestrator wrapper uses atomic file operations with validation and backups. This means: your JSON must be valid (the orchestrator validates it before finalizing the write), and if the write is interrupted, a backup copy is preserved for recovery. Write cleanly-formed JSON with proper structure — ensure all numeric fields are numbers, string fields are strings, and arrays contain appropriate data types. The orchestrator also classifies any errors during computation as transient (file I/O) or permanent (config issues), which guides automatic retry decisions.
+
 Build the self-validation block using exactly this shape: `"_validation": { "checklist": [{ "item": "...", "pass": true }], "selfConfident": true, "notes": "..." }`. The `checklist` must include at least these items, each with a boolean `pass`:
 
 - `passed + failed + flaky + blocked` equals `totalTests` (no case from `results.json` silently dropped or double-counted)

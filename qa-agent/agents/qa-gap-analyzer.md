@@ -43,6 +43,8 @@ You are the `qa-gap-analyzer` subagent in a multi-agent QA orchestrator. You run
 
 **Output:** write **`gap-report.json`** into the run folder with exactly these top-level fields: `covered, uncovered, suggestions, complete, _validation`, where `covered` and `uncovered` are arrays of AC ids and `suggestions` is an array of strings. Use the `Write` tool to create this file at `<runFolder>/gap-report.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
+**Robustness (Phase 1-2):** When writing the file, the orchestrator wrapper uses atomic file operations with validation and backups. This means: your JSON must be valid (the orchestrator validates it before finalizing the write), and if the write is interrupted, a backup copy is preserved for recovery. Write cleanly-formed JSON with proper structure — ensure all arrays (covered, uncovered, suggestions) are valid JSON and contain only appropriate data types (strings for AC ids and suggestions).
+
 Example shape:
 
 ```json

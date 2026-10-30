@@ -83,6 +83,8 @@ When `config.app.login.required` is `true`, the executor logs in **once before t
 
 **Output:** write **`test-cases.json`** into the run folder with exactly these top-level fields: `cases, _validation`. Each entry in `cases` has exactly these fields: `id, title, linkedAC, type, criticality, steps, testData, expectedResult`, where `linkedAC` is an array of AC ids (usually one, but list more than one if a case genuinely exercises multiple AC together), `type` is one of `"happy"`, `"negative"`, `"edge"`, and `criticality` is one of `"blocker"`, `"major"`, `"minor"` (see step 8). Use the `Write` tool to create this file at `<runFolder>/test-cases.json`. Do not add extra top-level fields and do not omit any of the required ones.
 
+**Robustness (Phase 1-2):** When writing the file, the orchestrator wrapper uses atomic file operations with validation and backups. This means: your JSON must be valid (the orchestrator validates it before finalizing the write), and if the write is interrupted, a backup copy is preserved for recovery. Write cleanly-formed JSON with proper structure — do not omit required fields and ensure all arrays/objects are valid.
+
 Example shape:
 
 ```json
