@@ -21,6 +21,11 @@ const path = require("path");
 const os = require("os");
 const { execSync } = require("child_process");
 
+function escapeHtml(text) {
+  const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  return String(text).replace(/[&<>"']/g, c => map[c]);
+}
+
 class DiagnosticsCollector {
   constructor(options = {}) {
     this.maxLogEvents = options.maxLogEvents || 500;
@@ -49,8 +54,6 @@ class DiagnosticsCollector {
       platform: os.platform(),
       arch: os.arch(),
       osVersion: os.release(),
-      hostname: os.hostname(),
-      homeDir: os.homedir(),
       cpuCount: os.cpus().length,
       totalMemoryGb: Math.round(os.totalmem() / 1024 / 1024 / 1024),
       freeMemoryGb: Math.round(os.freemem() / 1024 / 1024 / 1024),
@@ -137,7 +140,12 @@ class DiagnosticsCollector {
           const content = fs.readFileSync(file.path, "utf8");
           const lines = content.split("\n").filter(Boolean);
           const recent = lines.slice(-this.maxLogEvents).map(line => {
-            try { return JSON.parse(line); } catch { return { raw: line }; }
+            try {
+              const parsed = JSON.parse(line);
+              return this.redactLogEvent(parsed);
+            } catch {
+              return { raw: line };
+            }
           });
 
           logs.push({
@@ -158,6 +166,17 @@ class DiagnosticsCollector {
     } catch (e) {
       return { status: "ERROR", error: e.message };
     }
+  }
+
+  redactLogEvent(event) {
+    if (typeof event !== "object" || event === null) return event;
+    const redacted = { ...event };
+    for (const [key, value] of Object.entries(redacted)) {
+      if (this.shouldRedact(key) && typeof value === "string") {
+        redacted[key] = "***";
+      }
+    }
+    return redacted;
   }
 
   collectRunFolderInfo(runFolder) {
@@ -285,7 +304,7 @@ class DiagnosticsCollector {
 
     <h2>Recent Logs</h2>
     <p>Last 100 events from most recent log file:</p>
-    <pre style="background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto;">${JSON.stringify(diagnostics.logs.files?.[0]?.events?.slice(-100) || [], null, 2)}</pre>
+    <pre style="background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto;">${escapeHtml(JSON.stringify(diagnostics.logs.files?.[0]?.events?.slice(-100) || [], null, 2))}</pre>
 
     <h2>Next Steps</h2>
     <ul>

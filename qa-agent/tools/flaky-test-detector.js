@@ -29,6 +29,11 @@ function die(msg, code = 1) {
   process.exit(code);
 }
 
+function escapeHtml(text) {
+  const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  return String(text).replace(/[&<>"']/g, c => map[c]);
+}
+
 // ---- config ----
 
 const MIN_RUNS = parseInt(process.argv[3]?.split("=")[1] || "5");
@@ -233,9 +238,9 @@ const html = `<!DOCTYPE html>
     <h2>Recommendations</h2>
     ${analysis.recommendations.map(r => `
       <div class="rec ${r.severity}">
-        <h3>${r.title}</h3>
-        <p>${r.action}</p>
-        ${r.tests.length > 0 ? `<p><strong>Tests:</strong> ${r.tests.join(", ")}</p>` : ""}
+        <h3>${escapeHtml(r.title)}</h3>
+        <p>${escapeHtml(r.action)}</p>
+        ${r.tests.length > 0 ? `<p><strong>Tests:</strong> ${r.tests.map(t => escapeHtml(t)).join(", ")}</p>` : ""}
       </div>
     `).join("")}
   </div>
@@ -257,13 +262,13 @@ const html = `<!DOCTYPE html>
       <tbody>
         ${analysis.tests.map(t => `
           <tr>
-            <td><code>${t.id}</code></td>
-            <td>${t.title}</td>
+            <td><code>${escapeHtml(t.id)}</code></td>
+            <td>${escapeHtml(t.title)}</td>
             <td>${t.runsCount}</td>
             <td>${t.results.passed}</td>
             <td>${t.results.failed}</td>
             <td class="rate ${t.stability}">${t.passRate}%</td>
-            <td><span class="${t.stability}">${t.stability.toUpperCase()}</span></td>
+            <td><span class="${t.stability}">${escapeHtml(t.stability.toUpperCase())}</span></td>
           </tr>
         `).join("")}
       </tbody>
